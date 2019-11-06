@@ -81,9 +81,6 @@ echo "Creating the Spot Instance $SPOT_INSTANCE_ID with Request Id $SPOT_REQUEST
 #aws ec2 run-instances --launch-template LaunchTemplateName=$LAUNCH_TEMPLATE_NAME,Version=$LAUNCH_TEMPLATE_VERSION
 
 
-
-
-
 SPOTFLEET_TEMPLATE_INSTANCESPECS_FILE=spot_fleet_with_instancespecs_template.json
 SPOTFLEET_TEMPLATE_INSTANCESPECS_TEMP_FILE=spot_fleet_with_instancespecs_template_temp.json
 cp -Rfp $SPOTFLEET_TEMPLATE_INSTANCESPECS_FILE $SPOTFLEET_TEMPLATE_INSTANCESPECS_TEMP_FILE

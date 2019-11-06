@@ -1,0 +1,34 @@
+{
+    "SpotOptions": {
+        "AllocationStrategy": "TMPL_EC2FLEET_SPOT_ALLOCATIION_STRATEGY", 
+        "InstanceInterruptionBehavior": "TMPL_EC2FLEET_SPOT_TERMINATE_BEHAVIOUR", 
+        "InstancePoolsToUseCount": TMPL_EC2FLEET_SPOT_INSTANCE_POOL_COUNT, 
+        "MinTargetCapacity": TMPL_EC2FLEET_SPOT_MIN_TARGET_CAPACITY
+    }, 
+    "OnDemandOptions": {
+        "AllocationStrategy": "lowest-price",
+        "MinTargetCapacity": TMPL_EC2FLEET_OD_MIN_TARGET_CAPACITY
+    }, 
+    "LaunchTemplateConfigs": [
+        {
+            "LaunchTemplateSpecification": {
+                "LaunchTemplateId": "TMPL_EC2FLEET_LAUNCHTEMPLATE_LT_ID", 
+                "Version": "TMPL_EC2FLEET_LAUNCHTEMPLATE_LT_VERSION"
+            }, 
+            "Overrides": [
+                {
+                    "InstanceType": "TMPL_EC2FLEET_LAUNCHTEMPLATE_1_INSTANCE_TYPE", 
+                    "SubnetId": "TMPL_EC2FLEET_LAUNCHTEMPLATE_SUBNETS_1"
+                }
+            ]
+        }
+    ], 
+    "TargetCapacitySpecification": {
+        "TotalTargetCapacity": TMPL_EC2FLEET_TOTAL_TARGET_CAPACITY, 
+        "OnDemandTargetCapacity": TMPL_EC2FLEET_OD_TARGET_CAPACITY, 
+        "SpotTargetCapacity": TMPL_EC2FLEET_SPOT_TARGET_CAPACITY, 
+        "DefaultTargetCapacityType": "spot"
+    }, 
+    "Type": "maintain", 
+    "ReplaceUnhealthyInstances": true
+}

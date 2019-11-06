@@ -1,0 +1,71 @@
+{
+    "DryRun": true, 
+    "ClientToken": "", 
+    "SpotOptions": {
+        "AllocationStrategy": "diversified", 
+        "InstanceInterruptionBehavior": "hibernate", 
+        "InstancePoolsToUseCount": 0, 
+        "SingleInstanceType": true, 
+        "SingleAvailabilityZone": true, 
+        "MinTargetCapacity": 0, 
+        "MaxTotalPrice": ""
+    }, 
+    "OnDemandOptions": {
+        "AllocationStrategy": "lowest-price", 
+        "SingleInstanceType": true, 
+        "SingleAvailabilityZone": true, 
+        "MinTargetCapacity": 0, 
+        "MaxTotalPrice": ""
+    }, 
+    "ExcessCapacityTerminationPolicy": "no-termination", 
+    "LaunchTemplateConfigs": [
+        {
+            "LaunchTemplateSpecification": {
+                "LaunchTemplateId": "", 
+                "LaunchTemplateName": "", 
+                "Version": ""
+            }, 
+            "Overrides": [
+                {
+                    "InstanceType": "c3.4xlarge", 
+                    "MaxPrice": "", 
+                    "SubnetId": "", 
+                    "AvailabilityZone": "", 
+                    "WeightedCapacity": null, 
+                    "Priority": null, 
+                    "Placement": {
+                        "AvailabilityZone": "", 
+                        "Affinity": "", 
+                        "GroupName": "", 
+                        "PartitionNumber": 0, 
+                        "HostId": "", 
+                        "Tenancy": "dedicated", 
+                        "SpreadDomain": ""
+                    }
+                }
+            ]
+        }
+    ], 
+    "TargetCapacitySpecification": {
+        "TotalTargetCapacity": 0, 
+        "OnDemandTargetCapacity": 0, 
+        "SpotTargetCapacity": 0, 
+        "DefaultTargetCapacityType": "spot"
+    }, 
+    "TerminateInstancesWithExpiration": true, 
+    "Type": "request", 
+    "ValidFrom": "1970-01-01T00:00:00", 
+    "ValidUntil": "1970-01-01T00:00:00", 
+    "ReplaceUnhealthyInstances": true, 
+    "TagSpecifications": [
+        {
+            "ResourceType": "dhcp-options", 
+            "Tags": [
+                {
+                    "Key": "", 
+                    "Value": ""
+                }
+            ]
+        }
+    ]
+}

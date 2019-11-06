@@ -1,0 +1,34 @@
+{
+    "SpotOptions": {
+        "AllocationStrategy": "lowestPrice", 
+        "InstanceInterruptionBehavior": "terminate", 
+        "InstancePoolsToUseCount": 2, 
+        "MinTargetCapacity": 2
+    }, 
+    "OnDemandOptions": {
+        "AllocationStrategy": "lowest-price",
+        "MinTargetCapacity": 1
+    }, 
+    "LaunchTemplateConfigs": [
+        {
+            "LaunchTemplateSpecification": {
+                "LaunchTemplateId": "lt-046437183d3b6bf53", 
+                "Version": "1"
+            }, 
+            "Overrides": [
+                {
+                    "InstanceType": "c3.large", 
+                    "SubnetId": "subnet-764d7d11"
+                }
+            ]
+        }
+    ], 
+    "TargetCapacitySpecification": {
+        "TotalTargetCapacity": 3, 
+        "OnDemandTargetCapacity": 1, 
+        "SpotTargetCapacity": 2, 
+        "DefaultTargetCapacityType": "spot"
+    }, 
+    "Type": "maintain", 
+    "ReplaceUnhealthyInstances": true
+}

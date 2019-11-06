@@ -1,0 +1,52 @@
+{
+    "AutoScalingGroupName": "EC2SpotWorkshop2_asg2", 
+
+    "MixedInstancesPolicy": {
+        "LaunchTemplate": {
+            "LaunchTemplateSpecification": {
+                "LaunchTemplateId": "lt-046437183d3b6bf53", 
+                "Version": "1"
+            }, 
+            "Overrides": [
+                {
+                    "InstanceType": "m4.large"
+                },
+                                {
+                    "InstanceType": "c4.large"
+                },
+                                {
+                    "InstanceType": "r4.large"
+                }
+            ]
+        }, 
+        "InstancesDistribution": {
+            "OnDemandAllocationStrategy": "prioritized", 
+            "OnDemandBaseCapacity": 0, 
+            "OnDemandPercentageAboveBaseCapacity": 50, 
+            "SpotAllocationStrategy": "lowest-price", 
+            "SpotInstancePools": 2
+        }
+    }, 
+ 
+    "MinSize": 4, 
+    "MaxSize": 4, 
+    "DesiredCapacity": 4, 
+    "DefaultCooldown": 0, 
+   
+    "HealthCheckType": "EC2", 
+    "HealthCheckGracePeriod": 0, 
+  
+    "VPCZoneIdentifier": "subnet-764d7d11,subnet-a2c2fd8c,subnet-cb26e686", 
+ 
+    "NewInstancesProtectedFromScaleIn": true, 
+     
+    "Tags": [
+        {
+ 
+            "Key": "Name", 
+            "Value": "EC2SpotWorkshop2_asg2", 
+            "PropagateAtLaunch": true
+        }
+    ]
+ 
+}

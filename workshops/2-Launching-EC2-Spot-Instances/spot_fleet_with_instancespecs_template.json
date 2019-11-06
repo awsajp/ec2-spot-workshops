@@ -1,0 +1,60 @@
+{
+	"IamFleetRole": "arn:aws:iam::000474600478:role/aws-ec2-spot-fleet-tagging-role",
+	"AllocationStrategy": "TMPL_SPOTFLEET_SPOT_ALLOCATIION_STRATEGY",
+	"TargetCapacity": TMPL_SPOTFLEET_TARGET_CAPACITY,
+	"TerminateInstancesWithExpiration": true,
+	"LaunchSpecifications": [
+		{
+			"ImageId": "TMPL_SPOTFLEET_INSTANCESPEC_1_IMAGE_ID",
+			"InstanceType": "TMPL_SPOTFLEET_INSTANCESPEC_1_INSTANCE_TYPE",
+			"SubnetId": "TMPL_SPOTFLEET_INSTANCESPEC_SUBNETS_LIST",
+			"KeyName": "TMPL_SPOTFLEET_INSTANCESPEC_KEY_PAIR",
+			"BlockDeviceMappings": [
+				{
+					"DeviceName": "/dev/xvda",
+					"Ebs": {
+						"DeleteOnTermination": true,
+						"VolumeType": "gp2",
+						"VolumeSize": 8,
+						"SnapshotId": "snap-05c184ed39d0ecd7b"
+					}
+				}
+			]
+		},
+		{
+			"ImageId": "TMPL_SPOTFLEET_INSTANCESPEC_2_IMAGE_ID",
+			"InstanceType": "TMPL_SPOTFLEET_INSTANCESPEC_2_INSTANCE_TYPE",
+			"SubnetId": "TMPL_SPOTFLEET_INSTANCESPEC_SUBNETS_LIST",
+			"KeyName": "TMPL_SPOTFLEET_INSTANCESPEC_KEY_PAIR",
+			"BlockDeviceMappings": [
+				{
+					"DeviceName": "/dev/xvda",
+					"Ebs": {
+						"DeleteOnTermination": true,
+						"VolumeType": "gp2",
+						"VolumeSize": 8,
+						"SnapshotId": "snap-05c184ed39d0ecd7b"
+					}
+				}
+			]
+		},
+		{
+			"ImageId": "TMPL_SPOTFLEET_INSTANCESPEC_3_IMAGE_ID",
+			"InstanceType": "TMPL_SPOTFLEET_INSTANCESPEC_3_INSTANCE_TYPE",
+			"SubnetId": "TMPL_SPOTFLEET_INSTANCESPEC_SUBNETS_LIST",
+			"KeyName": "TMPL_SPOTFLEET_INSTANCESPEC_KEY_PAIR",
+			"BlockDeviceMappings": [
+				{
+					"DeviceName": "/dev/xvda",
+					"Ebs": {
+						"DeleteOnTermination": true,
+						"VolumeType": "gp2",
+						"VolumeSize": 8,
+						"SnapshotId": "snap-05c184ed39d0ecd7b"
+					}
+				}
+			]
+		}
+	],
+	"Type": "maintain"
+}

@@ -1,0 +1,52 @@
+{
+    "AutoScalingGroupName": "TMPL_ASG_NAME", 
+
+    "MixedInstancesPolicy": {
+        "LaunchTemplate": {
+            "LaunchTemplateSpecification": {
+                "LaunchTemplateId": "TMPL_ASG_LT_ID", 
+                "Version": "TMPL_ASG_LT_VERSION"
+            }, 
+            "Overrides": [
+                {
+                    "InstanceType": "TMPL_ASG_OVERRIDE_INSTANCE_1"
+                },
+                                {
+                    "InstanceType": "TMPL_ASG_OVERRIDE_INSTANCE_2"
+                },
+                                {
+                    "InstanceType": "TMPL_ASG_OVERRIDE_INSTANCE_3"
+                }
+            ]
+        }, 
+        "InstancesDistribution": {
+            "OnDemandAllocationStrategy": "TMPL_ASG_OD_ALLOCATIION_STRATEGY", 
+            "OnDemandBaseCapacity": TMPL_ASG_OD_CAPACITY, 
+            "OnDemandPercentageAboveBaseCapacity": TMPL_ASG_OD_PERCENTAGE_ABOVE_BASE, 
+            "SpotAllocationStrategy": "TMPL_ASG_SPOT_ALLOCATIION_STRATEGY", 
+            "SpotInstancePools": TMPL_ASG_SPOT_INSTANCE_POOL_COUNT
+        }
+    }, 
+ 
+    "MinSize": TMPL_ASG_MIN_SIZE, 
+    "MaxSize": TMPL_ASG_MAX_SIZE, 
+    "DesiredCapacity": TMPL_ASG_DESIRED_SIZE, 
+    "DefaultCooldown": 0, 
+   
+    "HealthCheckType": "EC2", 
+    "HealthCheckGracePeriod": 0, 
+  
+    "VPCZoneIdentifier": "TMPL_ASG_SUBNETS_LIST", 
+ 
+    "NewInstancesProtectedFromScaleIn": true, 
+     
+    "Tags": [
+        {
+ 
+            "Key": "Name", 
+            "Value": "TMPL_ASG_TAG_VALUE", 
+            "PropagateAtLaunch": true
+        }
+    ]
+ 
+}

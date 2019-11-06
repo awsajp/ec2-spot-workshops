@@ -1,0 +1,34 @@
+{
+  "IamFleetRole": "arn:aws:iam::000474600478:role/aws-ec2-spot-fleet-tagging-role",
+  "AllocationStrategy": "TMPL_SPOTFLEET_SPOT_ALLOCATIION_STRATEGY",
+  "TargetCapacity": TMPL_SPOTFLEET_TARGET_CAPACITY,
+  "TerminateInstancesWithExpiration": true,
+  "LaunchSpecifications": [],
+  "Type": "maintain",
+  "OnDemandTargetCapacity": TMPL_SPOTFLEET_OD_TARGET_CAPACITY,
+  "LaunchTemplateConfigs": [
+    {
+      "LaunchTemplateSpecification": {
+        "LaunchTemplateId": "TMPL_SPOTFLEET_LAUNCHTEMPLATE_LT_ID",
+        "Version": "TMPL_SPOTFLEET_LAUNCHTEMPLATE_LT_VERSION"
+      },
+      "Overrides": [
+        {
+          "InstanceType": "TMPL_SPOTFLEET_LAUNCHTEMPLATE_1_INSTANCE_TYPE",
+          "WeightedCapacity": 1,
+          "SubnetId": "TMPL_SPOTFLEET_LAUNCHTEMPLATE_SUBNETS_1"
+        },
+        {
+          "InstanceType": "TMPL_SPOTFLEET_LAUNCHTEMPLATE_2_INSTANCE_TYPE",
+          "WeightedCapacity": 1,
+          "SubnetId": "TMPL_SPOTFLEET_LAUNCHTEMPLATE_SUBNETS_2"
+        },
+        {
+          "InstanceType": "TMPL_SPOTFLEET_LAUNCHTEMPLATE_3_INSTANCE_TYPE",
+          "WeightedCapacity": 1,
+          "SubnetId": "TMPL_SPOTFLEET_LAUNCHTEMPLATE_SUBNETS_3"
+        }
+      ]
+    }
+  ]
+}

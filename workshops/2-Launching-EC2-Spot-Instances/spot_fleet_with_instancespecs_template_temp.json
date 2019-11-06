@@ -1,0 +1,60 @@
+{
+	"IamFleetRole": "arn:aws:iam::000474600478:role/aws-ec2-spot-fleet-tagging-role",
+	"AllocationStrategy": "capacityOptimized",
+	"TargetCapacity": 2,
+	"TerminateInstancesWithExpiration": true,
+	"LaunchSpecifications": [
+		{
+			"ImageId": "ami-00eb20669e0990cb4",
+			"InstanceType": "c3.large",
+			"SubnetId": "subnet-764d7d11,subnet-a2c2fd8c,subnet-cb26e686",
+			"KeyName": "awsajp_keypair",
+			"BlockDeviceMappings": [
+				{
+					"DeviceName": "/dev/xvda",
+					"Ebs": {
+						"DeleteOnTermination": true,
+						"VolumeType": "gp2",
+						"VolumeSize": 8,
+						"SnapshotId": "snap-05c184ed39d0ecd7b"
+					}
+				}
+			]
+		},
+		{
+			"ImageId": "ami-0d08fa65f81355d86",
+			"InstanceType": "t3a.medium",
+			"SubnetId": "subnet-764d7d11,subnet-a2c2fd8c,subnet-cb26e686",
+			"KeyName": "awsajp_keypair",
+			"BlockDeviceMappings": [
+				{
+					"DeviceName": "/dev/xvda",
+					"Ebs": {
+						"DeleteOnTermination": true,
+						"VolumeType": "gp2",
+						"VolumeSize": 8,
+						"SnapshotId": "snap-05c184ed39d0ecd7b"
+					}
+				}
+			]
+		},
+		{
+			"ImageId": "ami-00eb20669e0990cb4",
+			"InstanceType": "t3.medium",
+			"SubnetId": "subnet-764d7d11,subnet-a2c2fd8c,subnet-cb26e686",
+			"KeyName": "awsajp_keypair",
+			"BlockDeviceMappings": [
+				{
+					"DeviceName": "/dev/xvda",
+					"Ebs": {
+						"DeleteOnTermination": true,
+						"VolumeType": "gp2",
+						"VolumeSize": 8,
+						"SnapshotId": "snap-05c184ed39d0ecd7b"
+					}
+				}
+			]
+		}
+	],
+	"Type": "maintain"
+}

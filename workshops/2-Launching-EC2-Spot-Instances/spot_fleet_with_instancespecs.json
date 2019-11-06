@@ -1,0 +1,84 @@
+{
+  "IamFleetRole": "arn:aws:iam::000474600478:role/aws-ec2-spot-fleet-tagging-role",
+  "AllocationStrategy": "capacityOptimized",
+  "TargetCapacity": 2,
+  "SpotPrice": "0.105",
+  "ValidFrom": "2019-11-05T09:20:18Z",
+  "ValidUntil": "2020-11-05T09:20:18Z",
+  "TerminateInstancesWithExpiration": true,
+  "LaunchSpecifications": [
+    {
+      "ImageId": "ami-009d6802948d06e52",
+      "InstanceType": "c3.large",
+      "SubnetId": "subnet-764d7d11, subnet-a2c2fd8c, subnet-cb26e686",
+      "KeyName": "awsajp_keypair",
+      "SpotPrice": "0.105",
+      "BlockDeviceMappings": [
+        {
+          "DeviceName": "/dev/xvda",
+          "Ebs": {
+            "DeleteOnTermination": true,
+            "VolumeType": "gp2",
+            "VolumeSize": 8,
+            "SnapshotId": "snap-05c184ed39d0ecd7b"
+          }
+        }
+      ]
+    },
+    {
+      "ImageId": "ami-009d6802948d06e52",
+      "InstanceType": "t3a.medium",
+      "SubnetId": "subnet-764d7d11, subnet-a2c2fd8c, subnet-cb26e686",
+      "KeyName": "awsajp_keypair",
+      "SpotPrice": "0.0376",
+      "BlockDeviceMappings": [
+        {
+          "DeviceName": "/dev/xvda",
+          "Ebs": {
+            "DeleteOnTermination": true,
+            "VolumeType": "gp2",
+            "VolumeSize": 8,
+            "SnapshotId": "snap-05c184ed39d0ecd7b"
+          }
+        }
+      ]
+    },
+    {
+      "ImageId": "ami-009d6802948d06e52",
+      "InstanceType": "t3.medium",
+      "SubnetId": "subnet-764d7d11, subnet-a2c2fd8c, subnet-cb26e686",
+      "KeyName": "awsajp_keypair",
+      "SpotPrice": "0.0416",
+      "BlockDeviceMappings": [
+        {
+          "DeviceName": "/dev/xvda",
+          "Ebs": {
+            "DeleteOnTermination": true,
+            "VolumeType": "gp2",
+            "VolumeSize": 8,
+            "SnapshotId": "snap-05c184ed39d0ecd7b"
+          }
+        }
+      ]
+    },
+    {
+      "ImageId": "ami-009d6802948d06e52",
+      "InstanceType": "t3a.large",
+      "SubnetId": "subnet-764d7d11, subnet-cb26e686",
+      "KeyName": "awsajp_keypair",
+      "SpotPrice": "0.0752",
+      "BlockDeviceMappings": [
+        {
+          "DeviceName": "/dev/xvda",
+          "Ebs": {
+            "DeleteOnTermination": true,
+            "VolumeType": "gp2",
+            "VolumeSize": 8,
+            "SnapshotId": "snap-05c184ed39d0ecd7b"
+          }
+        }
+      ]
+    }
+  ],
+  "Type": "maintain"
+}

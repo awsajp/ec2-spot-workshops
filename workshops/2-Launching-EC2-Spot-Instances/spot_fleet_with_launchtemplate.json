@@ -1,0 +1,66 @@
+{
+  "IamFleetRole": "arn:aws:iam::000474600478:role/aws-ec2-spot-fleet-tagging-role",
+  "AllocationStrategy": "capacityOptimized",
+  "TargetCapacity": 2,
+  "ValidFrom": "2019-11-05T08:45:00Z",
+  "ValidUntil": "2020-11-05T08:45:00Z",
+  "TerminateInstancesWithExpiration": true,
+  "LaunchSpecifications": [],
+  "Type": "maintain",
+  "OnDemandTargetCapacity": 1,
+  "LaunchTemplateConfigs": [
+    {
+      "LaunchTemplateSpecification": {
+        "LaunchTemplateId": "lt-046437183d3b6bf53",
+        "Version": "1"
+      },
+      "Overrides": [
+        {
+          "InstanceType": "t2.micro",
+          "WeightedCapacity": 1,
+          "SubnetId": "subnet-a2c2fd8c"
+        },
+        {
+          "InstanceType": "t2.micro",
+          "WeightedCapacity": 1,
+          "SubnetId": "subnet-764d7d11"
+        },
+        {
+          "InstanceType": "t2.micro",
+          "WeightedCapacity": 1,
+          "SubnetId": "subnet-cb26e686"
+        },
+        {
+          "InstanceType": "t3a.micro",
+          "WeightedCapacity": 1,
+          "SubnetId": "subnet-a2c2fd8c"
+        },
+        {
+          "InstanceType": "t3a.micro",
+          "WeightedCapacity": 1,
+          "SubnetId": "subnet-764d7d11"
+        },
+        {
+          "InstanceType": "t3a.micro",
+          "WeightedCapacity": 1,
+          "SubnetId": "subnet-cb26e686"
+        },
+        {
+          "InstanceType": "t3.micro",
+          "WeightedCapacity": 1,
+          "SubnetId": "subnet-a2c2fd8c"
+        },
+        {
+          "InstanceType": "t3.micro",
+          "WeightedCapacity": 1,
+          "SubnetId": "subnet-764d7d11"
+        },
+        {
+          "InstanceType": "t3.micro",
+          "WeightedCapacity": 1,
+          "SubnetId": "subnet-cb26e686"
+        }
+      ]
+    }
+  ]
+}

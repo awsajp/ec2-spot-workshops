@@ -1,42 +1,37 @@
-## Ec2 Spot Workshops
+## 2-Launching-EC2-Spot-Instances
    
+  This is a automated version of the EC2 Spot workshop Launching EC2 Spot Instances https://ec2spotworkshops.com/launching_ec2_spot_instances.html
+  
    
-   
--- INSERT --                                                 
-Collection of workshops to demonstrate best practices in using Amazon EC2 Spot Instances. https://aws.amazon.com/ec2/spot/
 
-Website for this workshops is available at https://ec2spotworkshops.com
+## Deploy the cloud formation template to create the Infrastructure Infra 
 
-## Building the Workshop site
+Please find the CF yaml at  https://ec2spotworkshops.com/launching_ec2_spot_instances.html
 
-The content of the workshops is built using [hugo](https://gohugo.io/). 
+### Create the Launch Template Instances 
 
-### Local Build
-To build the content
- * clone this repository
- * [install hugo](https://gohugo.io/getting-started/installing/)
- * The project uses [hugo learn](https://github.com/matcornic/hugo-theme-learn/) template as a git submodule. To update the content, execute the following code
-```bash
-pushd themes/learn
-git submodule init
-git submodule update --checkout --recursive
-popd
-```
- * Run hugo to generate the site, and point your browser to http://localhost:1313
-```bash
-hugo serve -D
-```
+aws ec2 create-launch-template --region $DEFAULT_REGION --launch-template-name $LAUNCH_TEMPLATE_NAME --version-description LAUNCH_TEMPLATE_VERSION --launch-template-data "{\"NetworkInterfaces\":[{\"DeviceIndex\":0,\"SubnetId\":\"$DEFAULT_SUBNET\"}],\"ImageId\":\"$AMI_ID\",\"InstanceType\":\"$INSTANCE_TYPE\",\"TagSpecifications\":[{\"ResourceType\":\"instance\",\"Tags\":[{\"Key\":\"Name\",\"Value\":\"$LAUNCH_TEMPLATE_NAME\"}]}]}" | jq -r '.LaunchTemplate.LaunchTemplateId'
 
-### Containerized Development
 
-The image can also serve as a development enviornment using [docker-compose](https://docs.docker.com/compose/).
-The following command will spin up a container exposing the website at [localhost:1313](http://localhost:1313) and mount `config.toml` and the directories `./content`, `./layouts` and `./static`, so that local changes will automatically be picked up by the development container.
 
-```
-$ docker-compose up -d  ## To see the logs just drop '-d'
-Starting ec2-spot-workshops_hugo_1 ... done
-```
+### Create the Spot Instances using Auto scaling Group
 
-## License
+aws autoscaling create-auto-scaling-group --cli-input-json file://$ASG_TEMPLATE_TEMP_FILE
 
-This library is licensed under the Amazon Software License.
+### Create the Spot Instances using Run Instances API
+
+aws ec2 run-instances --launch-template LaunchTemplateName=$LAUNCH_TEMPLATE_NAME,Version=$LAUNCH_TEMPLATE_VERSION --instance-market-options MarketType=spot
+ 
+ 
+### Create the Spot Instances using Spot Fleet using Instance Specifications
+
+ aws ec2 request-spot-fleet --spot-fleet-request-config file://$SPOTFLEET_TEMPLATE_INSTANCESPECS_TEMP_FILE|jq -r '.SpotFleetRequestId'
+
+### Create the Spot Instances using Spot Fleet using the Launch Template
+
+aws ec2 request-spot-fleet --spot-fleet-request-config file://$SPOTFLEET_TEMPLATE_LAUNCHTEMPLATE_TEMP_FILE|jq -r '.SpotFleetRequestId'
+
+
+### Workshop Cleanup
+
+

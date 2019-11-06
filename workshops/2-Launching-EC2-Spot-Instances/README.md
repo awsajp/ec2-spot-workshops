@@ -1,6 +1,6 @@
-## Ec2 Spot Workshops
+## 2-Launching-EC2-Spot-Instances
    
-   
+  This is a automated version of the EC2 Spot workshop Launching EC2 Spot Instances https://ec2spotworkshops.com/launching_ec2_spot_instances.html
    
 -- INSERT --                                                 
 Collection of workshops to demonstrate best practices in using Amazon EC2 Spot Instances. https://aws.amazon.com/ec2/spot/

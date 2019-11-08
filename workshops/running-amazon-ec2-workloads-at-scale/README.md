@@ -1,37 +1,64 @@
-## 2-Launching-EC2-Spot-Instances
-   
+## EC2 Spot Workshop #1 : running-amazon-ec2-workloads-at-scale
+
+In this workshop, you will deploy the following:
+
+    An AWS CloudFormation stack, which will include:
+        An Amazon Virtual Private Cloud (Amazon VPC) with subnets in two Availability Zones
+        An AWS Cloud9 environment
+        Supporting IAM policies and roles
+        Supporting security groups
+        An Amazon EFS file system
+        An Amazon S3 bucket to use with AWS CodeDeploy
+    An Amazon RDS database instance
+    An Amazon EC2 launch template
+    An Application Load Balancer (ALB) with a listener and target group
+    An Amazon EC2 Auto Scaling group, with:
+        A scheduled scaling action
+        A dynamic scaling policy
+    An AWS CodeDeploy application deployment
+    An AWS Systems Manager run command to emulate load on the service
+
+
+
   This is a automated version of the EC2 Spot workshop Launching EC2 Spot Instances https://ec2spotworkshops.com/launching_ec2_spot_instances.html
   
    
 
-## Deploy the cloud formation template to create the Infrastructure Infra 
+### Step1 :  Deploy the cloud formation template to create the Infrastructure  
 
-Please find the CF yaml at  https://ec2spotworkshops.com/launching_ec2_spot_instances.html
+aws cloudformation create-stack --stack-name $CFS_STACK_NAME  --template-body file://$CFS_STACK_FILE --capabilities CAPABILITY_IAM --region $DEFAULT_REGION|jq -r '.StackId'
 
-### Create the Launch Template Instances 
+### Step2 : Create an Amazon RDS database instance
+aws rds create-db-instance --cli-input-json file://rds.json|jq -r '.DBInstance.DBInstanceIdentifier'
 
-aws ec2 create-launch-template --region $DEFAULT_REGION --launch-template-name $LAUNCH_TEMPLATE_NAME --version-description LAUNCH_TEMPLATE_VERSION --launch-template-data "{\"NetworkInterfaces\":[{\"DeviceIndex\":0,\"SubnetId\":\"$DEFAULT_SUBNET\"}],\"ImageId\":\"$AMI_ID\",\"InstanceType\":\"$INSTANCE_TYPE\",\"TagSpecifications\":[{\"ResourceType\":\"instance\",\"Tags\":[{\"Key\":\"Name\",\"Value\":\"$LAUNCH_TEMPLATE_NAME\"}]}]}" | jq -r '.LaunchTemplate.LaunchTemplateId'
+### Step3 : Create the Launch Template Instances 
 
+aws ec2 create-launch-template --launch-template-name $LAUNCH_TEMPLATE_NAME --version-description LAUNCH_TEMPLATE_VERSION --launch-template-data file://launch-template-data.json | jq -r '.LaunchTemplate.LaunchTemplateId'
 
+### Step4 : Create the Application Load Balancer and Target Group
 
-### Create the Spot Instances using Auto scaling Group
+aws elbv2 create-load-balancer --cli-input-json file://application-load-balancer.json
+aws elbv2 create-target-group --cli-input-json file://target-group.json
 
-aws autoscaling create-auto-scaling-group --cli-input-json file://$ASG_TEMPLATE_TEMP_FILE
+### Step5 : Create the Auto Scaling Group
+aws autoscaling create-auto-scaling-group --cli-input-json file://asg.json
 
-### Create the Spot Instances using Run Instances API
+### Step6 : An AWS CodeDeploy application deployment
 
-aws ec2 run-instances --launch-template LaunchTemplateName=$LAUNCH_TEMPLATE_NAME,Version=$LAUNCH_TEMPLATE_VERSION --instance-market-options MarketType=spot
- 
- 
-### Create the Spot Instances using Spot Fleet using Instance Specifications
+git clone https://github.com/phanan/koel.git
+    
+cd koel && git checkout v3.7.2
+cp -avr ../codedeploy/* .
+aws deploy create-application --application-name koelApp
 
- aws ec2 request-spot-fleet --spot-fleet-request-config file://$SPOTFLEET_TEMPLATE_INSTANCESPECS_TEMP_FILE|jq -r '.SpotFleetRequestId'
+aws deploy push --application-name koelApp --s3-location s3://$code_deploy_bucket/koelApp.zip --no-ignore-hidden-files
+cd ..
+aws deploy create-deployment-group --cli-input-json file://deployment-group.json
+aws deploy create-deployment --cli-input-json file://deployment.json
 
-### Create the Spot Instances using Spot Fleet using the Launch Template
-
-aws ec2 request-spot-fleet --spot-fleet-request-config file://$SPOTFLEET_TEMPLATE_LAUNCHTEMPLATE_TEMP_FILE|jq -r '.SpotFleetRequestId'
+### Step7 : Run AWS Systems Manager run command to emulate load on the service
+aws ssm send-command --cli-input-json file://ssm-stress.json
 
 
 ### Workshop Cleanup
-
-
+Delete all the resources created above. This section is TBD

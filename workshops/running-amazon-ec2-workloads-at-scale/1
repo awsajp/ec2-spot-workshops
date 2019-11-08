@@ -1,0 +1,78 @@
+  {
+  
+  "DBInstance": {
+        "PubliclyAccessible": false, 
+        "MasterUsername": "dbadmin", 
+        "MonitoringInterval": 0, 
+        "LicenseModel": "general-public-license", 
+        "VpcSecurityGroups": [
+            {
+                "Status": "active", 
+                "VpcSecurityGroupId": "sg-0b92e575dd23d30cf"
+            }
+        ], 
+        "CopyTagsToSnapshot": false, 
+        "OptionGroupMemberships": [
+            {
+                "Status": "in-sync", 
+                "OptionGroupName": "default:mariadb-10-2"
+            }
+        ], 
+        "PendingModifiedValues": {
+            "MasterUserPassword": "****"
+        }, 
+        "Engine": "mariadb", 
+        "MultiAZ": false, 
+        "DBSecurityGroups": [], 
+        "DBParameterGroups": [
+            {
+                "DBParameterGroupName": "default.mariadb10.2", 
+                "ParameterApplyStatus": "in-sync"
+            }
+        ], 
+        "PerformanceInsightsEnabled": false, 
+        "AutoMinorVersionUpgrade": true, 
+        "PreferredBackupWindow": "06:31-07:01", 
+        "DBSubnetGroup": {
+            "Subnets": [
+                {
+                    "SubnetStatus": "Active", 
+                    "SubnetIdentifier": "subnet-0dc375a567a23cea4", 
+                    "SubnetAvailabilityZone": {
+                        "Name": "us-east-1a"
+                    }
+                }, 
+                {
+                    "SubnetStatus": "Active", 
+                    "SubnetIdentifier": "subnet-064349c493b655ac2", 
+                    "SubnetAvailabilityZone": {
+                        "Name": "us-east-1b"
+                    }
+                }
+            ], 
+            "DBSubnetGroupName": "runningamazonec2workloadsatscalenew-dbsubnetgroup-sf1b96l7uiw5", 
+            "VpcId": "vpc-01d1311bde1f96351", 
+            "DBSubnetGroupDescription": "Running Amazon EC2 Workloads at Scale - RDS database subnet group", 
+            "SubnetGroupStatus": "Complete"
+        }, 
+        "ReadReplicaDBInstanceIdentifiers": [], 
+        "AllocatedStorage": 20, 
+        "DBInstanceArn": "arn:aws:rds:us-east-1:000474600478:db:runningamazonec2workloadsatscale", 
+        "BackupRetentionPeriod": 1, 
+        "DBName": "koel", 
+        "PreferredMaintenanceWindow": "thu:07:22-thu:07:52", 
+        "DBInstanceStatus": "creating", 
+        "IAMDatabaseAuthenticationEnabled": false, 
+        "EngineVersion": "10.2.21", 
+        "DeletionProtection": false, 
+        "DomainMemberships": [], 
+        "StorageType": "gp2", 
+        "DbiResourceId": "db-UQSPSEMHEZFSFEYQFW4HKYU5MU", 
+        "CACertificateIdentifier": "rds-ca-2015", 
+        "StorageEncrypted": false, 
+        "AssociatedRoles": [], 
+        "DBInstanceClass": "db.t2.medium", 
+        "DbInstancePort": 0, 
+        "DBInstanceIdentifier": "runningamazonec2workloadsatscale"
+    }
+}

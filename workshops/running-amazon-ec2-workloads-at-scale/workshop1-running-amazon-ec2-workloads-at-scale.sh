@@ -27,15 +27,6 @@ aws cloudformation wait stack-create-complete --stack-name $CFS_STACK_NAME --no-
 #done
 
 
-CFS_STACK_OP_INSTANCEPROFILE_KEY=instanceProfile
-CFS_STACK_OP_INSTANCEPROFILE_VALUE=$(aws cloudformation describe-stacks --stack-name $CFS_STACK_NAME | jq -r ".Stacks[].Outputs[]| select(.OutputKey==\"$CFS_STACK_OP_INSTANCEPROFILE_KEY\")|.OutputValue")
-echo "CFS_STACK_OP_INSTANCEPROFILE_VALUE=$CFS_STACK_OP_INSTANCEPROFILE_VALUE"
-
-CFS_STACK_OP_CODEDEPLOYSERVICEROLE_KEY=codeDeployServiceRole
-CFS_STACK_OP_CODEDEPLOYSERVICEROLE_VALUE=$(aws cloudformation describe-stacks --stack-name $CFS_STACK_NAME | jq -r ".Stacks[].Outputs[]| select(.OutputKey==\"$CFS_STACK_OP_CODEDEPLOYSERVICEROLE_KEY\")|.OutputValue")
-echo "CFS_STACK_OP_CODEDEPLOYSERVICEROLE_VALUE=$CFS_STACK_OP_CODEDEPLOYSERVICEROLE_VALUE"
-
-
 #CFS_STACK_OP_SNSTOPIC_KEY=snsTopic
 #CFS_STACK_OP_SNSTOPIC_VALUE=$(aws cloudformation describe-stacks --stack-name $CFS_STACK_NAME | jq -r ".Stacks[].Outputs[]| select(.OutputKey==\"$CFS_STACK_OP_CODEDEPLOYSERVICEROLE_KEY\")|.OutputValue")
 #echo "CFS_STACK_OP_CODEDEPLOYSERVICEROLE_VALUE=$CFS_STACK_OP_CODEDEPLOYSERVICEROLE_VALUE"
@@ -62,6 +53,9 @@ echo "$CFK_STACK_OP_KEY=$CFK_STACK_OP_VALUE"
 sed -i.bak -e "s#%$CFK_STACK_OP_KEY%#$CFK_STACK_OP_VALUE#g"  user-data.txt
 sed -i.bak -e "s#%$CFK_STACK_OP_KEY%#$CFK_STACK_OP_VALUE#g"  launch-template-data.json
 sed -i.bak -e "s#%$CFK_STACK_OP_KEY%#$CFK_STACK_OP_VALUE#g"  rds.json
+sed -i.bak -e "s#%$CFK_STACK_OP_KEY%#$CFK_STACK_OP_VALUE#g"  application-load-balancer.json
+sed -i.bak -e "s#%$CFK_STACK_OP_KEY%#$CFK_STACK_OP_VALUE#g"  target-group.json
+sed -i.bak -e "s#%$CFK_STACK_OP_KEY%#$CFK_STACK_OP_VALUE#g"  asg.json
 
 
 done
@@ -72,6 +66,22 @@ done
 #LAUCH_TEMPLATE_ID=lt-046437183d3b6bf53
 #echo "Amazon LAUCH_TEMPLATE_ID is $LAUCH_TEMPLATE_ID"
 
-RDS_ID=$(aws rds create-db-instance --cli-input-json file://rds.json)
-echo "Amazon RDS_ID is $RDS_ID"
+#RDS_ID=$(aws rds create-db-instance --cli-input-json file://rds.json|jq -r '.DBInstance.DBInstanceIdentifier')
+#echo "Amazon RDS_ID is $RDS_ID"
 
+#aws rds wait  db-instance-available --db-instance-identifier $$RDS_ID
+
+
+aws elbv2 create-load-balancer --cli-input-json file://application-load-balancer.json
+alb_arn=$(aws elbv2 describe-load-balancers --names runningAmazonEC2WorkloadsAtScale --query LoadBalancers[].LoadBalancerArn --output text)
+aws elbv2 create-target-group --cli-input-json file://target-group.json
+tg_arn=$(aws elbv2 describe-target-groups --names runningAmazonEC2WorkloadsAtScale --query TargetGroups[].TargetGroupArn --output text)
+
+sed -i.bak -e "s#%TargetGroupArn%#$tg_arn#g" modify-target-group.json
+aws elbv2 modify-target-group-attributes --cli-input-json file://modify-target-group.json
+
+sed -i.bak -e "s#%LoadBalancerArn%#$alb_arn#g" -e "s#%TargetGroupArn%#$tg_arn#g" listener.json
+
+aws elbv2 create-listener --cli-input-json file://listener.json
+
+aws autoscaling create-auto-scaling-group --cli-input-json file://asg.json

@@ -5,5 +5,5 @@
   "autoScalingGroups": [
     "runningAmazonEC2WorkloadsAtScale"
   ],
-  "serviceRoleArn": "arn:aws:iam::000474600478:role/runningAmazonEC2WorkloadsAtS-codeDeployServiceRole-1N4R12DNT18F9"
+  "serviceRoleArn": "%codeDeployServiceRole%"
 }

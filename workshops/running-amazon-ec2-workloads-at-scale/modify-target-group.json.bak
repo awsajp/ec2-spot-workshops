@@ -1,5 +1,5 @@
 {
-  "TargetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:000474600478:targetgroup/runningAmazonEC2WorkloadsAtScale/2be65df49b51cf7c",
+  "TargetGroupArn": "%TargetGroupArn%",
   "Attributes": [
     {
       "Key": "deregistration_delay.timeout_seconds",

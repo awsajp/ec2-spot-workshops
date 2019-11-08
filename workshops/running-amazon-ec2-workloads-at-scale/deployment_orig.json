@@ -4,7 +4,7 @@
   "revision": {
     "revisionType": "S3",
     "s3Location": {
-      "bucket": "runningamazonec2workloadsatscale-codedeploybucket-lerrmkeudti6",
+      "bucket": "%codeDeployBucket%",
       "key": "koelApp.zip",
       "bundleType": "zip"
     }

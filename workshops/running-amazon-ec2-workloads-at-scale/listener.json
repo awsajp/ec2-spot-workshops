@@ -1,11 +1,11 @@
 {
-  "LoadBalancerArn": "%LoadBalancerArn%",
+  "LoadBalancerArn": "arn:aws:elasticloadbalancing:us-east-1:000474600478:loadbalancer/app/runningAmazonEC2WorkloadsAtScale/1ec78f58636bcd32",
   "Protocol": "HTTP",
   "Port": 80,
   "DefaultActions": [
     {
       "Type": "forward",
-      "TargetGroupArn": "%TargetGroupArn%"
+      "TargetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:000474600478:targetgroup/runningAmazonEC2WorkloadsAtScale/2be65df49b51cf7c"
     }
   ]
 }

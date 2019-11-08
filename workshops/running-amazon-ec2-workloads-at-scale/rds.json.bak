@@ -7,9 +7,9 @@
   "MasterUsername": "dbadmin",
   "MasterUserPassword": "db-pass-2020",
   "VpcSecurityGroupIds": [
-    "sg-0b92e575dd23d30cf"
+    "sg-0ea1a204a401bcfdd"
   ],
-  "DBSubnetGroupName": "runningamazonec2workloadsatscalenew-dbsubnetgroup-sf1b96l7uiw5",
+  "DBSubnetGroupName": "runningamazonec2workloadsatscalenew-dbsubnetgroup-118ix23qhlebu",
   "PreferredMaintenanceWindow": "",
   "MultiAZ": false,
   "PubliclyAccessible": false,

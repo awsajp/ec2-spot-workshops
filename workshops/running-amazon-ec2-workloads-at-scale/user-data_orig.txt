@@ -9,13 +9,13 @@ packages:
   - amazon-efs-utils
 
 runcmd:
-  - [ sh, -c, "curl https://aws-codedeploy-us-east-1.s3.amazonaws.com/latest/install -o /home/ec2-user/install" ]
+  - [ sh, -c, "curl https://aws-codedeploy-%awsRegionId%.s3.amazonaws.com/latest/install -o /home/ec2-user/install" ]
   - [ sh, -c, "chmod +x /home/ec2-user/install" ]
   - [ sh, -c, "./home/ec2-user/install auto" ]
   - [ sh, -c, "systemctl enable codedeploy-agent.service" ]
   - [ sh, -c, "systemctl start codedeploy-agent.service" ]
   - [ sh, -c, "mkdir -p /var/www/media" ]
-  - [ sh, -c, "echo 'fs-8dc94e0c:/ /var/www/media efs tls,_netdev' >> /etc/fstab" ]
+  - [ sh, -c, "echo '%fileSystem%:/ /var/www/media efs tls,_netdev' >> /etc/fstab" ]
   - [ sh, -c, "mount -a -t efs defaults" ]
   - [ sh, -c, "chown -R ec2-user. /var/www/media" ]
 

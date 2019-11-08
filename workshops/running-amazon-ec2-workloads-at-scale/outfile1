@@ -1,0 +1,628 @@
++ echo 'Hello World from EC2 Spot Team...'
+Hello World from EC2 Spot Team...
++ DEFAULT_REGION=us-east-1
++ SLEEP=5
++ LAUNCH_TEMPLATE_NAME=runningAmazonEC2WorkloadsAtScale
++ LAUNCH_TEMPLATE_VERSION=1
++ CFS_STACK_NAME=runningAmazonEC2WorkloadsAtScaleNew
++ CFS_STACK_FILE=running-amazon-ec2-workloads-at-scale.yaml
+++ jq -r .StackId
+++ aws cloudformation create-stack --stack-name runningAmazonEC2WorkloadsAtScaleNew --template-body file://running-amazon-ec2-workloads-at-scale.yaml --capabilities CAPABILITY_IAM --region us-east-1
++ CFS_STACK_ID=arn:aws:cloudformation:us-east-1:000474600478:stack/runningAmazonEC2WorkloadsAtScaleNew/c2d6a920-0218-11ea-b585-129cd46a326a
++ aws cloudformation wait stack-create-complete --stack-name runningAmazonEC2WorkloadsAtScaleNew --no-paginate
++ cp -Rfp application-load-balancer_orig.json application-load-balancer.json
++ cp -Rfp asg-automatic-scaling_orig.json asg-automatic-scaling.json
++ cp -Rfp asg_orig.json asg.json
++ cp -Rfp deployment_orig.json deployment.json
++ cp -Rfp launch-template-data_orig.json launch-template-data.json
++ cp -Rfp listener_orig.json listener.json
++ cp -Rfp modify-target-group_orig.json modify-target-group.json
++ cp -Rfp rds_orig.json rds.json
++ cp -Rfp ssm-stress_orig.json ssm-stress.json
++ cp -Rfp target-group_orig.json target-group.json
++ cp -Rfp user-data_orig.txt user-data.txt
+++ jq -r '.Images |   sort_by(.CreationDate) | last(.[]).ImageId'
+++ aws ec2 describe-images --owners amazon --filters 'Name=name,Values=amzn2-ami-hvm-2.0.????????-x86_64-gp2' Name=state,Values=available --output json
++ export AMI_ID=ami-0b898040803850657
++ AMI_ID=ami-0b898040803850657
++ echo 'Amazon AMI_ID is ami-0b898040803850657'
+Amazon AMI_ID is ami-0b898040803850657
++ sed -i s/%ami-id%/ami-0b898040803850657/g launch-template-data.json
+++ base64 --wrap=0
+++ cat user-data.txt
++ sed -i s/%UserData%/I2Nsb3VkLWNvbmZpZwpyZXBvX3VwZGF0ZTogdHJ1ZQpyZXBvX3VwZ3JhZGU6IGFsbAoKcGFja2FnZXM6CiAgLSB3Z2V0CiAgLSBydWJ5CiAgLSBjdXJsCiAgLSBhbWF6b24tZWZzLXV0aWxzCgpydW5jbWQ6CiAgLSBbIHNoLCAtYywgImN1cmwgaHR0cHM6Ly9hd3MtY29kZWRlcGxveS0lYXdzUmVnaW9uSWQlLnMzLmFtYXpvbmF3cy5jb20vbGF0ZXN0L2luc3RhbGwgLW8gL2hvbWUvZWMyLXVzZXIvaW5zdGFsbCIgXQogIC0gWyBzaCwgLWMsICJjaG1vZCAreCAvaG9tZS9lYzItdXNlci9pbnN0YWxsIiBdCiAgLSBbIHNoLCAtYywgIi4vaG9tZS9lYzItdXNlci9pbnN0YWxsIGF1dG8iIF0KICAtIFsgc2gsIC1jLCAic3lzdGVtY3RsIGVuYWJsZSBjb2RlZGVwbG95LWFnZW50LnNlcnZpY2UiIF0KICAtIFsgc2gsIC1jLCAic3lzdGVtY3RsIHN0YXJ0IGNvZGVkZXBsb3ktYWdlbnQuc2VydmljZSIgXQogIC0gWyBzaCwgLWMsICJta2RpciAtcCAvdmFyL3d3dy9tZWRpYSIgXQogIC0gWyBzaCwgLWMsICJlY2hvICclZmlsZVN5c3RlbSU6LyAvdmFyL3d3dy9tZWRpYSBlZnMgdGxzLF9uZXRkZXYnID4+IC9ldGMvZnN0YWIiIF0KICAtIFsgc2gsIC1jLCAibW91bnQgLWEgLXQgZWZzIGRlZmF1bHRzIiBdCiAgLSBbIHNoLCAtYywgImNob3duIC1SIGVjMi11c2VyLiAvdmFyL3d3dy9tZWRpYSIgXQoKCg==/g launch-template-data.json
++ CFK_STACK_OP_KEYS_LIST=("instanceProfile" "codeDeployServiceRole" "snsTopic" "cloud9Environment" "fileSystem" "eventRule" "lambdaFunction" "codeDeployBucket" "dbSubnetGroup" "instanceSecurityGroup" "dbSecurityGroup" "loadBalancerSecurityGroup" "publicSubnet2" "publicSubnet1" "awsRegionId" "vpc")
++ declare -a CFK_STACK_OP_KEYS_LIST
++ for CFK_STACK_OP_KEY in '"${CFK_STACK_OP_KEYS_LIST[@]}"'
+++ jq -r '.Stacks[].Outputs[]| select(.OutputKey=="instanceProfile")|.OutputValue'
+++ aws cloudformation describe-stacks --stack-name runningAmazonEC2WorkloadsAtScaleNew
++ CFK_STACK_OP_VALUE=arn:aws:iam::000474600478:instance-profile/runningAmazonEC2WorkloadsAtScaleNew-instanceProfile-7OPD868RVYF9
++ echo instanceProfile=arn:aws:iam::000474600478:instance-profile/runningAmazonEC2WorkloadsAtScaleNew-instanceProfile-7OPD868RVYF9
+instanceProfile=arn:aws:iam::000474600478:instance-profile/runningAmazonEC2WorkloadsAtScaleNew-instanceProfile-7OPD868RVYF9
++ sed -i.bak -e s#%instanceProfile%#arn:aws:iam::000474600478:instance-profile/runningAmazonEC2WorkloadsAtScaleNew-instanceProfile-7OPD868RVYF9#g user-data.txt
++ sed -i.bak -e s#%instanceProfile%#arn:aws:iam::000474600478:instance-profile/runningAmazonEC2WorkloadsAtScaleNew-instanceProfile-7OPD868RVYF9#g launch-template-data.json
++ sed -i.bak -e s#%instanceProfile%#arn:aws:iam::000474600478:instance-profile/runningAmazonEC2WorkloadsAtScaleNew-instanceProfile-7OPD868RVYF9#g rds.json
++ sed -i.bak -e s#%instanceProfile%#arn:aws:iam::000474600478:instance-profile/runningAmazonEC2WorkloadsAtScaleNew-instanceProfile-7OPD868RVYF9#g application-load-balancer.json
++ sed -i.bak -e s#%instanceProfile%#arn:aws:iam::000474600478:instance-profile/runningAmazonEC2WorkloadsAtScaleNew-instanceProfile-7OPD868RVYF9#g target-group.json
++ sed -i.bak -e s#%instanceProfile%#arn:aws:iam::000474600478:instance-profile/runningAmazonEC2WorkloadsAtScaleNew-instanceProfile-7OPD868RVYF9#g asg.json
++ sed -i.bak -e s#%instanceProfile%#arn:aws:iam::000474600478:instance-profile/runningAmazonEC2WorkloadsAtScaleNew-instanceProfile-7OPD868RVYF9#g deployment-group.json
++ sed -i.bak -e s#%instanceProfile%#arn:aws:iam::000474600478:instance-profile/runningAmazonEC2WorkloadsAtScaleNew-instanceProfile-7OPD868RVYF9#g deployment.json
++ sed -i.bak -e s#%instanceProfile%#arn:aws:iam::000474600478:instance-profile/runningAmazonEC2WorkloadsAtScaleNew-instanceProfile-7OPD868RVYF9#g asg-automatic-scaling.json
++ '[' instanceProfile == codeDeployBucket ']'
++ '[' instanceProfile == fileSystem ']'
++ for CFK_STACK_OP_KEY in '"${CFK_STACK_OP_KEYS_LIST[@]}"'
+++ jq -r '.Stacks[].Outputs[]| select(.OutputKey=="codeDeployServiceRole")|.OutputValue'
+++ aws cloudformation describe-stacks --stack-name runningAmazonEC2WorkloadsAtScaleNew
++ CFK_STACK_OP_VALUE=arn:aws:iam::000474600478:role/runningAmazonEC2WorkloadsAtS-codeDeployServiceRole-FJC14F81P4F3
++ echo codeDeployServiceRole=arn:aws:iam::000474600478:role/runningAmazonEC2WorkloadsAtS-codeDeployServiceRole-FJC14F81P4F3
+codeDeployServiceRole=arn:aws:iam::000474600478:role/runningAmazonEC2WorkloadsAtS-codeDeployServiceRole-FJC14F81P4F3
++ sed -i.bak -e s#%codeDeployServiceRole%#arn:aws:iam::000474600478:role/runningAmazonEC2WorkloadsAtS-codeDeployServiceRole-FJC14F81P4F3#g user-data.txt
++ sed -i.bak -e s#%codeDeployServiceRole%#arn:aws:iam::000474600478:role/runningAmazonEC2WorkloadsAtS-codeDeployServiceRole-FJC14F81P4F3#g launch-template-data.json
++ sed -i.bak -e s#%codeDeployServiceRole%#arn:aws:iam::000474600478:role/runningAmazonEC2WorkloadsAtS-codeDeployServiceRole-FJC14F81P4F3#g rds.json
++ sed -i.bak -e s#%codeDeployServiceRole%#arn:aws:iam::000474600478:role/runningAmazonEC2WorkloadsAtS-codeDeployServiceRole-FJC14F81P4F3#g application-load-balancer.json
++ sed -i.bak -e s#%codeDeployServiceRole%#arn:aws:iam::000474600478:role/runningAmazonEC2WorkloadsAtS-codeDeployServiceRole-FJC14F81P4F3#g target-group.json
++ sed -i.bak -e s#%codeDeployServiceRole%#arn:aws:iam::000474600478:role/runningAmazonEC2WorkloadsAtS-codeDeployServiceRole-FJC14F81P4F3#g asg.json
++ sed -i.bak -e s#%codeDeployServiceRole%#arn:aws:iam::000474600478:role/runningAmazonEC2WorkloadsAtS-codeDeployServiceRole-FJC14F81P4F3#g deployment-group.json
++ sed -i.bak -e s#%codeDeployServiceRole%#arn:aws:iam::000474600478:role/runningAmazonEC2WorkloadsAtS-codeDeployServiceRole-FJC14F81P4F3#g deployment.json
++ sed -i.bak -e s#%codeDeployServiceRole%#arn:aws:iam::000474600478:role/runningAmazonEC2WorkloadsAtS-codeDeployServiceRole-FJC14F81P4F3#g asg-automatic-scaling.json
++ '[' codeDeployServiceRole == codeDeployBucket ']'
++ '[' codeDeployServiceRole == fileSystem ']'
++ for CFK_STACK_OP_KEY in '"${CFK_STACK_OP_KEYS_LIST[@]}"'
+++ jq -r '.Stacks[].Outputs[]| select(.OutputKey=="snsTopic")|.OutputValue'
+++ aws cloudformation describe-stacks --stack-name runningAmazonEC2WorkloadsAtScaleNew
++ CFK_STACK_OP_VALUE=arn:aws:sns:us-east-1:000474600478:runningAmazonEC2WorkloadsAtScaleNew-snsTopic-1NEB2IKDOZTB8
++ echo snsTopic=arn:aws:sns:us-east-1:000474600478:runningAmazonEC2WorkloadsAtScaleNew-snsTopic-1NEB2IKDOZTB8
+snsTopic=arn:aws:sns:us-east-1:000474600478:runningAmazonEC2WorkloadsAtScaleNew-snsTopic-1NEB2IKDOZTB8
++ sed -i.bak -e s#%snsTopic%#arn:aws:sns:us-east-1:000474600478:runningAmazonEC2WorkloadsAtScaleNew-snsTopic-1NEB2IKDOZTB8#g user-data.txt
++ sed -i.bak -e s#%snsTopic%#arn:aws:sns:us-east-1:000474600478:runningAmazonEC2WorkloadsAtScaleNew-snsTopic-1NEB2IKDOZTB8#g launch-template-data.json
++ sed -i.bak -e s#%snsTopic%#arn:aws:sns:us-east-1:000474600478:runningAmazonEC2WorkloadsAtScaleNew-snsTopic-1NEB2IKDOZTB8#g rds.json
++ sed -i.bak -e s#%snsTopic%#arn:aws:sns:us-east-1:000474600478:runningAmazonEC2WorkloadsAtScaleNew-snsTopic-1NEB2IKDOZTB8#g application-load-balancer.json
++ sed -i.bak -e s#%snsTopic%#arn:aws:sns:us-east-1:000474600478:runningAmazonEC2WorkloadsAtScaleNew-snsTopic-1NEB2IKDOZTB8#g target-group.json
++ sed -i.bak -e s#%snsTopic%#arn:aws:sns:us-east-1:000474600478:runningAmazonEC2WorkloadsAtScaleNew-snsTopic-1NEB2IKDOZTB8#g asg.json
++ sed -i.bak -e s#%snsTopic%#arn:aws:sns:us-east-1:000474600478:runningAmazonEC2WorkloadsAtScaleNew-snsTopic-1NEB2IKDOZTB8#g deployment-group.json
++ sed -i.bak -e s#%snsTopic%#arn:aws:sns:us-east-1:000474600478:runningAmazonEC2WorkloadsAtScaleNew-snsTopic-1NEB2IKDOZTB8#g deployment.json
++ sed -i.bak -e s#%snsTopic%#arn:aws:sns:us-east-1:000474600478:runningAmazonEC2WorkloadsAtScaleNew-snsTopic-1NEB2IKDOZTB8#g asg-automatic-scaling.json
++ '[' snsTopic == codeDeployBucket ']'
++ '[' snsTopic == fileSystem ']'
++ for CFK_STACK_OP_KEY in '"${CFK_STACK_OP_KEYS_LIST[@]}"'
+++ jq -r '.Stacks[].Outputs[]| select(.OutputKey=="cloud9Environment")|.OutputValue'
+++ aws cloudformation describe-stacks --stack-name runningAmazonEC2WorkloadsAtScaleNew
++ CFK_STACK_OP_VALUE=cloud9Environment-rWFjpeuNdWQv
++ echo cloud9Environment=cloud9Environment-rWFjpeuNdWQv
+cloud9Environment=cloud9Environment-rWFjpeuNdWQv
++ sed -i.bak -e s#%cloud9Environment%#cloud9Environment-rWFjpeuNdWQv#g user-data.txt
++ sed -i.bak -e s#%cloud9Environment%#cloud9Environment-rWFjpeuNdWQv#g launch-template-data.json
++ sed -i.bak -e s#%cloud9Environment%#cloud9Environment-rWFjpeuNdWQv#g rds.json
++ sed -i.bak -e s#%cloud9Environment%#cloud9Environment-rWFjpeuNdWQv#g application-load-balancer.json
++ sed -i.bak -e s#%cloud9Environment%#cloud9Environment-rWFjpeuNdWQv#g target-group.json
++ sed -i.bak -e s#%cloud9Environment%#cloud9Environment-rWFjpeuNdWQv#g asg.json
++ sed -i.bak -e s#%cloud9Environment%#cloud9Environment-rWFjpeuNdWQv#g deployment-group.json
++ sed -i.bak -e s#%cloud9Environment%#cloud9Environment-rWFjpeuNdWQv#g deployment.json
++ sed -i.bak -e s#%cloud9Environment%#cloud9Environment-rWFjpeuNdWQv#g asg-automatic-scaling.json
++ '[' cloud9Environment == codeDeployBucket ']'
++ '[' cloud9Environment == fileSystem ']'
++ for CFK_STACK_OP_KEY in '"${CFK_STACK_OP_KEYS_LIST[@]}"'
+++ jq -r '.Stacks[].Outputs[]| select(.OutputKey=="fileSystem")|.OutputValue'
+++ aws cloudformation describe-stacks --stack-name runningAmazonEC2WorkloadsAtScaleNew
++ CFK_STACK_OP_VALUE=fs-8dc94e0c
++ echo fileSystem=fs-8dc94e0c
+fileSystem=fs-8dc94e0c
++ sed -i.bak -e s#%fileSystem%#fs-8dc94e0c#g user-data.txt
++ sed -i.bak -e s#%fileSystem%#fs-8dc94e0c#g launch-template-data.json
++ sed -i.bak -e s#%fileSystem%#fs-8dc94e0c#g rds.json
++ sed -i.bak -e s#%fileSystem%#fs-8dc94e0c#g application-load-balancer.json
++ sed -i.bak -e s#%fileSystem%#fs-8dc94e0c#g target-group.json
++ sed -i.bak -e s#%fileSystem%#fs-8dc94e0c#g asg.json
++ sed -i.bak -e s#%fileSystem%#fs-8dc94e0c#g deployment-group.json
++ sed -i.bak -e s#%fileSystem%#fs-8dc94e0c#g deployment.json
++ sed -i.bak -e s#%fileSystem%#fs-8dc94e0c#g asg-automatic-scaling.json
++ '[' fileSystem == codeDeployBucket ']'
++ '[' fileSystem == fileSystem ']'
++ file_system=fs-8dc94e0c
++ echo file_system=fs-8dc94e0c
+file_system=fs-8dc94e0c
++ for CFK_STACK_OP_KEY in '"${CFK_STACK_OP_KEYS_LIST[@]}"'
+++ jq -r '.Stacks[].Outputs[]| select(.OutputKey=="eventRule")|.OutputValue'
+++ aws cloudformation describe-stacks --stack-name runningAmazonEC2WorkloadsAtScaleNew
++ CFK_STACK_OP_VALUE=runningAmazonEC2WorkloadsAtScaleNew-eventRule-ZRWYE2U39CKL
++ echo eventRule=runningAmazonEC2WorkloadsAtScaleNew-eventRule-ZRWYE2U39CKL
+eventRule=runningAmazonEC2WorkloadsAtScaleNew-eventRule-ZRWYE2U39CKL
++ sed -i.bak -e s#%eventRule%#runningAmazonEC2WorkloadsAtScaleNew-eventRule-ZRWYE2U39CKL#g user-data.txt
++ sed -i.bak -e s#%eventRule%#runningAmazonEC2WorkloadsAtScaleNew-eventRule-ZRWYE2U39CKL#g launch-template-data.json
++ sed -i.bak -e s#%eventRule%#runningAmazonEC2WorkloadsAtScaleNew-eventRule-ZRWYE2U39CKL#g rds.json
++ sed -i.bak -e s#%eventRule%#runningAmazonEC2WorkloadsAtScaleNew-eventRule-ZRWYE2U39CKL#g application-load-balancer.json
++ sed -i.bak -e s#%eventRule%#runningAmazonEC2WorkloadsAtScaleNew-eventRule-ZRWYE2U39CKL#g target-group.json
++ sed -i.bak -e s#%eventRule%#runningAmazonEC2WorkloadsAtScaleNew-eventRule-ZRWYE2U39CKL#g asg.json
++ sed -i.bak -e s#%eventRule%#runningAmazonEC2WorkloadsAtScaleNew-eventRule-ZRWYE2U39CKL#g deployment-group.json
++ sed -i.bak -e s#%eventRule%#runningAmazonEC2WorkloadsAtScaleNew-eventRule-ZRWYE2U39CKL#g deployment.json
++ sed -i.bak -e s#%eventRule%#runningAmazonEC2WorkloadsAtScaleNew-eventRule-ZRWYE2U39CKL#g asg-automatic-scaling.json
++ '[' eventRule == codeDeployBucket ']'
++ '[' eventRule == fileSystem ']'
++ for CFK_STACK_OP_KEY in '"${CFK_STACK_OP_KEYS_LIST[@]}"'
+++ jq -r '.Stacks[].Outputs[]| select(.OutputKey=="lambdaFunction")|.OutputValue'
+++ aws cloudformation describe-stacks --stack-name runningAmazonEC2WorkloadsAtScaleNew
++ CFK_STACK_OP_VALUE=runningAmazonEC2WorkloadsAtScaleNew-lambdaFunction-19AK9PYO41X94
++ echo lambdaFunction=runningAmazonEC2WorkloadsAtScaleNew-lambdaFunction-19AK9PYO41X94
+lambdaFunction=runningAmazonEC2WorkloadsAtScaleNew-lambdaFunction-19AK9PYO41X94
++ sed -i.bak -e s#%lambdaFunction%#runningAmazonEC2WorkloadsAtScaleNew-lambdaFunction-19AK9PYO41X94#g user-data.txt
++ sed -i.bak -e s#%lambdaFunction%#runningAmazonEC2WorkloadsAtScaleNew-lambdaFunction-19AK9PYO41X94#g launch-template-data.json
++ sed -i.bak -e s#%lambdaFunction%#runningAmazonEC2WorkloadsAtScaleNew-lambdaFunction-19AK9PYO41X94#g rds.json
++ sed -i.bak -e s#%lambdaFunction%#runningAmazonEC2WorkloadsAtScaleNew-lambdaFunction-19AK9PYO41X94#g application-load-balancer.json
++ sed -i.bak -e s#%lambdaFunction%#runningAmazonEC2WorkloadsAtScaleNew-lambdaFunction-19AK9PYO41X94#g target-group.json
++ sed -i.bak -e s#%lambdaFunction%#runningAmazonEC2WorkloadsAtScaleNew-lambdaFunction-19AK9PYO41X94#g asg.json
++ sed -i.bak -e s#%lambdaFunction%#runningAmazonEC2WorkloadsAtScaleNew-lambdaFunction-19AK9PYO41X94#g deployment-group.json
++ sed -i.bak -e s#%lambdaFunction%#runningAmazonEC2WorkloadsAtScaleNew-lambdaFunction-19AK9PYO41X94#g deployment.json
++ sed -i.bak -e s#%lambdaFunction%#runningAmazonEC2WorkloadsAtScaleNew-lambdaFunction-19AK9PYO41X94#g asg-automatic-scaling.json
++ '[' lambdaFunction == codeDeployBucket ']'
++ '[' lambdaFunction == fileSystem ']'
++ for CFK_STACK_OP_KEY in '"${CFK_STACK_OP_KEYS_LIST[@]}"'
+++ jq -r '.Stacks[].Outputs[]| select(.OutputKey=="codeDeployBucket")|.OutputValue'
+++ aws cloudformation describe-stacks --stack-name runningAmazonEC2WorkloadsAtScaleNew
++ CFK_STACK_OP_VALUE=runningamazonec2workloadsatscale-codedeploybucket-lerrmkeudti6
++ echo codeDeployBucket=runningamazonec2workloadsatscale-codedeploybucket-lerrmkeudti6
+codeDeployBucket=runningamazonec2workloadsatscale-codedeploybucket-lerrmkeudti6
++ sed -i.bak -e s#%codeDeployBucket%#runningamazonec2workloadsatscale-codedeploybucket-lerrmkeudti6#g user-data.txt
++ sed -i.bak -e s#%codeDeployBucket%#runningamazonec2workloadsatscale-codedeploybucket-lerrmkeudti6#g launch-template-data.json
++ sed -i.bak -e s#%codeDeployBucket%#runningamazonec2workloadsatscale-codedeploybucket-lerrmkeudti6#g rds.json
++ sed -i.bak -e s#%codeDeployBucket%#runningamazonec2workloadsatscale-codedeploybucket-lerrmkeudti6#g application-load-balancer.json
++ sed -i.bak -e s#%codeDeployBucket%#runningamazonec2workloadsatscale-codedeploybucket-lerrmkeudti6#g target-group.json
++ sed -i.bak -e s#%codeDeployBucket%#runningamazonec2workloadsatscale-codedeploybucket-lerrmkeudti6#g asg.json
++ sed -i.bak -e s#%codeDeployBucket%#runningamazonec2workloadsatscale-codedeploybucket-lerrmkeudti6#g deployment-group.json
++ sed -i.bak -e s#%codeDeployBucket%#runningamazonec2workloadsatscale-codedeploybucket-lerrmkeudti6#g deployment.json
++ sed -i.bak -e s#%codeDeployBucket%#runningamazonec2workloadsatscale-codedeploybucket-lerrmkeudti6#g asg-automatic-scaling.json
++ '[' codeDeployBucket == codeDeployBucket ']'
++ code_deploy_bucket=runningamazonec2workloadsatscale-codedeploybucket-lerrmkeudti6
++ echo code_deploy_bucket=runningamazonec2workloadsatscale-codedeploybucket-lerrmkeudti6
+code_deploy_bucket=runningamazonec2workloadsatscale-codedeploybucket-lerrmkeudti6
++ '[' codeDeployBucket == fileSystem ']'
++ for CFK_STACK_OP_KEY in '"${CFK_STACK_OP_KEYS_LIST[@]}"'
+++ jq -r '.Stacks[].Outputs[]| select(.OutputKey=="dbSubnetGroup")|.OutputValue'
+++ aws cloudformation describe-stacks --stack-name runningAmazonEC2WorkloadsAtScaleNew
++ CFK_STACK_OP_VALUE=runningamazonec2workloadsatscalenew-dbsubnetgroup-118ix23qhlebu
++ echo dbSubnetGroup=runningamazonec2workloadsatscalenew-dbsubnetgroup-118ix23qhlebu
+dbSubnetGroup=runningamazonec2workloadsatscalenew-dbsubnetgroup-118ix23qhlebu
++ sed -i.bak -e s#%dbSubnetGroup%#runningamazonec2workloadsatscalenew-dbsubnetgroup-118ix23qhlebu#g user-data.txt
++ sed -i.bak -e s#%dbSubnetGroup%#runningamazonec2workloadsatscalenew-dbsubnetgroup-118ix23qhlebu#g launch-template-data.json
++ sed -i.bak -e s#%dbSubnetGroup%#runningamazonec2workloadsatscalenew-dbsubnetgroup-118ix23qhlebu#g rds.json
++ sed -i.bak -e s#%dbSubnetGroup%#runningamazonec2workloadsatscalenew-dbsubnetgroup-118ix23qhlebu#g application-load-balancer.json
++ sed -i.bak -e s#%dbSubnetGroup%#runningamazonec2workloadsatscalenew-dbsubnetgroup-118ix23qhlebu#g target-group.json
++ sed -i.bak -e s#%dbSubnetGroup%#runningamazonec2workloadsatscalenew-dbsubnetgroup-118ix23qhlebu#g asg.json
++ sed -i.bak -e s#%dbSubnetGroup%#runningamazonec2workloadsatscalenew-dbsubnetgroup-118ix23qhlebu#g deployment-group.json
++ sed -i.bak -e s#%dbSubnetGroup%#runningamazonec2workloadsatscalenew-dbsubnetgroup-118ix23qhlebu#g deployment.json
++ sed -i.bak -e s#%dbSubnetGroup%#runningamazonec2workloadsatscalenew-dbsubnetgroup-118ix23qhlebu#g asg-automatic-scaling.json
++ '[' dbSubnetGroup == codeDeployBucket ']'
++ '[' dbSubnetGroup == fileSystem ']'
++ for CFK_STACK_OP_KEY in '"${CFK_STACK_OP_KEYS_LIST[@]}"'
+++ jq -r '.Stacks[].Outputs[]| select(.OutputKey=="instanceSecurityGroup")|.OutputValue'
+++ aws cloudformation describe-stacks --stack-name runningAmazonEC2WorkloadsAtScaleNew
++ CFK_STACK_OP_VALUE=sg-09320129524e01210
++ echo instanceSecurityGroup=sg-09320129524e01210
+instanceSecurityGroup=sg-09320129524e01210
++ sed -i.bak -e s#%instanceSecurityGroup%#sg-09320129524e01210#g user-data.txt
++ sed -i.bak -e s#%instanceSecurityGroup%#sg-09320129524e01210#g launch-template-data.json
++ sed -i.bak -e s#%instanceSecurityGroup%#sg-09320129524e01210#g rds.json
++ sed -i.bak -e s#%instanceSecurityGroup%#sg-09320129524e01210#g application-load-balancer.json
++ sed -i.bak -e s#%instanceSecurityGroup%#sg-09320129524e01210#g target-group.json
++ sed -i.bak -e s#%instanceSecurityGroup%#sg-09320129524e01210#g asg.json
++ sed -i.bak -e s#%instanceSecurityGroup%#sg-09320129524e01210#g deployment-group.json
++ sed -i.bak -e s#%instanceSecurityGroup%#sg-09320129524e01210#g deployment.json
++ sed -i.bak -e s#%instanceSecurityGroup%#sg-09320129524e01210#g asg-automatic-scaling.json
++ '[' instanceSecurityGroup == codeDeployBucket ']'
++ '[' instanceSecurityGroup == fileSystem ']'
++ for CFK_STACK_OP_KEY in '"${CFK_STACK_OP_KEYS_LIST[@]}"'
+++ jq -r '.Stacks[].Outputs[]| select(.OutputKey=="dbSecurityGroup")|.OutputValue'
+++ aws cloudformation describe-stacks --stack-name runningAmazonEC2WorkloadsAtScaleNew
++ CFK_STACK_OP_VALUE=sg-0ea1a204a401bcfdd
++ echo dbSecurityGroup=sg-0ea1a204a401bcfdd
+dbSecurityGroup=sg-0ea1a204a401bcfdd
++ sed -i.bak -e s#%dbSecurityGroup%#sg-0ea1a204a401bcfdd#g user-data.txt
++ sed -i.bak -e s#%dbSecurityGroup%#sg-0ea1a204a401bcfdd#g launch-template-data.json
++ sed -i.bak -e s#%dbSecurityGroup%#sg-0ea1a204a401bcfdd#g rds.json
++ sed -i.bak -e s#%dbSecurityGroup%#sg-0ea1a204a401bcfdd#g application-load-balancer.json
++ sed -i.bak -e s#%dbSecurityGroup%#sg-0ea1a204a401bcfdd#g target-group.json
++ sed -i.bak -e s#%dbSecurityGroup%#sg-0ea1a204a401bcfdd#g asg.json
++ sed -i.bak -e s#%dbSecurityGroup%#sg-0ea1a204a401bcfdd#g deployment-group.json
++ sed -i.bak -e s#%dbSecurityGroup%#sg-0ea1a204a401bcfdd#g deployment.json
++ sed -i.bak -e s#%dbSecurityGroup%#sg-0ea1a204a401bcfdd#g asg-automatic-scaling.json
++ '[' dbSecurityGroup == codeDeployBucket ']'
++ '[' dbSecurityGroup == fileSystem ']'
++ for CFK_STACK_OP_KEY in '"${CFK_STACK_OP_KEYS_LIST[@]}"'
+++ jq -r '.Stacks[].Outputs[]| select(.OutputKey=="loadBalancerSecurityGroup")|.OutputValue'
+++ aws cloudformation describe-stacks --stack-name runningAmazonEC2WorkloadsAtScaleNew
++ CFK_STACK_OP_VALUE=sg-02a8f4881c90cda4d
++ echo loadBalancerSecurityGroup=sg-02a8f4881c90cda4d
+loadBalancerSecurityGroup=sg-02a8f4881c90cda4d
++ sed -i.bak -e s#%loadBalancerSecurityGroup%#sg-02a8f4881c90cda4d#g user-data.txt
++ sed -i.bak -e s#%loadBalancerSecurityGroup%#sg-02a8f4881c90cda4d#g launch-template-data.json
++ sed -i.bak -e s#%loadBalancerSecurityGroup%#sg-02a8f4881c90cda4d#g rds.json
++ sed -i.bak -e s#%loadBalancerSecurityGroup%#sg-02a8f4881c90cda4d#g application-load-balancer.json
++ sed -i.bak -e s#%loadBalancerSecurityGroup%#sg-02a8f4881c90cda4d#g target-group.json
++ sed -i.bak -e s#%loadBalancerSecurityGroup%#sg-02a8f4881c90cda4d#g asg.json
++ sed -i.bak -e s#%loadBalancerSecurityGroup%#sg-02a8f4881c90cda4d#g deployment-group.json
++ sed -i.bak -e s#%loadBalancerSecurityGroup%#sg-02a8f4881c90cda4d#g deployment.json
++ sed -i.bak -e s#%loadBalancerSecurityGroup%#sg-02a8f4881c90cda4d#g asg-automatic-scaling.json
++ '[' loadBalancerSecurityGroup == codeDeployBucket ']'
++ '[' loadBalancerSecurityGroup == fileSystem ']'
++ for CFK_STACK_OP_KEY in '"${CFK_STACK_OP_KEYS_LIST[@]}"'
+++ jq -r '.Stacks[].Outputs[]| select(.OutputKey=="publicSubnet2")|.OutputValue'
+++ aws cloudformation describe-stacks --stack-name runningAmazonEC2WorkloadsAtScaleNew
++ CFK_STACK_OP_VALUE=subnet-09db1cf90df88b47b
++ echo publicSubnet2=subnet-09db1cf90df88b47b
+publicSubnet2=subnet-09db1cf90df88b47b
++ sed -i.bak -e s#%publicSubnet2%#subnet-09db1cf90df88b47b#g user-data.txt
++ sed -i.bak -e s#%publicSubnet2%#subnet-09db1cf90df88b47b#g launch-template-data.json
++ sed -i.bak -e s#%publicSubnet2%#subnet-09db1cf90df88b47b#g rds.json
++ sed -i.bak -e s#%publicSubnet2%#subnet-09db1cf90df88b47b#g application-load-balancer.json
++ sed -i.bak -e s#%publicSubnet2%#subnet-09db1cf90df88b47b#g target-group.json
++ sed -i.bak -e s#%publicSubnet2%#subnet-09db1cf90df88b47b#g asg.json
++ sed -i.bak -e s#%publicSubnet2%#subnet-09db1cf90df88b47b#g deployment-group.json
++ sed -i.bak -e s#%publicSubnet2%#subnet-09db1cf90df88b47b#g deployment.json
++ sed -i.bak -e s#%publicSubnet2%#subnet-09db1cf90df88b47b#g asg-automatic-scaling.json
++ '[' publicSubnet2 == codeDeployBucket ']'
++ '[' publicSubnet2 == fileSystem ']'
++ for CFK_STACK_OP_KEY in '"${CFK_STACK_OP_KEYS_LIST[@]}"'
+++ jq -r '.Stacks[].Outputs[]| select(.OutputKey=="publicSubnet1")|.OutputValue'
+++ aws cloudformation describe-stacks --stack-name runningAmazonEC2WorkloadsAtScaleNew
++ CFK_STACK_OP_VALUE=subnet-0fd023048055ab4e1
++ echo publicSubnet1=subnet-0fd023048055ab4e1
+publicSubnet1=subnet-0fd023048055ab4e1
++ sed -i.bak -e s#%publicSubnet1%#subnet-0fd023048055ab4e1#g user-data.txt
++ sed -i.bak -e s#%publicSubnet1%#subnet-0fd023048055ab4e1#g launch-template-data.json
++ sed -i.bak -e s#%publicSubnet1%#subnet-0fd023048055ab4e1#g rds.json
++ sed -i.bak -e s#%publicSubnet1%#subnet-0fd023048055ab4e1#g application-load-balancer.json
++ sed -i.bak -e s#%publicSubnet1%#subnet-0fd023048055ab4e1#g target-group.json
++ sed -i.bak -e s#%publicSubnet1%#subnet-0fd023048055ab4e1#g asg.json
++ sed -i.bak -e s#%publicSubnet1%#subnet-0fd023048055ab4e1#g deployment-group.json
++ sed -i.bak -e s#%publicSubnet1%#subnet-0fd023048055ab4e1#g deployment.json
++ sed -i.bak -e s#%publicSubnet1%#subnet-0fd023048055ab4e1#g asg-automatic-scaling.json
++ '[' publicSubnet1 == codeDeployBucket ']'
++ '[' publicSubnet1 == fileSystem ']'
++ for CFK_STACK_OP_KEY in '"${CFK_STACK_OP_KEYS_LIST[@]}"'
+++ jq -r '.Stacks[].Outputs[]| select(.OutputKey=="awsRegionId")|.OutputValue'
+++ aws cloudformation describe-stacks --stack-name runningAmazonEC2WorkloadsAtScaleNew
++ CFK_STACK_OP_VALUE=us-east-1
++ echo awsRegionId=us-east-1
+awsRegionId=us-east-1
++ sed -i.bak -e s#%awsRegionId%#us-east-1#g user-data.txt
++ sed -i.bak -e s#%awsRegionId%#us-east-1#g launch-template-data.json
++ sed -i.bak -e s#%awsRegionId%#us-east-1#g rds.json
++ sed -i.bak -e s#%awsRegionId%#us-east-1#g application-load-balancer.json
++ sed -i.bak -e s#%awsRegionId%#us-east-1#g target-group.json
++ sed -i.bak -e s#%awsRegionId%#us-east-1#g asg.json
++ sed -i.bak -e s#%awsRegionId%#us-east-1#g deployment-group.json
++ sed -i.bak -e s#%awsRegionId%#us-east-1#g deployment.json
++ sed -i.bak -e s#%awsRegionId%#us-east-1#g asg-automatic-scaling.json
++ '[' awsRegionId == codeDeployBucket ']'
++ '[' awsRegionId == fileSystem ']'
++ for CFK_STACK_OP_KEY in '"${CFK_STACK_OP_KEYS_LIST[@]}"'
+++ jq -r '.Stacks[].Outputs[]| select(.OutputKey=="vpc")|.OutputValue'
+++ aws cloudformation describe-stacks --stack-name runningAmazonEC2WorkloadsAtScaleNew
++ CFK_STACK_OP_VALUE=vpc-098348e569a41bd4f
++ echo vpc=vpc-098348e569a41bd4f
+vpc=vpc-098348e569a41bd4f
++ sed -i.bak -e s#%vpc%#vpc-098348e569a41bd4f#g user-data.txt
++ sed -i.bak -e s#%vpc%#vpc-098348e569a41bd4f#g launch-template-data.json
++ sed -i.bak -e s#%vpc%#vpc-098348e569a41bd4f#g rds.json
++ sed -i.bak -e s#%vpc%#vpc-098348e569a41bd4f#g application-load-balancer.json
++ sed -i.bak -e s#%vpc%#vpc-098348e569a41bd4f#g target-group.json
++ sed -i.bak -e s#%vpc%#vpc-098348e569a41bd4f#g asg.json
++ sed -i.bak -e s#%vpc%#vpc-098348e569a41bd4f#g deployment-group.json
++ sed -i.bak -e s#%vpc%#vpc-098348e569a41bd4f#g deployment.json
++ sed -i.bak -e s#%vpc%#vpc-098348e569a41bd4f#g asg-automatic-scaling.json
++ '[' vpc == codeDeployBucket ']'
++ '[' vpc == fileSystem ']'
+++ jq -r .LaunchTemplate.LaunchTemplateId
+++ aws ec2 create-launch-template --launch-template-name runningAmazonEC2WorkloadsAtScale --version-description LAUNCH_TEMPLATE_VERSION --launch-template-data file://launch-template-data.json
+
+An error occurred (InvalidLaunchTemplateName.AlreadyExistsException) when calling the CreateLaunchTemplate operation: Launch template name already in use.
++ LAUCH_TEMPLATE_ID=
++ echo 'Amazon LAUCH_TEMPLATE_ID is '
+Amazon LAUCH_TEMPLATE_ID is 
++ sleep 10
+++ jq -r .DBInstance.DBInstanceIdentifier
+++ aws rds create-db-instance --cli-input-json file://rds.json
++ RDS_ID=runningamazonec2workloadsatscale
++ echo 'Amazon RDS_ID is runningamazonec2workloadsatscale'
+Amazon RDS_ID is runningamazonec2workloadsatscale
++ aws rds wait db-instance-available --db-instance-identifier 8860RDS_ID
+
+Waiter DBInstanceAvailable failed: Invalid database identifier:  8860RDS_ID
++ aws elbv2 create-load-balancer --cli-input-json file://application-load-balancer.json
+
+An error occurred (DuplicateLoadBalancerName) when calling the CreateLoadBalancer operation: A load balancer with the same name 'runningAmazonEC2WorkloadsAtScale' exists, but with different settings
+++ aws elbv2 describe-load-balancers --names runningAmazonEC2WorkloadsAtScale --query 'LoadBalancers[].LoadBalancerArn' --output text
++ alb_arn=arn:aws:elasticloadbalancing:us-east-1:000474600478:loadbalancer/app/runningAmazonEC2WorkloadsAtScale/9b5c240ec389c921
++ aws elbv2 create-target-group --cli-input-json file://target-group.json
+
+An error occurred (DuplicateTargetGroupName) when calling the CreateTargetGroup operation: A target group with the same name 'runningAmazonEC2WorkloadsAtScale' exists, but with different settings
+++ aws elbv2 describe-target-groups --names runningAmazonEC2WorkloadsAtScale --query 'TargetGroups[].TargetGroupArn' --output text
++ tg_arn=arn:aws:elasticloadbalancing:us-east-1:000474600478:targetgroup/runningAmazonEC2WorkloadsAtScale/7b88d58b77a9cffd
++ sed -i.bak -e s#%TargetGroupArn%#arn:aws:elasticloadbalancing:us-east-1:000474600478:targetgroup/runningAmazonEC2WorkloadsAtScale/7b88d58b77a9cffd#g modify-target-group.json
++ aws elbv2 modify-target-group-attributes --cli-input-json file://modify-target-group.json
+{
+    "Attributes": [
+        {
+            "Value": "true", 
+            "Key": "stickiness.enabled"
+        }, 
+        {
+            "Value": "120", 
+            "Key": "deregistration_delay.timeout_seconds"
+        }, 
+        {
+            "Value": "lb_cookie", 
+            "Key": "stickiness.type"
+        }, 
+        {
+            "Value": "86400", 
+            "Key": "stickiness.lb_cookie.duration_seconds"
+        }, 
+        {
+            "Value": "0", 
+            "Key": "slow_start.duration_seconds"
+        }
+    ]
+}
++ sed -i.bak -e s#%LoadBalancerArn%#arn:aws:elasticloadbalancing:us-east-1:000474600478:loadbalancer/app/runningAmazonEC2WorkloadsAtScale/9b5c240ec389c921#g -e s#%TargetGroupArn%#arn:aws:elasticloadbalancing:us-east-1:000474600478:targetgroup/runningAmazonEC2WorkloadsAtScale/7b88d58b77a9cffd#g listener.json
++ aws elbv2 create-listener --cli-input-json file://listener.json
+{
+    "Listeners": [
+        {
+            "Protocol": "HTTP", 
+            "DefaultActions": [
+                {
+                    "TargetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:000474600478:targetgroup/runningAmazonEC2WorkloadsAtScale/7b88d58b77a9cffd", 
+                    "Type": "forward"
+                }
+            ], 
+            "LoadBalancerArn": "arn:aws:elasticloadbalancing:us-east-1:000474600478:loadbalancer/app/runningAmazonEC2WorkloadsAtScale/9b5c240ec389c921", 
+            "Port": 80, 
+            "ListenerArn": "arn:aws:elasticloadbalancing:us-east-1:000474600478:listener/app/runningAmazonEC2WorkloadsAtScale/9b5c240ec389c921/0a05373e3574001d"
+        }
+    ]
+}
++ aws autoscaling create-auto-scaling-group --cli-input-json file://asg.json
+
+An error occurred (ValidationError) when calling the CreateAutoScalingGroup operation: The security group 'sg-05934ab6da2f5bdd8' does not exist
+++ aws rds describe-db-instances --db-instance-identifier runningamazonec2workloadsatscale --query 'DBInstances[].Endpoint.Address' --output text
++ rds_endpoint=
++ mysql -h -u dbadmin --password=db-pass-2020 -f koel
+mysql  Ver 14.14 Distrib 5.5.62, for Linux (x86_64) using readline 5.1
+Copyright (c) 2000, 2018, Oracle and/or its affiliates. All rights reserved.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Usage: mysql [OPTIONS] [database]
+  -?, --help          Display this help and exit.
+  -I, --help          Synonym for -?
+  --auto-rehash       Enable automatic rehashing. One doesn't need to use
+                      'rehash' to get table and field completion, but startup
+                      and reconnecting may take a longer time. Disable with
+                      --disable-auto-rehash.
+                      (Defaults to on; use --skip-auto-rehash to disable.)
+  -A, --no-auto-rehash 
+                      No automatic rehashing. One has to use 'rehash' to get
+                      table and field completion. This gives a quicker start of
+                      mysql and disables rehashing on reconnect.
+  --auto-vertical-output 
+                      Automatically switch to vertical output mode if the
+                      result is wider than the terminal width.
+  -B, --batch         Don't use history file. Disable interactive behavior.
+                      (Enables --silent.)
+  --binary-as-hex     Print binary data as hex
+  --character-sets-dir=name 
+                      Directory for character set files.
+  --column-type-info  Display column type information.
+  -c, --comments      Preserve comments. Send comments to the server. The
+                      default is --skip-comments (discard comments), enable
+                      with --comments.
+  -C, --compress      Use compression in server/client protocol.
+  -#, --debug[=#]     This is a non-debug version. Catch this and exit.
+  --debug-check       Check memory and open file usage at exit.
+  -T, --debug-info    Print some debug info at exit.
+  -D, --database=name Database to use.
+  --default-character-set=name 
+                      Set the default character set.
+  --delimiter=name    Delimiter to be used.
+  --enable-cleartext-plugin 
+                      Enable/disable the clear text authentication plugin.
+  -e, --execute=name  Execute command and quit. (Disables --force and history
+                      file.)
+  -E, --vertical      Print the output of a query (rows) vertically.
+  -f, --force         Continue even if we get an SQL error.
+  -G, --named-commands 
+                      Enable named commands. Named commands mean this program's
+                      internal commands; see mysql> help . When enabled, the
+                      named commands can be used from any line of the query,
+                      otherwise only from the first line, before an enter.
+                      Disable with --disable-named-commands. This option is
+                      disabled by default.
+  -i, --ignore-spaces Ignore space after function names.
+  --init-command=name SQL Command to execute when connecting to MySQL server.
+                      Will automatically be re-executed when reconnecting.
+  --local-infile      Enable/disable LOAD DATA LOCAL INFILE.
+  -b, --no-beep       Turn off beep on error.
+  -h, --host=name     Connect to host.
+  -H, --html          Produce HTML output.
+  -X, --xml           Produce XML output.
+  --line-numbers      Write line numbers for errors.
+                      (Defaults to on; use --skip-line-numbers to disable.)
+  -L, --skip-line-numbers 
+                      Don't write line number for errors.
+  -n, --unbuffered    Flush buffer after each query.
+  --column-names      Write column names in results.
+                      (Defaults to on; use --skip-column-names to disable.)
+  -N, --skip-column-names 
+                      Don't write column names in results.
+  --sigint-ignore     Ignore SIGINT (CTRL-C).
+  -o, --one-database  Ignore statements except those that occur while the
+                      default database is the one named at the command line.
+  --pager[=name]      Pager to use to display results. If you don't supply an
+                      option, the default pager is taken from your ENV variable
+                      PAGER. Valid pagers are less, more, cat [> filename],
+                      etc. See interactive help (\h) also. This option does not
+                      work in batch mode. Disable with --disable-pager. This
+                      option is disabled by default.
+  -p, --password[=name] 
+                      Password to use when connecting to server. If password is
+                      not given it's asked from the tty.
+  -P, --port=#        Port number to use for connection or 0 for default to, in
+                      order of preference, my.cnf, $MYSQL_TCP_PORT,
+                      /etc/services, built-in default (3306).
+  --prompt=name       Set the mysql prompt to this value.
+  --protocol=name     The protocol to use for connection (tcp, socket, pipe,
+                      memory).
+  -q, --quick         Don't cache result, print it row by row. This may slow
+                      down the server if the output is suspended. Doesn't use
+                      history file.
+  -r, --raw           Write fields without conversion. Used with --batch.
+  --reconnect         Reconnect if the connection is lost. Disable with
+                      --disable-reconnect. This option is enabled by default.
+                      (Defaults to on; use --skip-reconnect to disable.)
+  -s, --silent        Be more silent. Print results with a tab as separator,
+                      each row on new line.
+  -S, --socket=name   The socket file to use for connection.
+  --ssl               Enable SSL for connection (automatically enabled with
+                      other flags).
+  --ssl-ca=name       CA file in PEM format (check OpenSSL docs, implies
+                      --ssl).
+  --ssl-capath=name   CA directory (check OpenSSL docs, implies --ssl).
+  --ssl-cert=name     X509 cert in PEM format (implies --ssl).
+  --ssl-cipher=name   SSL cipher to use (implies --ssl).
+  --ssl-key=name      X509 key in PEM format (implies --ssl).
+  --ssl-verify-server-cert 
+                      Verify server's "Common Name" in its cert against
+                      hostname used when connecting. This option is disabled by
+                      default.
+  --ssl-mode=name     SSL connection mode.
+  -t, --table         Output in table format.
+  --tee=name          Append everything into outfile. See interactive help (\h)
+                      also. Does not work in batch mode. Disable with
+                      --disable-tee. This option is disabled by default.
+  -u, --user=name     User for login if not current user.
+  -U, --safe-updates  Only allow UPDATE and DELETE that uses keys.
+  -U, --i-am-a-dummy  Synonym for option --safe-updates, -U.
+  -v, --verbose       Write more. (-v -v -v gives the table output format).
+  -V, --version       Output version information and exit.
+  -w, --wait          Wait and retry if connection is down.
+  --connect-timeout=# Number of seconds before connection timeout.
+  --max-allowed-packet=# 
+                      The maximum packet length to send to or receive from
+                      server.
+  --net-buffer-length=# 
+                      The buffer size for TCP/IP and socket communication.
+  --select-limit=#    Automatic limit for SELECT when using --safe-updates.
+  --max-join-size=#   Automatic limit for rows in a join when using
+                      --safe-updates.
+  --secure-auth       Refuse client connecting to server if it uses old
+                      (pre-4.1.1) protocol.
+  --server-arg=name   Send embedded server this as a parameter.
+  --show-warnings     Show warnings after every statement.
+  --plugin-dir=name   Directory for client-side plugins.
+  --default-auth=name Default authentication client-side plugin to use.
+
+Default options are read from the following files in the given order:
+/etc/mysql/my.cnf /etc/my.cnf ~/.my.cnf 
+The following groups are read: mysql client
+The following options may be given as the first argument:
+--print-defaults        Print the program argument list and exit.
+--no-defaults           Don't read default options from any option file.
+--defaults-file=#       Only read default options from the given file #.
+--defaults-extra-file=# Read this file after the global files are read.
+
+Variables (--variable-name=value)
+and boolean options {FALSE|TRUE}  Value (after reading options)
+--------------------------------- ----------------------------------------
+auto-rehash                       TRUE
+auto-vertical-output              FALSE
+binary-as-hex                     FALSE
+character-sets-dir                (No default value)
+column-type-info                  FALSE
+comments                          FALSE
+compress                          FALSE
+debug-check                       FALSE
+debug-info                        FALSE
+database                          (No default value)
+default-character-set             auto
+delimiter                         ;
+enable-cleartext-plugin           FALSE
+vertical                          FALSE
+force                             TRUE
+named-commands                    FALSE
+ignore-spaces                     FALSE
+init-command                      (No default value)
+local-infile                      FALSE
+no-beep                           FALSE
+host                              -u
+html                              FALSE
+xml                               FALSE
+line-numbers                      TRUE
+unbuffered                        FALSE
+column-names                      TRUE
+sigint-ignore                     FALSE
+port                              0
+prompt                            mysql> 
+quick                             FALSE
+raw                               FALSE
+reconnect                         FALSE
+socket                            (No default value)
+ssl                               FALSE
+ssl-ca                            (No default value)
+ssl-capath                        (No default value)
+ssl-cert                          (No default value)
+ssl-cipher                        (No default value)
+ssl-key                           (No default value)
+ssl-verify-server-cert            FALSE
+table                             FALSE
+user                              (No default value)
+safe-updates                      FALSE
+i-am-a-dummy                      FALSE
+connect-timeout                   0
+max-allowed-packet                16777216
+net-buffer-length                 16384
+select-limit                      1000
+max-join-size                     1000000
+secure-auth                       FALSE
+show-warnings                     FALSE
+plugin-dir                        (No default value)
+default-auth                      (No default value)
++ sed -i.bak -e s#%endpoint%##g codedeploy/scripts/configure_db.sh
++ git clone https://github.com/phanan/koel.git
+fatal: destination path 'koel' already exists and is not an empty directory.
++ cd koel
++ git checkout v3.7.2
+HEAD is now at cd67609... Bump version
++ cp -avr ../codedeploy/appspec.yml ../codedeploy/koel.conf ../codedeploy/scripts .
+‘../codedeploy/appspec.yml’ -> ‘./appspec.yml’
+‘../codedeploy/koel.conf’ -> ‘./koel.conf’
+‘../codedeploy/scripts/build_and_install.sh’ -> ‘./scripts/build_and_install.sh’
+‘../codedeploy/scripts/install_dependencies.sh’ -> ‘./scripts/install_dependencies.sh’
+‘../codedeploy/scripts/configure_db.sh’ -> ‘./scripts/configure_db.sh’
+‘../codedeploy/scripts/configure_db.sh.bak’ -> ‘./scripts/configure_db.sh.bak’
+‘../codedeploy/scripts/stop_services.sh’ -> ‘./scripts/stop_services.sh’
+‘../codedeploy/scripts/configure_httpd_php.sh’ -> ‘./scripts/configure_httpd_php.sh’
+‘../codedeploy/scripts/start_services.sh’ -> ‘./scripts/start_services.sh’
++ aws deploy create-application --application-name koelApp
+
+An error occurred (ApplicationAlreadyExistsException) when calling the CreateApplication operation: koelApp already exists.
++ aws deploy push --application-name koelApp --s3-location s3://runningamazonec2workloadsatscale-codedeploybucket-lerrmkeudti6/koelApp.zip --no-ignore-hidden-files
+To deploy with this revision, run:
+aws deploy create-deployment --application-name koelApp --s3-location bucket=runningamazonec2workloadsatscale-codedeploybucket-lerrmkeudti6,key=koelApp.zip,bundleType=zip,eTag=464063e942e154560a8c76733cd7b76c-2 --deployment-group-name <deployment-group-name> --deployment-config-name <deployment-config-name> --description <description>
++ aws deploy create-deployment-group --cli-input-json file://deployment-group.json
+
+Error parsing parameter '--cli-input-json': Unable to load paramfile file://deployment-group.json: [Errno 2] No such file or directory: 'deployment-group.json'
++ aws deploy create-deployment --cli-input-json file://deployment.json
+
+Error parsing parameter '--cli-input-json': Unable to load paramfile file://deployment.json: [Errno 2] No such file or directory: 'deployment.json'
++ mkdir -p /home/ec2-user/environment/media
++ sudo mount -t efs fs-8dc94e0c:/ /home/ec2-user/environment/media
+Failed to resolve "fs-8dc94e0c.efs.us-east-1.amazonaws.com" - check that your file system ID is correct.
+See https://docs.aws.amazon.com/console/efs/mount-dns-name for more detail.
++ sudo chown ec2-user. /home/ec2-user/environment/media
++ sudo cp -av '*.mp3' /home/ec2-user/environment/media
+cp: cannot stat ‘*.mp3’: No such file or directory
++ aws autoscaling put-scaling-policy --cli-input-json file://asg-automatic-scaling.json
+
+Error parsing parameter '--cli-input-json': Unable to load paramfile file://asg-automatic-scaling.json: [Errno 2] No such file or directory: 'asg-automatic-scaling.json'

@@ -1,0 +1,532 @@
+
+Install kubectl 
+
+sudo curl --silent --location -o /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/v1.13.7/bin/linux/amd64/kubectl
+sudo chmod +x /usr/local/bin/kubectl
+
+
+Install JQ and envsubst 
+sudo yum -y install jq gettext
+
+Verify the binaries are in the path and executable 
+
+for command in kubectl jq envsubst
+  do
+    which $command &>/dev/null && echo "$command in path" || echo "$command NOT FOUND"
+  done
+  
+ 
+ arn:aws:iam::000474600478:role/eksworkshop-admin
+ rm -vf ${HOME}/.aws/credentials
+ 
+
+ 
+ export ACCOUNT_ID=$(aws sts get-caller-identity --output text --query Account)
+export AWS_REGION=$(curl -s 169.254.169.254/latest/dynamic/instance-identity/document | jq -r '.region')
+
+echo "export ACCOUNT_ID=${ACCOUNT_ID}" >> ~/.bash_profile
+echo "export AWS_REGION=${AWS_REGION}" >> ~/.bash_profile
+aws configure set default.region ${AWS_REGION}
+aws configure get default.region
+
+
+jp:~/environment $ aws sts get-caller-identity
+{
+    "Account": "000474600478", 
+    "UserId": "AIDAQAHCJ2QPB6754PWPY", 
+    "Arn": "arn:aws:iam::000474600478:user/jp"
+}
+
+
+ssh-keygen
+
+aws ec2 import-key-pair --key-name "eksworkshop" --public-key-material file://~/.ssh/id_rsa.pub
+
+
+
+curl --silent --location "https://github.com/weaveworks/eksctl/releases/download/latest_release/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+sudo mv -v /tmp/eksctl /usr/local/bin
+eksctl version  
+
+
+eksctl create cluster --version=1.13 --name=eksworkshop-eksctl --nodes=2 --alb-ingress-access --region=${AWS_REGION} --node-labels="lifecycle=OnDemand,intent=control-apps" --asg-access
+
+
+
+[ℹ]  if you encounter any issues, check CloudFormation console or try 'eksctl utils describe-stacks --region=us-east-2 --name=eksworkshop-eksctl'
+[ℹ]  CloudWatch logging will not be enabled for cluster "eksworkshop-eksctl" in "us-east-2"
+[ℹ]  you can enable it with 'eksctl utils update-cluster-logging --region=us-east-2 --name=eksworkshop-eksctl'
+
+
+
+jp:~/environment $ kubectl get nodes
+NAME                                          STATUS   ROLES    AGE    VERSION
+ip-192-168-47-71.us-east-2.compute.internal   Ready    <none>   8m7s   v1.13.11-eks-5876d6
+ip-192-168-72-38.us-east-2.compute.internal   Ready    <none>   8m6s   v1.13.11-eks-5876d6
+
+
+
+STACK_NAME=$(eksctl get nodegroup --cluster eksworkshop-eksctl -o json | jq -r '.[].StackName')
+INSTANCE_PROFILE_ARN=$(aws cloudformation describe-stacks --stack-name $STACK_NAME | jq -r '.Stacks[].Outputs[] | select(.OutputKey=="InstanceProfileARN") | .OutputValue')
+ROLE_NAME=$(aws cloudformation describe-stacks --stack-name $STACK_NAME | jq -r '.Stacks[].Outputs[] | select(.OutputKey=="InstanceRoleARN") | .OutputValue' | cut -f2 -d/)
+echo "export ROLE_NAME=${ROLE_NAME}" >> ~/.bash_profile
+echo "export INSTANCE_PROFILE_ARN=${INSTANCE_PROFILE_ARN}" >> ~/.bash_profile
+
+
+cd ~/environment
+curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get > get_helm.sh
+chmod +x get_helm.sh
+./get_helm.sh
+
+
+cat <<EoF > ~/environment/rbac.yaml
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: tiller
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: tiller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+  - kind: ServiceAccount
+    name: tiller
+    namespace: kube-system
+EoF
+
+
+kubectl apply -f ~/environment/rbac.yaml
+
+helm init --service-account tiller
+
+helm repo update
+helm install stable/kube-ops-view --name kube-ops-view --set service.type=LoadBalancer --set rbac.create=True
+
+
+jp:~/environment $ helm install stable/kube-ops-view --name kube-ops-view --set service.type=LoadBalancer --set rbac.create=True
+NAME:   kube-ops-view
+LAST DEPLOYED: Fri Oct 18 03:37:35 2019
+NAMESPACE: default
+STATUS: DEPLOYED
+
+RESOURCES:
+==> v1/Pod(related)
+NAME                            READY  STATUS             RESTARTS  AGE
+kube-ops-view-5cb49878b4-dcmvt  0/1    ContainerCreating  0         0s
+
+==> v1/Service
+NAME           TYPE          CLUSTER-IP   EXTERNAL-IP  PORT(S)       AGE
+kube-ops-view  LoadBalancer  10.100.3.84  <pending>    80:32208/TCP  0s
+
+==> v1/ServiceAccount
+NAME           SECRETS  AGE
+kube-ops-view  1        1s
+
+==> v1beta1/ClusterRole
+NAME           AGE
+kube-ops-view  0s
+
+==> v1beta1/ClusterRoleBinding
+NAME           AGE
+kube-ops-view  0s
+
+==> v1beta1/Deployment
+NAME           READY  UP-TO-DATE  AVAILABLE  AGE
+kube-ops-view  0/1    1           0          0s
+
+
+NOTES:
+To access the Kubernetes Operational View UI:
+
+1. First start the kubectl proxy:
+
+   kubectl proxy
+
+2. Now open the following URL in your browser:
+
+   http://localhost:8001/api/v1/proxy/namespaces/default/services/kube-ops-view/
+
+Please try reloading the page if you see "ServiceUnavailable / no endpoints available for service", pod creation might take a moment.
+
+Kube-ops-view URL = http://aa04d8b54f15811e9a072068aa889936-498632011.us-east-2.elb.amazonaws.com
+
+kubectl get svc kube-ops-view | tail -n 1 | awk '{ print "Kube-ops-view URL = http://"$4 }'
+
+
+
+
+cat <<EoF > ~/environment/spot_nodegroups.yml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+    name: eksworkshop-eksctl
+    region: $AWS_REGION
+nodeGroups:
+    - name: dev-4vcpu-16gb-spot
+      minSize: 1
+      maxSize: 5
+      instancesDistribution:
+        instanceTypes: ["m5.xlarge", "m5d.xlarge", "m4.xlarge","t3.xlarge","t3a.xlarge","m5a.xlarge","t2.xlarge"] 
+        onDemandBaseCapacity: 0
+        onDemandPercentageAboveBaseCapacity: 0
+        spotInstancePools: 4
+      labels:
+        lifecycle: Ec2Spot
+        intent: apps
+      taints:
+        spotInstance: "true:PreferNoSchedule"
+      iam:
+        withAddonPolicies:
+          autoScaler: true
+          cloudWatch: true
+          albIngress: true
+    - name: dev-8vcpu-32gb-spot
+      minSize: 1
+      maxSize: 5
+      instancesDistribution:
+        instanceTypes: ["m5.2xlarge", "m5d.2xlarge", "m4.2xlarge","t3.2xlarge","t3a.2xlarge","m5a.2xlarge","t2.2xlarge"] 
+        onDemandBaseCapacity: 0
+        onDemandPercentageAboveBaseCapacity: 0
+        spotInstancePools: 4
+      labels:
+        lifecycle: Ec2Spot
+        intent: apps
+      taints:
+        spotInstance: "true:PreferNoSchedule"
+      iam:
+        withAddonPolicies:
+          autoScaler: true
+          cloudWatch: true
+          albIngress: true
+EoF
+
+eksctl create nodegroup -f spot_nodegroups.yml
+
+
+kubectl scale deployment/monte-carlo-pi-service --replicas=4
+
+helm install stable/metrics-server \
+    --name metrics-server \
+    --version 2.8.3 \
+    --namespace metrics
+	
+NAME:   metrics-server
+LAST DEPLOYED: Fri Oct 18 06:40:12 2019
+NAMESPACE: metrics
+STATUS: DEPLOYED
+
+RESOURCES:
+==> v1/ClusterRole
+NAME                                     AGE
+system:metrics-server                    0s
+system:metrics-server-aggregated-reader  0s
+
+==> v1/ClusterRoleBinding
+NAME                                  AGE
+metrics-server:system:auth-delegator  0s
+system:metrics-server                 0s
+
+==> v1/Deployment
+NAME            READY  UP-TO-DATE  AVAILABLE  AGE
+metrics-server  0/1    1           0          0s
+
+==> v1/Pod(related)
+NAME                             READY  STATUS             RESTARTS  AGE
+metrics-server-7dfc675884-29kwh  0/1    ContainerCreating  0         0s
+
+==> v1/Service
+NAME            TYPE       CLUSTER-IP    EXTERNAL-IP  PORT(S)  AGE
+metrics-server  ClusterIP  10.100.85.40  <none>       443/TCP  0s
+
+==> v1/ServiceAccount
+NAME            SECRETS  AGE
+metrics-server  1        0s
+
+==> v1beta1/APIService
+NAME                    AGE
+v1beta1.metrics.k8s.io  0s
+
+==> v1beta1/RoleBinding
+NAME                        AGE
+metrics-server-auth-reader  0s
+
+
+NOTES:
+The metric server has been deployed. 
+
+In a few minutes you should be able to list metrics using the following
+command:
+
+  kubectl get --raw "/apis/metrics.k8s.io/v1beta1/nodes"
+  
+jp:~/environment $ kubectl get apiservice v1beta1.metrics.k8s.io -o yaml
+apiVersion: apiregistration.k8s.io/v1
+kind: APIService
+metadata:
+  creationTimestamp: "2019-10-18T06:40:12Z"
+  labels:
+    app: metrics-server
+    chart: metrics-server-2.8.3
+    heritage: Tiller
+    release: metrics-server
+  name: v1beta1.metrics.k8s.io
+  resourceVersion: "23986"
+  selfLink: /apis/apiregistration.k8s.io/v1/apiservices/v1beta1.metrics.k8s.io
+  uid: 230c7e52-f172-11e9-a072-068aa889936a
+spec:
+  group: metrics.k8s.io
+  groupPriorityMinimum: 100
+  insecureSkipTLSVerify: true
+  service:
+    name: metrics-server
+    namespace: metrics
+  version: v1beta1
+  versionPriority: 100
+status:
+  conditions:
+  - lastTransitionTime: "2019-10-18T06:40:35Z"
+    message: all checks passed
+    reason: Passed
+    status: "True"
+    type: Available
+	
+	
+jp:~/environment $ kubectl autoscale deployment monte-carlo-pi-service --cpu-percent=50 --min=4 --max=50
+horizontalpodautoscaler.autoscaling/monte-carlo-pi-service autoscaled
+
+jp:~/environment $ kubectl get hpa
+NAME                     REFERENCE                           TARGETS         MINPODS   MAXPODS   REPLICAS   AGE
+monte-carlo-pi-service   Deployment/monte-carlo-pi-service   <unknown>/50%   4         50        0          12s
+
+
+
+mkdir -p ~/environment/submit_mc_pi_k8s_requests/
+curl -o ~/environment/submit_mc_pi_k8s_requests/submit_mc_pi_k8s_requests.py https://raw.githubusercontent.com/ruecarlo/eks-workshop-sample-api-service-go/master/stress_test_script/submit_mc_pi_k8s_requests.py
+chmod +x ~/environment/submit_mc_pi_k8s_requests/submit_mc_pi_k8s_requests.py
+curl -o ~/environment/submit_mc_pi_k8s_requests/requirements.txt https://raw.githubusercontent.com/ruecarlo/eks-workshop-sample-api-service-go/master/stress_test_script/requirements.txt
+sudo python3 -m pip install -r ~/environment/submit_mc_pi_k8s_requests/requirements.txt
+URL=$(kubectl get svc monte-carlo-pi-service | tail -n 1 | awk '{ print $4 }')
+~/environment/submit_mc_pi_k8s_requests/submit_mc_pi_k8s_requests.py -p 1 -r 1 -i 1 -u "http://${URL}"
+
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100    30  100    30    0     0    149      0 --:--:-- --:--:-- --:--:--   149
+jp:~/environment $ sudo python3 -m pip install -r ~/environment/submit_mc_pi_k8s_requests/requirements.txt
+
+Collecting tqdm==4.36.1 (from -r /home/ec2-user/environment/submit_mc_pi_k8s_requests/requirements.txt (line 1))
+  Downloading https://files.pythonhosted.org/packages/e1/c1/bc1dba38b48f4ae3c4428aea669c5e27bd5a7642a74c8348451e0bd8ff86/tqdm-4.36.1-py2.py3-none-any.whl (52kB)
+    100% |████████████████████████████████| 61kB 2.4MB/s 
+Collecting requests==2.22.0 (from -r /home/ec2-user/environment/submit_mc_pi_k8s_requests/requirements.txt (line 2))
+  Downloading https://files.pythonhosted.org/packages/51/bd/23c926cd341ea6b7dd0b2a00aba99ae0f828be89d72b2190f27c11d4b7fb/requests-2.22.0-py2.py3-none-any.whl (57kB)
+    100% |████████████████████████████████| 61kB 8.9MB/s 
+Collecting idna<2.9,>=2.5 (from requests==2.22.0->-r /home/ec2-user/environment/submit_mc_pi_k8s_requests/requirements.txt (line 2))
+  Downloading https://files.pythonhosted.org/packages/14/2c/cd551d81dbe15200be1cf41cd03869a46fe7226e7450af7a6545bfc474c9/idna-2.8-py2.py3-none-any.whl (58kB)
+    100% |████████████████████████████████| 61kB 9.0MB/s 
+Collecting certifi>=2017.4.17 (from requests==2.22.0->-r /home/ec2-user/environment/submit_mc_pi_k8s_requests/requirements.txt (line 2))
+  Using cached https://files.pythonhosted.org/packages/18/b0/8146a4f8dd402f60744fa380bc73ca47303cccf8b9190fd16a827281eac2/certifi-2019.9.11-py2.py3-none-any.whl
+Collecting chardet<3.1.0,>=3.0.2 (from requests==2.22.0->-r /home/ec2-user/environment/submit_mc_pi_k8s_requests/requirements.txt (line 2))
+  Using cached https://files.pythonhosted.org/packages/bc/a9/01ffebfb562e4274b6487b4bb1ddec7ca55ec7510b22e4c51f14098443b8/chardet-3.0.4-py2.py3-none-any.whl
+Collecting urllib3!=1.25.0,!=1.25.1,<1.26,>=1.21.1 (from requests==2.22.0->-r /home/ec2-user/environment/submit_mc_pi_k8s_requests/requirements.txt (line 2))
+  Using cached https://files.pythonhosted.org/packages/e0/da/55f51ea951e1b7c63a579c09dd7db825bb730ec1fe9c0180fc77bfb31448/urllib3-1.25.6-py2.py3-none-any.whl
+Installing collected packages: tqdm, idna, certifi, chardet, urllib3, requests
+Successfully installed certifi-2019.9.11 chardet-3.0.4 idna-2.8 requests-2.22.0 tqdm-4.36.1 urllib3-1.25.6
+You are using pip version 9.0.3, however version 19.3 is available.
+You should consider upgrading via the 'pip install --upgrade pip' command.
+jp:~/environment $ URL=$(kubectl get svc monte-carlo-pi-service | tail -n 1 | awk '{ print $4 }')
+jp:~/environment $ ~/environment/submit_mc_pi_k8s_requests/submit_mc_pi_k8s_requests.py -p 1 -r 1 -i 1 -u "http://${URL}"
+Total processes: 1
+Len of queue_of_urls: 1
+content of queue_of_urls: http://afdccee6ef16b11e9887e025238351fc-1027127211.us-east-2.elb.amazonaws.com/?iterations=1
+100%|██
+
+
+
+
+
+	
+kubectl get nodes
+
+
+
+kubectl get nodes --show-labels --selector=lifecycle=Ec2Spot
+
+NAME                                           STATUS   ROLES    AGE     VERSION               LABELS
+ip-192-168-25-37.us-east-2.compute.internal    Ready    <none>   6m9s    v1.13.11-eks-5876d6   alpha.eksctl.io/cluster-name=eksworkshop-eksctl,alpha.eksctl.io/instance-id=i-0343a539a49559534,alpha.eksctl.io/nodegroup-name=dev-8vcpu-32gb-spot,beta.kubernetes.io/arch=amd64,beta.kubernetes.io/instance-type=m5d.2xlarge,beta.kubernetes.io/os=linux,failure-domain.beta.kubernetes.io/region=us-east-2,failure-domain.beta.kubernetes.io/zone=us-east-2a,intent=apps,kubernetes.io/hostname=ip-192-168-25-37.us-east-2.compute.internal,lifecycle=Ec2Spot
+ip-192-168-58-135.us-east-2.compute.internal   Ready    <none>   6m33s   v1.13.11-eks-5876d6   alpha.eksctl.io/cluster-name=eksworkshop-eksctl,alpha.eksctl.io/instance-id=i-0d21c400bd734707d,alpha.eksctl.io/nodegroup-name=dev-4vcpu-16gb-spot,beta.kubernetes.io/arch=amd64,beta.kubernetes.io/instance-type=m4.xlarge,beta.kubernetes.io/os=linux,failure-domain.beta.kubernetes.io/region=us-east-2,failure-domain.beta.kubernetes.io/zone=us-east-2c,intent=apps,kubernetes.io/hostname=ip-192-168-58-135.us-east-2.compute.internal,lifecycle=Ec2Spot
+
+
+
+mkdir ~/environment/spot
+curl -o ~/environment/spot/spot-interrupt-handler-example.yml https://raw.githubusercontent.com/awslabs/ec2-spot-workshops/master/content/using_ec2_spot_instances_with_eks/spotworkers/deployhandler.files/spot-interrupt-handler-example.yml
+
+kubectl apply -f ~/environment/spot/spot-interrupt-handler-example.yml
+
+kubectl get daemonsets
+NAME                     DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR       AGE
+spot-interrupt-handler   2         2         2       2            2           lifecycle=Ec2Spot   27s
+
+cat <<EoF > ~/environment/monte-carlo-pi-service.yml
+---
+apiVersion: v1 
+kind: Service 
+metadata: 
+  name: monte-carlo-pi-service 
+spec: 
+  type: LoadBalancer 
+  ports: 
+    - port: 80 
+      targetPort: 8080 
+  selector: 
+    app: monte-carlo-pi-service 
+--- 
+apiVersion: apps/v1 
+kind: Deployment 
+metadata: 
+  name: monte-carlo-pi-service 
+  labels: 
+    app: monte-carlo-pi-service 
+spec: 
+  replicas: 2 
+  selector: 
+    matchLabels: 
+      app: monte-carlo-pi-service 
+  template: 
+    metadata: 
+      labels: 
+        app: monte-carlo-pi-service 
+    spec: 
+      containers: 
+        - name: monte-carlo-pi-service 
+          image: ruecarlo/monte-carlo-pi-service
+          resources: 
+            requests: 
+              memory: "512Mi" 
+              cpu: "1024m" 
+            limits: 
+              memory: "512Mi" 
+              cpu: "1024m" 
+          securityContext: 
+            privileged: false 
+            readOnlyRootFilesystem: true 
+            allowPrivilegeEscalation: false 
+          ports: 
+            - containerPort: 8080 
+
+EoF
+
+
+kubectl apply -f ~/environment/monte-carlo-pi-service.yml 
+service/monte-carlo-pi-service created
+deployment.apps/monte-carlo-pi-service created
+
+nodes=$(kubectl get nodes --selector=intent=apps | tail -n +2 |  awk '{print $1}')
+for node in $nodes; do echo $node; kubectl describe nodes $node | grep "monte-carlo-pi-service"; done 
+
+ip-192-168-25-37.us-east-2.compute.internal
+  default                    monte-carlo-pi-service-584f6ddff-kbp6m    1024m (12%)   1024m (12%)  512Mi (1%)       512Mi (1%)     42s
+ip-192-168-58-135.us-east-2.compute.internal
+  default                    monte-carlo-pi-service-584f6ddff-zshgc    1024m (25%)   1024m (25%)  512Mi (3%)       512Mi (3%)     43s
+ 
+ 
+ kubectl get svc monte-carlo-pi-service | tail -n 1 | awk '{ print "monte-carlo-pi-service URL = http://"$4 }'
+ 
+ jp:~/environment $ monte-carlo-pi-service URL = http://afdccee6ef16b11e9887e025238351fc-1027127211.us-east-2.elb.amazonaws.com
+
+
+URL=$(kubectl get svc monte-carlo-pi-service | tail -n 1 | awk '{ print $4 }')
+time curl ${URL}/?iterations=100000000
+
+{
+  "message": "Monte-carlo pi simulation",
+  "iterations": 100000000,
+  "pi": 3.14143496,
+  "duration_in_secconds": 2.623066255,
+  "env": [
+    "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+    "HOSTNAME=monte-carlo-pi-service-584f6ddff-zshgc",
+    "MONTE_CARLO_PI_SERVICE_PORT_80_TCP=tcp://10.100.174.155:80",
+    "KUBERNETES_SERVICE_PORT=443",
+    "KUBERNETES_SERVICE_PORT_HTTPS=443",
+    "KUBERNETES_PORT_443_TCP_ADDR=10.100.0.1",
+    "KUBE_OPS_VIEW_PORT=tcp://10.100.3.84:80",
+    "KUBE_OPS_VIEW_PORT_80_TCP_ADDR=10.100.3.84",
+    "MONTE_CARLO_PI_SERVICE_PORT=tcp://10.100.174.155:80",
+    "KUBERNETES_SERVICE_HOST=10.100.0.1",
+    "KUBE_OPS_VIEW_SERVICE_HOST=10.100.3.84",
+    "KUBE_OPS_VIEW_SERVICE_PORT=80",
+    "KUBE_OPS_VIEW_PORT_80_TCP_PROTO=tcp",
+    "MONTE_CARLO_PI_SERVICE_SERVICE_HOST=10.100.174.155",
+    "MONTE_CARLO_PI_SERVICE_PORT_80_TCP_PROTO=tcp",
+    "KUBERNETES_PORT=tcp://10.100.0.1:443",
+    "KUBERNETES_PORT_443_TCP_PROTO=tcp",
+    "MONTE_CARLO_PI_SERVICE_SERVICE_PORT=80",
+    "KUBERNETES_PORT_443_TCP=tcp://10.100.0.1:443",
+    "KUBERNETES_PORT_443_TCP_PORT=443",
+    "KUBE_OPS_VIEW_PORT_80_TCP=tcp://10.100.3.84:80",
+    "KUBE_OPS_VIEW_PORT_80_TCP_PORT=80",
+    "MONTE_CARLO_PI_SERVICE_PORT_80_TCP_PORT=80",
+    "MONTE_CARLO_PI_SERVICE_PORT_80_TCP_ADDR=10.100.174.155",
+    "HOME=/home/app"
+  ]
+}
+real    0m2.655s
+user    0m0.008s
+sys     0m0.004s
+
+
+mkdir -p ~/environment/cluster-autoscaler
+curl -o ~/environment/cluster-autoscaler/cluster_autoscaler.yml https://raw.githubusercontent.com/awslabs/ec2-spot-workshops/master/content/using_ec2_spot_instances_with_eks/scaling/deploy_ca.files/cluster_autoscaler.yml
+sed -i "s/--AWS_REGION--/${AWS_REGION}/g" ~/environment/cluster-autoscaler/cluster_autoscaler.yml
+kubectl apply -f ~/environment/cluster-autoscaler/cluster_autoscaler.yml
+
+
+serviceaccount/cluster-autoscaler created
+clusterrole.rbac.authorization.k8s.io/cluster-autoscaler created
+role.rbac.authorization.k8s.io/cluster-autoscaler created
+clusterrolebinding.rbac.authorization.k8s.io/cluster-autoscaler created
+rolebinding.rbac.authorization.k8s.io/cluster-autoscaler created
+deployment.extensions/cluster-autoscaler created
+
+
+kubectl logs -f deployment/cluster-autoscaler -n kube-system --tail=10
+
+kubectl scale deployment/monte-carlo-pi-service --replicas=13
+
+
+jp:~/environment $ kubectl get node --selector=intent=apps --show-labels
+NAME                                           STATUS   ROLES    AGE    VERSION               LABELS
+ip-192-168-25-37.us-east-2.compute.internal    Ready    <none>   147m   v1.13.11-eks-5876d6   alpha.eksctl.io/cluster-name=eksworkshop-eksctl,alpha.eksctl.io/instance-id=i-0343a539a49559534,alpha.eksctl.io/nodegroup-name=dev-8vcpu-32gb-spot,beta.kubernetes.io/arch=amd64,beta.kubernetes.io/instance-type=m5d.2xlarge,beta.kubernetes.io/os=linux,failure-domain.beta.kubernetes.io/region=us-east-2,failure-domain.beta.kubernetes.io/zone=us-east-2a,intent=apps,kubernetes.io/hostname=ip-192-168-25-37.us-east-2.compute.internal,lifecycle=Ec2Spot
+ip-192-168-39-157.us-east-2.compute.internal   Ready    <none>   109s   v1.13.11-eks-5876d6   alpha.eksctl.io/cluster-name=eksworkshop-eksctl,alpha.eksctl.io/instance-id=i-024bb2546af454dd8,alpha.eksctl.io/nodegroup-name=dev-8vcpu-32gb-spot,beta.kubernetes.io/arch=amd64,beta.kubernetes.io/instance-type=m5d.2xlarge,beta.kubernetes.io/os=linux,failure-domain.beta.kubernetes.io/region=us-east-2,failure-domain.beta.kubernetes.io/zone=us-east-2c,intent=apps,kubernetes.io/hostname=ip-192-168-39-157.us-east-2.compute.internal,lifecycle=Ec2Spot
+ip-192-168-58-135.us-east-2.compute.internal   Ready    <none>   147m   v1.13.11-eks-5876d6   alpha.eksctl.io/cluster-name=eksworkshop-eksctl,alpha.eksctl.io/instance-id=i-0d21c400bd734707d,alpha.eksctl.io/nodegroup-name=dev-4vcpu-16gb-spot,beta.kubernetes.io/arch=amd64,beta.kubernetes.io/instance-type=m4.xlarge,beta.kubernetes.io/os=linux,failure-domain.beta.kubernetes.io/region=us-east-2,failure-domain.beta.kubernetes.io/zone=us-east-2c,intent=apps,kubernetes.io/hostname=ip-192-168-58-135.us-east-2.compute.internal,lifecycle=Ec2Spot
+
+
+Clean Up
+
+
+kubectl delete hpa monte-carlo-pi-service
+kubectl delete -f ~/environment/cluster-autoscaler/cluster_autoscaler.yml
+kubectl delete -f monte-carlo-pi-service.yml
+helm delete --purge kube-ops-view metrics-server
+
+
+eksctl delete nodegroup -f spot_nodegroups.yml --approve
+od_nodegroup=$(eksctl get nodegroup --cluster eksworkshop-eksctl | tail -n 1 | awk '{print $2}')
+eksctl delete nodegroup --cluster eksworkshop-eksctl --name $od_nodegroup
+eksctl delete cluster --name eksworkshop-eksctl
+
+
+Clean Cloud 9 	
+
+aws ec2 delete-key-pair --key-name eksworkshop
+CLOUD_9_IDS=$(aws cloud9 list-environments | jq -c ".environmentIds | flatten(0)" | sed -E -e 's/\[|\]|\"|//g' | sed 's/,/ /g')
+CLOUD_9_WORKSHOP_ID=$(aws cloud9 describe-environments --environment-ids $CLOUD_9_IDS | jq '.environments | .[] | select(.name=="eksworkshop") | .id ' | sed -e 's/\"//g')
+aws cloud9 delete-environment --environment-id $CLOUD_9_WORKSHOP_ID
+
+

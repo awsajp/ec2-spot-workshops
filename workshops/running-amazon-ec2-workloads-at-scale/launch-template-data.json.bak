@@ -1,0 +1,25 @@
+{
+  "IamInstanceProfile": {
+    "Arn": "arn:aws:iam::000474600478:instance-profile/runningAmazonEC2WorkloadsAtScale-instanceProfile-18SDQ74MRB2EL"
+  },
+  "ImageId": "%ami-id%",
+  "SecurityGroupIds": [
+    "sg-0fadf9471dcf225b3"
+  ],
+  "TagSpecifications": [
+    {
+      "ResourceType": "instance",
+      "Tags": [
+        {
+          "Key": "Name",
+          "Value": "runningAmazonEC2WorkloadsAtScale"
+        },
+        {
+          "Key": "Env",
+          "Value": "prod"
+        }
+      ]
+    }
+  ],
+  "UserData": "%UserData%"
+}

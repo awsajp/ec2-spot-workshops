@@ -1,0 +1,27 @@
+EgressInterCluster	eksctl-eksworkshop-eksctl-nodegroup-ng-a7b3aeb6-EgressInterCluster-NQN5RBLXFZHD	AWS::EC2::SecurityGroupEgress	
+CREATE_COMPLETE	-
+EgressInterClusterAPI	eksctl-eksworkshop-eksctl-nodegroup-ng-a7b3aeb6-EgressInterClusterAPI-1GU5AMKLH3X6G	AWS::EC2::SecurityGroupEgress	
+CREATE_COMPLETE	-
+IngressInterCluster	IngressInterCluster	AWS::EC2::SecurityGroupIngress	
+CREATE_COMPLETE	-
+IngressInterClusterAPI	IngressInterClusterAPI	AWS::EC2::SecurityGroupIngress	
+CREATE_COMPLETE	-
+IngressInterClusterCP	IngressInterClusterCP	AWS::EC2::SecurityGroupIngress	
+CREATE_COMPLETE	-
+NodeGroup	eksctl-eksworkshop-eksctl-nodegroup-ng-a7b3aeb6-NodeGroup-3XU4DXA2GYVI
+AWS::AutoScaling::AutoScalingGroup	
+CREATE_COMPLETE	-
+NodeGroupLaunchTemplate	lt-07b4fd288223a5441
+AWS::EC2::LaunchTemplate	
+CREATE_COMPLETE	-
+NodeInstanceProfile	eksctl-eksworkshop-eksctl-nodegroup-ng-a7b3aeb6-NodeInstanceProfile-115KTP9F36MOS	AWS::IAM::InstanceProfile	
+CREATE_COMPLETE	-
+NodeInstanceRole	eksctl-eksworkshop-eksctl-nodegro-NodeInstanceRole-PEBB7COKJHKX
+AWS::IAM::Role	
+CREATE_COMPLETE	-
+PolicyALBIngress	eksct-Poli-33NOWASQA1IK	AWS::IAM::Policy	
+CREATE_COMPLETE	-
+PolicyAutoScaling	eksct-Poli-1H0C5452EQDA	AWS::IAM::Policy	
+CREATE_COMPLETE	-
+SG	sg-0e8daa8eab2ac708a
+AWS::EC2::SecurityGroup

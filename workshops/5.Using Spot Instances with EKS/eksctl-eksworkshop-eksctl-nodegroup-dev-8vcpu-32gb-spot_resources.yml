@@ -1,0 +1,33 @@
+Logical ID
+	Physical ID
+	Type
+	Status
+	Status reason
+EgressInterCluster	eksctl-eksworkshop-eksctl-nodegroup-dev-8vcpu-32gb-spot-EgressInterCluster-1WDYZQB0YTG5J	AWS::EC2::SecurityGroupEgress	
+CREATE_COMPLETE	-
+EgressInterClusterAPI	eksctl-eksworkshop-eksctl-nodegroup-dev-8vcpu-32gb-spot-EgressInterClusterAPI-1MQ9E84RKXBP4	AWS::EC2::SecurityGroupEgress	
+CREATE_COMPLETE	-
+IngressInterCluster	IngressInterCluster	AWS::EC2::SecurityGroupIngress	
+CREATE_COMPLETE	-
+IngressInterClusterAPI	IngressInterClusterAPI	AWS::EC2::SecurityGroupIngress	
+CREATE_COMPLETE	-
+IngressInterClusterCP	IngressInterClusterCP	AWS::EC2::SecurityGroupIngress	
+CREATE_COMPLETE	-
+NodeGroup	eksctl-eksworkshop-eksctl-nodegroup-dev-8vcpu-32gb-spot-NodeGroup-TBMXDZBID5X0
+AWS::AutoScaling::AutoScalingGroup	
+CREATE_COMPLETE	-
+NodeGroupLaunchTemplate	lt-0f4280eaecbff5b10
+AWS::EC2::LaunchTemplate	
+CREATE_COMPLETE	-
+NodeInstanceProfile	eksctl-eksworkshop-eksctl-nodegroup-dev-8vcpu-32gb-spot-NodeInstanceProfile-6S6DD2N9N9UC	AWS::IAM::InstanceProfile	
+CREATE_COMPLETE	-
+NodeInstanceRole	eksctl-eksworkshop-eksctl-nodegro-NodeInstanceRole-7UD90JKEDC02
+AWS::IAM::Role	
+CREATE_COMPLETE	-
+PolicyALBIngress	eksct-Poli-1ON1JZTQQWTC8	AWS::IAM::Policy	
+CREATE_COMPLETE	-
+PolicyAutoScaling	eksct-Poli-1A2VPCYX519EE	AWS::IAM::Policy	
+CREATE_COMPLETE	-
+SG	sg-092dace33fea9b7ad
+AWS::EC2::SecurityGroup	
+CREATE_COMPLETE	

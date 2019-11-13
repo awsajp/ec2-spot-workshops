@@ -1,0 +1,298 @@
++ echo 'Hello World from EC2 Spot Team...'
+Hello World from EC2 Spot Team...
++ DEFAULT_REGION=us-east-1
++ SLEEP=5
++ LAUNCH_TEMPLATE_NAME=runningAmazonEC2WorkloadsAtScale
++ LAUNCH_TEMPLATE_VERSION=1
++ CFS_STACK_NAME=runningAmazonEC2WorkloadsAtScale
++ CFS_STACK_FILE=running-amazon-ec2-workloads-at-scale.yaml
++ CFK_STACK_OP_KEYS_LIST=("instanceProfile" "codeDeployServiceRole" "snsTopic" "cloud9Environment" "fileSystem" "eventRule" "lambdaFunction" "codeDeployBucket" "dbSubnetGroup" "instanceSecurityGroup" "dbSecurityGroup" "loadBalancerSecurityGroup" "publicSubnet2" "publicSubnet1" "awsRegionId" "vpc")
++ declare -a CFK_STACK_OP_KEYS_LIST
++ cp -Rfp templates/application-load-balancer.json templates/asg-automatic-scaling.json templates/asg-scheduled-scaling.json templates/deployment-group.json templates/launch-template-data.json templates/listener_orig.json templates/modify-target-group.json templates/ssm-stress.json templates/target-group.json .
++ cp -Rfp templates/user-data.txt .
+++ jq -r .StackId
+++ aws cloudformation create-stack --stack-name runningAmazonEC2WorkloadsAtScale --template-body file://running-amazon-ec2-workloads-at-scale.yaml --capabilities CAPABILITY_IAM --region us-east-1
++ CFS_STACK_ID=arn:aws:cloudformation:us-east-1:000474600478:stack/runningAmazonEC2WorkloadsAtScale/32222010-04f4-11ea-8a3f-0ad23187ddb2
++ echo 'Created the stack runningAmazonEC2WorkloadsAtScale with Stack Id arn:aws:cloudformation:us-east-1:000474600478:stack/runningAmazonEC2WorkloadsAtScale/32222010-04f4-11ea-8a3f-0ad23187ddb2. Please wait till the status is COMPLETE'
+Created the stack runningAmazonEC2WorkloadsAtScale with Stack Id arn:aws:cloudformation:us-east-1:000474600478:stack/runningAmazonEC2WorkloadsAtScale/32222010-04f4-11ea-8a3f-0ad23187ddb2. Please wait till the status is COMPLETE
++ aws cloudformation wait stack-create-complete --stack-name runningAmazonEC2WorkloadsAtScale --no-paginate
++ for CFK_STACK_OP_KEY in '"${CFK_STACK_OP_KEYS_LIST[@]}"'
+++ jq -r '.Stacks[].Outputs[]| select(.OutputKey=="instanceProfile")|.OutputValue'
+++ aws cloudformation describe-stacks --stack-name runningAmazonEC2WorkloadsAtScale
++ CFK_STACK_OP_VALUE=arn:aws:iam::000474600478:instance-profile/runningAmazonEC2WorkloadsAtScale-instanceProfile-18SDQ74MRB2EL
++ echo instanceProfile=arn:aws:iam::000474600478:instance-profile/runningAmazonEC2WorkloadsAtScale-instanceProfile-18SDQ74MRB2EL
+instanceProfile=arn:aws:iam::000474600478:instance-profile/runningAmazonEC2WorkloadsAtScale-instanceProfile-18SDQ74MRB2EL
++ sed -i.bak -e s#%instanceProfile%#arn:aws:iam::000474600478:instance-profile/runningAmazonEC2WorkloadsAtScale-instanceProfile-18SDQ74MRB2EL#g user-data.txt
++ sed -i.bak -e s#%instanceProfile%#arn:aws:iam::000474600478:instance-profile/runningAmazonEC2WorkloadsAtScale-instanceProfile-18SDQ74MRB2EL#g launch-template-data.json
++ sed -i.bak -e s#%instanceProfile%#arn:aws:iam::000474600478:instance-profile/runningAmazonEC2WorkloadsAtScale-instanceProfile-18SDQ74MRB2EL#g rds.json
++ sed -i.bak -e s#%instanceProfile%#arn:aws:iam::000474600478:instance-profile/runningAmazonEC2WorkloadsAtScale-instanceProfile-18SDQ74MRB2EL#g application-load-balancer.json
++ sed -i.bak -e s#%instanceProfile%#arn:aws:iam::000474600478:instance-profile/runningAmazonEC2WorkloadsAtScale-instanceProfile-18SDQ74MRB2EL#g target-group.json
++ sed -i.bak -e s#%instanceProfile%#arn:aws:iam::000474600478:instance-profile/runningAmazonEC2WorkloadsAtScale-instanceProfile-18SDQ74MRB2EL#g asg.json
++ sed -i.bak -e s#%instanceProfile%#arn:aws:iam::000474600478:instance-profile/runningAmazonEC2WorkloadsAtScale-instanceProfile-18SDQ74MRB2EL#g deployment-group.json
++ sed -i.bak -e s#%instanceProfile%#arn:aws:iam::000474600478:instance-profile/runningAmazonEC2WorkloadsAtScale-instanceProfile-18SDQ74MRB2EL#g deployment.json
++ sed -i.bak -e s#%instanceProfile%#arn:aws:iam::000474600478:instance-profile/runningAmazonEC2WorkloadsAtScale-instanceProfile-18SDQ74MRB2EL#g asg-automatic-scaling.json
++ '[' instanceProfile == codeDeployBucket ']'
++ '[' instanceProfile == fileSystem ']'
++ for CFK_STACK_OP_KEY in '"${CFK_STACK_OP_KEYS_LIST[@]}"'
+++ jq -r '.Stacks[].Outputs[]| select(.OutputKey=="codeDeployServiceRole")|.OutputValue'
+++ aws cloudformation describe-stacks --stack-name runningAmazonEC2WorkloadsAtScale
++ CFK_STACK_OP_VALUE=arn:aws:iam::000474600478:role/runningAmazonEC2WorkloadsAtS-codeDeployServiceRole-FB2ACGLIT8HV
++ echo codeDeployServiceRole=arn:aws:iam::000474600478:role/runningAmazonEC2WorkloadsAtS-codeDeployServiceRole-FB2ACGLIT8HV
+codeDeployServiceRole=arn:aws:iam::000474600478:role/runningAmazonEC2WorkloadsAtS-codeDeployServiceRole-FB2ACGLIT8HV
++ sed -i.bak -e s#%codeDeployServiceRole%#arn:aws:iam::000474600478:role/runningAmazonEC2WorkloadsAtS-codeDeployServiceRole-FB2ACGLIT8HV#g user-data.txt
++ sed -i.bak -e s#%codeDeployServiceRole%#arn:aws:iam::000474600478:role/runningAmazonEC2WorkloadsAtS-codeDeployServiceRole-FB2ACGLIT8HV#g launch-template-data.json
++ sed -i.bak -e s#%codeDeployServiceRole%#arn:aws:iam::000474600478:role/runningAmazonEC2WorkloadsAtS-codeDeployServiceRole-FB2ACGLIT8HV#g rds.json
++ sed -i.bak -e s#%codeDeployServiceRole%#arn:aws:iam::000474600478:role/runningAmazonEC2WorkloadsAtS-codeDeployServiceRole-FB2ACGLIT8HV#g application-load-balancer.json
++ sed -i.bak -e s#%codeDeployServiceRole%#arn:aws:iam::000474600478:role/runningAmazonEC2WorkloadsAtS-codeDeployServiceRole-FB2ACGLIT8HV#g target-group.json
++ sed -i.bak -e s#%codeDeployServiceRole%#arn:aws:iam::000474600478:role/runningAmazonEC2WorkloadsAtS-codeDeployServiceRole-FB2ACGLIT8HV#g asg.json
++ sed -i.bak -e s#%codeDeployServiceRole%#arn:aws:iam::000474600478:role/runningAmazonEC2WorkloadsAtS-codeDeployServiceRole-FB2ACGLIT8HV#g deployment-group.json
++ sed -i.bak -e s#%codeDeployServiceRole%#arn:aws:iam::000474600478:role/runningAmazonEC2WorkloadsAtS-codeDeployServiceRole-FB2ACGLIT8HV#g deployment.json
++ sed -i.bak -e s#%codeDeployServiceRole%#arn:aws:iam::000474600478:role/runningAmazonEC2WorkloadsAtS-codeDeployServiceRole-FB2ACGLIT8HV#g asg-automatic-scaling.json
++ '[' codeDeployServiceRole == codeDeployBucket ']'
++ '[' codeDeployServiceRole == fileSystem ']'
++ for CFK_STACK_OP_KEY in '"${CFK_STACK_OP_KEYS_LIST[@]}"'
+++ jq -r '.Stacks[].Outputs[]| select(.OutputKey=="snsTopic")|.OutputValue'
+++ aws cloudformation describe-stacks --stack-name runningAmazonEC2WorkloadsAtScale
++ CFK_STACK_OP_VALUE=arn:aws:sns:us-east-1:000474600478:runningAmazonEC2WorkloadsAtScale-snsTopic-1J2UBL4MP8M9N
++ echo snsTopic=arn:aws:sns:us-east-1:000474600478:runningAmazonEC2WorkloadsAtScale-snsTopic-1J2UBL4MP8M9N
+snsTopic=arn:aws:sns:us-east-1:000474600478:runningAmazonEC2WorkloadsAtScale-snsTopic-1J2UBL4MP8M9N
++ sed -i.bak -e s#%snsTopic%#arn:aws:sns:us-east-1:000474600478:runningAmazonEC2WorkloadsAtScale-snsTopic-1J2UBL4MP8M9N#g user-data.txt
++ sed -i.bak -e s#%snsTopic%#arn:aws:sns:us-east-1:000474600478:runningAmazonEC2WorkloadsAtScale-snsTopic-1J2UBL4MP8M9N#g launch-template-data.json
++ sed -i.bak -e s#%snsTopic%#arn:aws:sns:us-east-1:000474600478:runningAmazonEC2WorkloadsAtScale-snsTopic-1J2UBL4MP8M9N#g rds.json
++ sed -i.bak -e s#%snsTopic%#arn:aws:sns:us-east-1:000474600478:runningAmazonEC2WorkloadsAtScale-snsTopic-1J2UBL4MP8M9N#g application-load-balancer.json
++ sed -i.bak -e s#%snsTopic%#arn:aws:sns:us-east-1:000474600478:runningAmazonEC2WorkloadsAtScale-snsTopic-1J2UBL4MP8M9N#g target-group.json
++ sed -i.bak -e s#%snsTopic%#arn:aws:sns:us-east-1:000474600478:runningAmazonEC2WorkloadsAtScale-snsTopic-1J2UBL4MP8M9N#g asg.json
++ sed -i.bak -e s#%snsTopic%#arn:aws:sns:us-east-1:000474600478:runningAmazonEC2WorkloadsAtScale-snsTopic-1J2UBL4MP8M9N#g deployment-group.json
++ sed -i.bak -e s#%snsTopic%#arn:aws:sns:us-east-1:000474600478:runningAmazonEC2WorkloadsAtScale-snsTopic-1J2UBL4MP8M9N#g deployment.json
++ sed -i.bak -e s#%snsTopic%#arn:aws:sns:us-east-1:000474600478:runningAmazonEC2WorkloadsAtScale-snsTopic-1J2UBL4MP8M9N#g asg-automatic-scaling.json
++ '[' snsTopic == codeDeployBucket ']'
++ '[' snsTopic == fileSystem ']'
++ for CFK_STACK_OP_KEY in '"${CFK_STACK_OP_KEYS_LIST[@]}"'
+++ jq -r '.Stacks[].Outputs[]| select(.OutputKey=="cloud9Environment")|.OutputValue'
+++ aws cloudformation describe-stacks --stack-name runningAmazonEC2WorkloadsAtScale
++ CFK_STACK_OP_VALUE=cloud9Environment-nKdK4TW1uRV5
++ echo cloud9Environment=cloud9Environment-nKdK4TW1uRV5
+cloud9Environment=cloud9Environment-nKdK4TW1uRV5
++ sed -i.bak -e s#%cloud9Environment%#cloud9Environment-nKdK4TW1uRV5#g user-data.txt
++ sed -i.bak -e s#%cloud9Environment%#cloud9Environment-nKdK4TW1uRV5#g launch-template-data.json
++ sed -i.bak -e s#%cloud9Environment%#cloud9Environment-nKdK4TW1uRV5#g rds.json
++ sed -i.bak -e s#%cloud9Environment%#cloud9Environment-nKdK4TW1uRV5#g application-load-balancer.json
++ sed -i.bak -e s#%cloud9Environment%#cloud9Environment-nKdK4TW1uRV5#g target-group.json
++ sed -i.bak -e s#%cloud9Environment%#cloud9Environment-nKdK4TW1uRV5#g asg.json
++ sed -i.bak -e s#%cloud9Environment%#cloud9Environment-nKdK4TW1uRV5#g deployment-group.json
++ sed -i.bak -e s#%cloud9Environment%#cloud9Environment-nKdK4TW1uRV5#g deployment.json
++ sed -i.bak -e s#%cloud9Environment%#cloud9Environment-nKdK4TW1uRV5#g asg-automatic-scaling.json
++ '[' cloud9Environment == codeDeployBucket ']'
++ '[' cloud9Environment == fileSystem ']'
++ for CFK_STACK_OP_KEY in '"${CFK_STACK_OP_KEYS_LIST[@]}"'
+++ jq -r '.Stacks[].Outputs[]| select(.OutputKey=="fileSystem")|.OutputValue'
+++ aws cloudformation describe-stacks --stack-name runningAmazonEC2WorkloadsAtScale
++ CFK_STACK_OP_VALUE=fs-3f59d6be
++ echo fileSystem=fs-3f59d6be
+fileSystem=fs-3f59d6be
++ sed -i.bak -e s#%fileSystem%#fs-3f59d6be#g user-data.txt
++ sed -i.bak -e s#%fileSystem%#fs-3f59d6be#g launch-template-data.json
++ sed -i.bak -e s#%fileSystem%#fs-3f59d6be#g rds.json
++ sed -i.bak -e s#%fileSystem%#fs-3f59d6be#g application-load-balancer.json
++ sed -i.bak -e s#%fileSystem%#fs-3f59d6be#g target-group.json
++ sed -i.bak -e s#%fileSystem%#fs-3f59d6be#g asg.json
++ sed -i.bak -e s#%fileSystem%#fs-3f59d6be#g deployment-group.json
++ sed -i.bak -e s#%fileSystem%#fs-3f59d6be#g deployment.json
++ sed -i.bak -e s#%fileSystem%#fs-3f59d6be#g asg-automatic-scaling.json
++ '[' fileSystem == codeDeployBucket ']'
++ '[' fileSystem == fileSystem ']'
++ file_system=fs-3f59d6be
++ echo file_system=fs-3f59d6be
+file_system=fs-3f59d6be
++ for CFK_STACK_OP_KEY in '"${CFK_STACK_OP_KEYS_LIST[@]}"'
+++ jq -r '.Stacks[].Outputs[]| select(.OutputKey=="eventRule")|.OutputValue'
+++ aws cloudformation describe-stacks --stack-name runningAmazonEC2WorkloadsAtScale
++ CFK_STACK_OP_VALUE=runningAmazonEC2WorkloadsAtScale-eventRule-10ALLMFJV0P26
++ echo eventRule=runningAmazonEC2WorkloadsAtScale-eventRule-10ALLMFJV0P26
+eventRule=runningAmazonEC2WorkloadsAtScale-eventRule-10ALLMFJV0P26
++ sed -i.bak -e s#%eventRule%#runningAmazonEC2WorkloadsAtScale-eventRule-10ALLMFJV0P26#g user-data.txt
++ sed -i.bak -e s#%eventRule%#runningAmazonEC2WorkloadsAtScale-eventRule-10ALLMFJV0P26#g launch-template-data.json
++ sed -i.bak -e s#%eventRule%#runningAmazonEC2WorkloadsAtScale-eventRule-10ALLMFJV0P26#g rds.json
++ sed -i.bak -e s#%eventRule%#runningAmazonEC2WorkloadsAtScale-eventRule-10ALLMFJV0P26#g application-load-balancer.json
++ sed -i.bak -e s#%eventRule%#runningAmazonEC2WorkloadsAtScale-eventRule-10ALLMFJV0P26#g target-group.json
++ sed -i.bak -e s#%eventRule%#runningAmazonEC2WorkloadsAtScale-eventRule-10ALLMFJV0P26#g asg.json
++ sed -i.bak -e s#%eventRule%#runningAmazonEC2WorkloadsAtScale-eventRule-10ALLMFJV0P26#g deployment-group.json
++ sed -i.bak -e s#%eventRule%#runningAmazonEC2WorkloadsAtScale-eventRule-10ALLMFJV0P26#g deployment.json
++ sed -i.bak -e s#%eventRule%#runningAmazonEC2WorkloadsAtScale-eventRule-10ALLMFJV0P26#g asg-automatic-scaling.json
++ '[' eventRule == codeDeployBucket ']'
++ '[' eventRule == fileSystem ']'
++ for CFK_STACK_OP_KEY in '"${CFK_STACK_OP_KEYS_LIST[@]}"'
+++ jq -r '.Stacks[].Outputs[]| select(.OutputKey=="lambdaFunction")|.OutputValue'
+++ aws cloudformation describe-stacks --stack-name runningAmazonEC2WorkloadsAtScale
++ CFK_STACK_OP_VALUE=runningAmazonEC2WorkloadsAtScale-lambdaFunction-1NWECZX6F1L9J
++ echo lambdaFunction=runningAmazonEC2WorkloadsAtScale-lambdaFunction-1NWECZX6F1L9J
+lambdaFunction=runningAmazonEC2WorkloadsAtScale-lambdaFunction-1NWECZX6F1L9J
++ sed -i.bak -e s#%lambdaFunction%#runningAmazonEC2WorkloadsAtScale-lambdaFunction-1NWECZX6F1L9J#g user-data.txt
++ sed -i.bak -e s#%lambdaFunction%#runningAmazonEC2WorkloadsAtScale-lambdaFunction-1NWECZX6F1L9J#g launch-template-data.json
++ sed -i.bak -e s#%lambdaFunction%#runningAmazonEC2WorkloadsAtScale-lambdaFunction-1NWECZX6F1L9J#g rds.json
++ sed -i.bak -e s#%lambdaFunction%#runningAmazonEC2WorkloadsAtScale-lambdaFunction-1NWECZX6F1L9J#g application-load-balancer.json
++ sed -i.bak -e s#%lambdaFunction%#runningAmazonEC2WorkloadsAtScale-lambdaFunction-1NWECZX6F1L9J#g target-group.json
++ sed -i.bak -e s#%lambdaFunction%#runningAmazonEC2WorkloadsAtScale-lambdaFunction-1NWECZX6F1L9J#g asg.json
++ sed -i.bak -e s#%lambdaFunction%#runningAmazonEC2WorkloadsAtScale-lambdaFunction-1NWECZX6F1L9J#g deployment-group.json
++ sed -i.bak -e s#%lambdaFunction%#runningAmazonEC2WorkloadsAtScale-lambdaFunction-1NWECZX6F1L9J#g deployment.json
++ sed -i.bak -e s#%lambdaFunction%#runningAmazonEC2WorkloadsAtScale-lambdaFunction-1NWECZX6F1L9J#g asg-automatic-scaling.json
++ '[' lambdaFunction == codeDeployBucket ']'
++ '[' lambdaFunction == fileSystem ']'
++ for CFK_STACK_OP_KEY in '"${CFK_STACK_OP_KEYS_LIST[@]}"'
+++ jq -r '.Stacks[].Outputs[]| select(.OutputKey=="codeDeployBucket")|.OutputValue'
+++ aws cloudformation describe-stacks --stack-name runningAmazonEC2WorkloadsAtScale
++ CFK_STACK_OP_VALUE=runningamazonec2workloadsatscale-codedeploybucket-1ap7w9g6bgz6c
++ echo codeDeployBucket=runningamazonec2workloadsatscale-codedeploybucket-1ap7w9g6bgz6c
+codeDeployBucket=runningamazonec2workloadsatscale-codedeploybucket-1ap7w9g6bgz6c
++ sed -i.bak -e s#%codeDeployBucket%#runningamazonec2workloadsatscale-codedeploybucket-1ap7w9g6bgz6c#g user-data.txt
++ sed -i.bak -e s#%codeDeployBucket%#runningamazonec2workloadsatscale-codedeploybucket-1ap7w9g6bgz6c#g launch-template-data.json
++ sed -i.bak -e s#%codeDeployBucket%#runningamazonec2workloadsatscale-codedeploybucket-1ap7w9g6bgz6c#g rds.json
++ sed -i.bak -e s#%codeDeployBucket%#runningamazonec2workloadsatscale-codedeploybucket-1ap7w9g6bgz6c#g application-load-balancer.json
++ sed -i.bak -e s#%codeDeployBucket%#runningamazonec2workloadsatscale-codedeploybucket-1ap7w9g6bgz6c#g target-group.json
++ sed -i.bak -e s#%codeDeployBucket%#runningamazonec2workloadsatscale-codedeploybucket-1ap7w9g6bgz6c#g asg.json
++ sed -i.bak -e s#%codeDeployBucket%#runningamazonec2workloadsatscale-codedeploybucket-1ap7w9g6bgz6c#g deployment-group.json
++ sed -i.bak -e s#%codeDeployBucket%#runningamazonec2workloadsatscale-codedeploybucket-1ap7w9g6bgz6c#g deployment.json
++ sed -i.bak -e s#%codeDeployBucket%#runningamazonec2workloadsatscale-codedeploybucket-1ap7w9g6bgz6c#g asg-automatic-scaling.json
++ '[' codeDeployBucket == codeDeployBucket ']'
++ code_deploy_bucket=runningamazonec2workloadsatscale-codedeploybucket-1ap7w9g6bgz6c
++ echo code_deploy_bucket=runningamazonec2workloadsatscale-codedeploybucket-1ap7w9g6bgz6c
+code_deploy_bucket=runningamazonec2workloadsatscale-codedeploybucket-1ap7w9g6bgz6c
++ '[' codeDeployBucket == fileSystem ']'
++ for CFK_STACK_OP_KEY in '"${CFK_STACK_OP_KEYS_LIST[@]}"'
+++ jq -r '.Stacks[].Outputs[]| select(.OutputKey=="dbSubnetGroup")|.OutputValue'
+++ aws cloudformation describe-stacks --stack-name runningAmazonEC2WorkloadsAtScale
++ CFK_STACK_OP_VALUE=runningamazonec2workloadsatscale-dbsubnetgroup-ol9pwdskl6uq
++ echo dbSubnetGroup=runningamazonec2workloadsatscale-dbsubnetgroup-ol9pwdskl6uq
+dbSubnetGroup=runningamazonec2workloadsatscale-dbsubnetgroup-ol9pwdskl6uq
++ sed -i.bak -e s#%dbSubnetGroup%#runningamazonec2workloadsatscale-dbsubnetgroup-ol9pwdskl6uq#g user-data.txt
++ sed -i.bak -e s#%dbSubnetGroup%#runningamazonec2workloadsatscale-dbsubnetgroup-ol9pwdskl6uq#g launch-template-data.json
++ sed -i.bak -e s#%dbSubnetGroup%#runningamazonec2workloadsatscale-dbsubnetgroup-ol9pwdskl6uq#g rds.json
++ sed -i.bak -e s#%dbSubnetGroup%#runningamazonec2workloadsatscale-dbsubnetgroup-ol9pwdskl6uq#g application-load-balancer.json
++ sed -i.bak -e s#%dbSubnetGroup%#runningamazonec2workloadsatscale-dbsubnetgroup-ol9pwdskl6uq#g target-group.json
++ sed -i.bak -e s#%dbSubnetGroup%#runningamazonec2workloadsatscale-dbsubnetgroup-ol9pwdskl6uq#g asg.json
++ sed -i.bak -e s#%dbSubnetGroup%#runningamazonec2workloadsatscale-dbsubnetgroup-ol9pwdskl6uq#g deployment-group.json
++ sed -i.bak -e s#%dbSubnetGroup%#runningamazonec2workloadsatscale-dbsubnetgroup-ol9pwdskl6uq#g deployment.json
++ sed -i.bak -e s#%dbSubnetGroup%#runningamazonec2workloadsatscale-dbsubnetgroup-ol9pwdskl6uq#g asg-automatic-scaling.json
++ '[' dbSubnetGroup == codeDeployBucket ']'
++ '[' dbSubnetGroup == fileSystem ']'
++ for CFK_STACK_OP_KEY in '"${CFK_STACK_OP_KEYS_LIST[@]}"'
+++ jq -r '.Stacks[].Outputs[]| select(.OutputKey=="instanceSecurityGroup")|.OutputValue'
+++ aws cloudformation describe-stacks --stack-name runningAmazonEC2WorkloadsAtScale
++ CFK_STACK_OP_VALUE=sg-0fadf9471dcf225b3
++ echo instanceSecurityGroup=sg-0fadf9471dcf225b3
+instanceSecurityGroup=sg-0fadf9471dcf225b3
++ sed -i.bak -e s#%instanceSecurityGroup%#sg-0fadf9471dcf225b3#g user-data.txt
++ sed -i.bak -e s#%instanceSecurityGroup%#sg-0fadf9471dcf225b3#g launch-template-data.json
++ sed -i.bak -e s#%instanceSecurityGroup%#sg-0fadf9471dcf225b3#g rds.json
++ sed -i.bak -e s#%instanceSecurityGroup%#sg-0fadf9471dcf225b3#g application-load-balancer.json
++ sed -i.bak -e s#%instanceSecurityGroup%#sg-0fadf9471dcf225b3#g target-group.json
++ sed -i.bak -e s#%instanceSecurityGroup%#sg-0fadf9471dcf225b3#g asg.json
++ sed -i.bak -e s#%instanceSecurityGroup%#sg-0fadf9471dcf225b3#g deployment-group.json
++ sed -i.bak -e s#%instanceSecurityGroup%#sg-0fadf9471dcf225b3#g deployment.json
++ sed -i.bak -e s#%instanceSecurityGroup%#sg-0fadf9471dcf225b3#g asg-automatic-scaling.json
++ '[' instanceSecurityGroup == codeDeployBucket ']'
++ '[' instanceSecurityGroup == fileSystem ']'
++ for CFK_STACK_OP_KEY in '"${CFK_STACK_OP_KEYS_LIST[@]}"'
+++ jq -r '.Stacks[].Outputs[]| select(.OutputKey=="dbSecurityGroup")|.OutputValue'
+++ aws cloudformation describe-stacks --stack-name runningAmazonEC2WorkloadsAtScale
++ CFK_STACK_OP_VALUE=sg-06c33e8ad5eae5ed4
++ echo dbSecurityGroup=sg-06c33e8ad5eae5ed4
+dbSecurityGroup=sg-06c33e8ad5eae5ed4
++ sed -i.bak -e s#%dbSecurityGroup%#sg-06c33e8ad5eae5ed4#g user-data.txt
++ sed -i.bak -e s#%dbSecurityGroup%#sg-06c33e8ad5eae5ed4#g launch-template-data.json
++ sed -i.bak -e s#%dbSecurityGroup%#sg-06c33e8ad5eae5ed4#g rds.json
++ sed -i.bak -e s#%dbSecurityGroup%#sg-06c33e8ad5eae5ed4#g application-load-balancer.json
++ sed -i.bak -e s#%dbSecurityGroup%#sg-06c33e8ad5eae5ed4#g target-group.json
++ sed -i.bak -e s#%dbSecurityGroup%#sg-06c33e8ad5eae5ed4#g asg.json
++ sed -i.bak -e s#%dbSecurityGroup%#sg-06c33e8ad5eae5ed4#g deployment-group.json
++ sed -i.bak -e s#%dbSecurityGroup%#sg-06c33e8ad5eae5ed4#g deployment.json
++ sed -i.bak -e s#%dbSecurityGroup%#sg-06c33e8ad5eae5ed4#g asg-automatic-scaling.json
++ '[' dbSecurityGroup == codeDeployBucket ']'
++ '[' dbSecurityGroup == fileSystem ']'
++ for CFK_STACK_OP_KEY in '"${CFK_STACK_OP_KEYS_LIST[@]}"'
+++ jq -r '.Stacks[].Outputs[]| select(.OutputKey=="loadBalancerSecurityGroup")|.OutputValue'
+++ aws cloudformation describe-stacks --stack-name runningAmazonEC2WorkloadsAtScale
++ CFK_STACK_OP_VALUE=sg-0d9714cc6718e0a7a
++ echo loadBalancerSecurityGroup=sg-0d9714cc6718e0a7a
+loadBalancerSecurityGroup=sg-0d9714cc6718e0a7a
++ sed -i.bak -e s#%loadBalancerSecurityGroup%#sg-0d9714cc6718e0a7a#g user-data.txt
++ sed -i.bak -e s#%loadBalancerSecurityGroup%#sg-0d9714cc6718e0a7a#g launch-template-data.json
++ sed -i.bak -e s#%loadBalancerSecurityGroup%#sg-0d9714cc6718e0a7a#g rds.json
++ sed -i.bak -e s#%loadBalancerSecurityGroup%#sg-0d9714cc6718e0a7a#g application-load-balancer.json
++ sed -i.bak -e s#%loadBalancerSecurityGroup%#sg-0d9714cc6718e0a7a#g target-group.json
++ sed -i.bak -e s#%loadBalancerSecurityGroup%#sg-0d9714cc6718e0a7a#g asg.json
++ sed -i.bak -e s#%loadBalancerSecurityGroup%#sg-0d9714cc6718e0a7a#g deployment-group.json
++ sed -i.bak -e s#%loadBalancerSecurityGroup%#sg-0d9714cc6718e0a7a#g deployment.json
++ sed -i.bak -e s#%loadBalancerSecurityGroup%#sg-0d9714cc6718e0a7a#g asg-automatic-scaling.json
++ '[' loadBalancerSecurityGroup == codeDeployBucket ']'
++ '[' loadBalancerSecurityGroup == fileSystem ']'
++ for CFK_STACK_OP_KEY in '"${CFK_STACK_OP_KEYS_LIST[@]}"'
+++ jq -r '.Stacks[].Outputs[]| select(.OutputKey=="publicSubnet2")|.OutputValue'
+++ aws cloudformation describe-stacks --stack-name runningAmazonEC2WorkloadsAtScale
++ CFK_STACK_OP_VALUE=subnet-0979dc6ed0fe24499
++ echo publicSubnet2=subnet-0979dc6ed0fe24499
+publicSubnet2=subnet-0979dc6ed0fe24499
++ sed -i.bak -e s#%publicSubnet2%#subnet-0979dc6ed0fe24499#g user-data.txt
++ sed -i.bak -e s#%publicSubnet2%#subnet-0979dc6ed0fe24499#g launch-template-data.json
++ sed -i.bak -e s#%publicSubnet2%#subnet-0979dc6ed0fe24499#g rds.json
++ sed -i.bak -e s#%publicSubnet2%#subnet-0979dc6ed0fe24499#g application-load-balancer.json
++ sed -i.bak -e s#%publicSubnet2%#subnet-0979dc6ed0fe24499#g target-group.json
++ sed -i.bak -e s#%publicSubnet2%#subnet-0979dc6ed0fe24499#g asg.json
++ sed -i.bak -e s#%publicSubnet2%#subnet-0979dc6ed0fe24499#g deployment-group.json
++ sed -i.bak -e s#%publicSubnet2%#subnet-0979dc6ed0fe24499#g deployment.json
++ sed -i.bak -e s#%publicSubnet2%#subnet-0979dc6ed0fe24499#g asg-automatic-scaling.json
++ '[' publicSubnet2 == codeDeployBucket ']'
++ '[' publicSubnet2 == fileSystem ']'
++ for CFK_STACK_OP_KEY in '"${CFK_STACK_OP_KEYS_LIST[@]}"'
+++ jq -r '.Stacks[].Outputs[]| select(.OutputKey=="publicSubnet1")|.OutputValue'
+++ aws cloudformation describe-stacks --stack-name runningAmazonEC2WorkloadsAtScale
++ CFK_STACK_OP_VALUE=subnet-0e1c75662fd9bcf46
++ echo publicSubnet1=subnet-0e1c75662fd9bcf46
+publicSubnet1=subnet-0e1c75662fd9bcf46
++ sed -i.bak -e s#%publicSubnet1%#subnet-0e1c75662fd9bcf46#g user-data.txt
++ sed -i.bak -e s#%publicSubnet1%#subnet-0e1c75662fd9bcf46#g launch-template-data.json
++ sed -i.bak -e s#%publicSubnet1%#subnet-0e1c75662fd9bcf46#g rds.json
++ sed -i.bak -e s#%publicSubnet1%#subnet-0e1c75662fd9bcf46#g application-load-balancer.json
++ sed -i.bak -e s#%publicSubnet1%#subnet-0e1c75662fd9bcf46#g target-group.json
++ sed -i.bak -e s#%publicSubnet1%#subnet-0e1c75662fd9bcf46#g asg.json
++ sed -i.bak -e s#%publicSubnet1%#subnet-0e1c75662fd9bcf46#g deployment-group.json
++ sed -i.bak -e s#%publicSubnet1%#subnet-0e1c75662fd9bcf46#g deployment.json
++ sed -i.bak -e s#%publicSubnet1%#subnet-0e1c75662fd9bcf46#g asg-automatic-scaling.json
++ '[' publicSubnet1 == codeDeployBucket ']'
++ '[' publicSubnet1 == fileSystem ']'
++ for CFK_STACK_OP_KEY in '"${CFK_STACK_OP_KEYS_LIST[@]}"'
+++ jq -r '.Stacks[].Outputs[]| select(.OutputKey=="awsRegionId")|.OutputValue'
+++ aws cloudformation describe-stacks --stack-name runningAmazonEC2WorkloadsAtScale
++ CFK_STACK_OP_VALUE=us-east-1
++ echo awsRegionId=us-east-1
+awsRegionId=us-east-1
++ sed -i.bak -e s#%awsRegionId%#us-east-1#g user-data.txt
++ sed -i.bak -e s#%awsRegionId%#us-east-1#g launch-template-data.json
++ sed -i.bak -e s#%awsRegionId%#us-east-1#g rds.json
++ sed -i.bak -e s#%awsRegionId%#us-east-1#g application-load-balancer.json
++ sed -i.bak -e s#%awsRegionId%#us-east-1#g target-group.json
++ sed -i.bak -e s#%awsRegionId%#us-east-1#g asg.json
++ sed -i.bak -e s#%awsRegionId%#us-east-1#g deployment-group.json
++ sed -i.bak -e s#%awsRegionId%#us-east-1#g deployment.json
++ sed -i.bak -e s#%awsRegionId%#us-east-1#g asg-automatic-scaling.json
++ '[' awsRegionId == codeDeployBucket ']'
++ '[' awsRegionId == fileSystem ']'
++ for CFK_STACK_OP_KEY in '"${CFK_STACK_OP_KEYS_LIST[@]}"'
+++ jq -r '.Stacks[].Outputs[]| select(.OutputKey=="vpc")|.OutputValue'
+++ aws cloudformation describe-stacks --stack-name runningAmazonEC2WorkloadsAtScale
++ CFK_STACK_OP_VALUE=vpc-07f94664572cd661b
++ echo vpc=vpc-07f94664572cd661b
+vpc=vpc-07f94664572cd661b
++ sed -i.bak -e s#%vpc%#vpc-07f94664572cd661b#g user-data.txt
++ sed -i.bak -e s#%vpc%#vpc-07f94664572cd661b#g launch-template-data.json
++ sed -i.bak -e s#%vpc%#vpc-07f94664572cd661b#g rds.json
++ sed -i.bak -e s#%vpc%#vpc-07f94664572cd661b#g application-load-balancer.json
++ sed -i.bak -e s#%vpc%#vpc-07f94664572cd661b#g target-group.json
++ sed -i.bak -e s#%vpc%#vpc-07f94664572cd661b#g asg.json
++ sed -i.bak -e s#%vpc%#vpc-07f94664572cd661b#g deployment-group.json
++ sed -i.bak -e s#%vpc%#vpc-07f94664572cd661b#g deployment.json
++ sed -i.bak -e s#%vpc%#vpc-07f94664572cd661b#g asg-automatic-scaling.json
++ '[' vpc == codeDeployBucket ']'
++ '[' vpc == fileSystem ']'
++ sleep 5
++ '[' 1 == 2 ']'

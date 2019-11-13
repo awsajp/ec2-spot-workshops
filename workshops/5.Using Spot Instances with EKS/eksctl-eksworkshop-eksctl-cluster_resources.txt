@@ -1,0 +1,76 @@
+ClusterSharedNodeSecurityGroup	sg-0e1517be5ad3dc711
+AWS::EC2::SecurityGroup	
+CREATE_COMPLETE	-
+ControlPlane	eksworkshop-eksctl	AWS::EKS::Cluster	
+CREATE_COMPLETE	-
+ControlPlaneSecurityGroup	sg-0b15fc095d3d90c9d
+AWS::EC2::SecurityGroup	
+CREATE_COMPLETE	-
+IngressInterNodeGroupSG	IngressInterNodeGroupSG	AWS::EC2::SecurityGroupIngress	
+CREATE_COMPLETE	-
+InternetGateway	igw-077778ca6cb95847d
+AWS::EC2::InternetGateway	
+CREATE_COMPLETE	-
+NATGateway	nat-03e3976fa22d9ee29	AWS::EC2::NatGateway	
+CREATE_COMPLETE	-
+NATIP	52.40.92.126
+AWS::EC2::EIP	
+CREATE_COMPLETE	-
+NATPrivateSubnetRouteUSWEST2B	eksct-NATPr-WUQX7TPG7J29	AWS::EC2::Route	
+CREATE_COMPLETE	-
+NATPrivateSubnetRouteUSWEST2C	eksct-NATPr-XR7PCB7DEUVL	AWS::EC2::Route	
+CREATE_COMPLETE	-
+NATPrivateSubnetRouteUSWEST2D	eksct-NATPr-PKJ2I4ZBKPJ8	AWS::EC2::Route	
+CREATE_COMPLETE	-
+PolicyCloudWatchMetrics	eksct-Poli-1NR74AI56XY4X	AWS::IAM::Policy	
+CREATE_COMPLETE	-
+PolicyNLB	eksct-Poli-P0DY9VBHZHC	AWS::IAM::Policy	
+CREATE_COMPLETE	-
+PrivateRouteTableUSWEST2B	rtb-0c4cab9b34c4126dc	AWS::EC2::RouteTable	
+CREATE_COMPLETE	-
+PrivateRouteTableUSWEST2C	rtb-08e92331161834259	AWS::EC2::RouteTable	
+CREATE_COMPLETE	-
+PrivateRouteTableUSWEST2D	rtb-0cee7432925ce3102	AWS::EC2::RouteTable	
+CREATE_COMPLETE	-
+PublicRouteTable	rtb-0fd6bf2afb8e1ab72	AWS::EC2::RouteTable	
+CREATE_COMPLETE	-
+PublicSubnetRoute	eksct-Publi-TS6M0OOA8LYO	AWS::EC2::Route	
+CREATE_COMPLETE	-
+RouteTableAssociationPrivateUSWEST2B	rtbassoc-055a5b6d83c319be0	AWS::EC2::SubnetRouteTableAssociation	
+CREATE_COMPLETE	-
+RouteTableAssociationPrivateUSWEST2C	rtbassoc-04cb7d1a4d3da753a	AWS::EC2::SubnetRouteTableAssociation	
+CREATE_COMPLETE	-
+RouteTableAssociationPrivateUSWEST2D	rtbassoc-0fd6068c9f35cdf0c	AWS::EC2::SubnetRouteTableAssociation	
+CREATE_COMPLETE	-
+RouteTableAssociationPublicUSWEST2B	rtbassoc-05c8b7c58aa75c5c8	AWS::EC2::SubnetRouteTableAssociation	
+CREATE_COMPLETE	-
+RouteTableAssociationPublicUSWEST2C	rtbassoc-077876c5d5ed0e1a5	AWS::EC2::SubnetRouteTableAssociation	
+CREATE_COMPLETE	-
+RouteTableAssociationPublicUSWEST2D	rtbassoc-0f21434f22157e658	AWS::EC2::SubnetRouteTableAssociation	
+CREATE_COMPLETE	-
+ServiceRole	eksctl-eksworkshop-eksctl-cluster-ServiceRole-1V72D6BMUQWCE
+AWS::IAM::Role	
+CREATE_COMPLETE	-
+SubnetPrivateUSWEST2B	subnet-07103116b0fefbc4f
+AWS::EC2::Subnet	
+CREATE_COMPLETE	-
+SubnetPrivateUSWEST2C	subnet-04713dc4f179540f6
+AWS::EC2::Subnet	
+CREATE_COMPLETE	-
+SubnetPrivateUSWEST2D	subnet-019f2fba9088c90a6
+AWS::EC2::Subnet	
+CREATE_COMPLETE	-
+SubnetPublicUSWEST2B	subnet-0b20ddc2767c60f4b
+AWS::EC2::Subnet	
+CREATE_COMPLETE	-
+SubnetPublicUSWEST2C	subnet-03e786d9a5a1d4352
+AWS::EC2::Subnet	
+CREATE_COMPLETE	-
+SubnetPublicUSWEST2D	subnet-0cd8605a32743b643
+AWS::EC2::Subnet	
+CREATE_COMPLETE	-
+VPC	vpc-046a0608107a012ee
+AWS::EC2::VPC	
+CREATE_COMPLETE	-
+VPCGatewayAttachment	eksct-VPCGa-1FZ2PCDGP2IBM	AWS::EC2::VPCGatewayAttachment	
+CREATE_COMPLETE	-

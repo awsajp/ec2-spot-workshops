@@ -28,7 +28,7 @@ aws cloudformation wait stack-create-complete --stack-name $CFS_STACK_NAME --no-
 for CFK_STACK_OP_KEY in "${CFK_STACK_OP_KEYS_LIST[@]}"; do
     CFK_STACK_OP_VALUE=$(aws cloudformation describe-stacks --stack-name $CFS_STACK_NAME | jq -r ".Stacks[].Outputs[]| select(.OutputKey==\"$CFK_STACK_OP_KEY\")|.OutputValue")
     echo "$CFK_STACK_OP_KEY=$CFK_STACK_OP_VALUE"
-    sed -i.bak -e "s#%$CFK_STACK_OP_KEY%#$CFK_STACK_OP_VALUE#g"  user-data.txt
+    #sed -i.bak -e "s#%$CFK_STACK_OP_KEY%#$CFK_STACK_OP_VALUE#g"  user-data.txt
     sed -i.bak -e "s#%$CFK_STACK_OP_KEY%#$CFK_STACK_OP_VALUE#g"  launch-template-data.json
     sed -i.bak -e "s#%$CFK_STACK_OP_KEY%#$CFK_STACK_OP_VALUE#g"  rds.json
     sed -i.bak -e "s#%$CFK_STACK_OP_KEY%#$CFK_STACK_OP_VALUE#g"  application-load-balancer.json
@@ -53,6 +53,10 @@ done
 
 sleep 5
 
+
+if [ "1" == "2" ]; then
+
+    
 RDS_ID=$(aws rds create-db-instance --cli-input-json file://rds.json|jq -r '.DBInstance.DBInstanceIdentifier')
 echo "Amazon RDS_ID is $RDS_ID"
 
@@ -60,6 +64,7 @@ aws rds wait  db-instance-available --db-instance-identifier $RDS_ID
 
 export AMI_ID=$(aws ec2 describe-images --owners amazon --filters 'Name=name,Values=amzn2-ami-hvm-2.0.????????-x86_64-gp2' 'Name=state,Values=available' --output json | jq -r '.Images |   sort_by(.CreationDate) | last(.[]).ImageId')
 echo "Amazon AMI_ID is $AMI_ID"
+
 
 sed -i.bak  -e "s#%ami-id%#$ami_id#g" -e "s#%UserData%#$(cat user-data.txt | base64 --wrap=0)#g" launch-template-data.json
 
@@ -114,3 +119,5 @@ sudo chown ec2-user. ~/environment/media
 sudo cp -av *.mp3 ~/environment/media
 
 aws autoscaling put-scaling-policy --cli-input-json file://asg-automatic-scaling.json
+
+fi

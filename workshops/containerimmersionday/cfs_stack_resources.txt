@@ -1,0 +1,12 @@
+
+EcsInstanceAsg	EC2ContainerService-EcsLabPublicCluster-EcsInstanceAsg-1CF2FDTFKYVOY
+AWS::AutoScaling::AutoScalingGroup	
+CREATE_COMPLETE	-
+EcsInstanceLc	EC2ContainerService-EcsLabPublicCluster-EcsInstanceLc-TVFVRGYJSDZK
+AWS::AutoScaling::LaunchConfiguration	
+CREATE_COMPLETE	-
+
+
+EcsInstanceAsgName	EC2ContainerService-EcsLabPublicCluster-EcsInstanceAsg-1CF2FDTFKYVOY	Auto Scaling Group Name for ECS Instances	-
+TemplateVersion	2.0.0	The version of the template used by Create Cluster Wizard	-
+UsedByECSCreateCluster	true	Flag used by ECS Create Cluster Wizard	

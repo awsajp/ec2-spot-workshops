@@ -1,37 +1,45 @@
-## 2-Launching-EC2-Spot-Instances
-   
-  This is a automated version of the EC2 Spot workshop Launching EC2 Spot Instances https://ec2spotworkshops.com/launching_ec2_spot_instances.html
-  
+## ContainerImmersionDay - Lab 1 : Getting Started with Docker and ECR Lab
    
 
-## Deploy the cloud formation template to create the Infrastructure Infra 
+   
 
-Please find the CF yaml at  https://ec2spotworkshops.com/launching_ec2_spot_instances.html
-
-### Create the Launch Template Instances 
-
-aws ec2 create-launch-template --region $DEFAULT_REGION --launch-template-name $LAUNCH_TEMPLATE_NAME --version-description LAUNCH_TEMPLATE_VERSION --launch-template-data "{\"NetworkInterfaces\":[{\"DeviceIndex\":0,\"SubnetId\":\"$DEFAULT_SUBNET\"}],\"ImageId\":\"$AMI_ID\",\"InstanceType\":\"$INSTANCE_TYPE\",\"TagSpecifications\":[{\"ResourceType\":\"instance\",\"Tags\":[{\"Key\":\"Name\",\"Value\":\"$LAUNCH_TEMPLATE_NAME\"}]}]}" | jq -r '.LaunchTemplate.LaunchTemplateId'
+### 1. Setting up the VPC 
 
 
+### Setting up the IAM user and roles
 
-### Create the Spot Instances using Auto scaling Group
 
-aws autoscaling create-auto-scaling-group --cli-input-json file://$ASG_TEMPLATE_TEMP_FILE
 
-### Create the Spot Instances using Run Instances API
+### Launching the Cluster
 
-aws ec2 run-instances --launch-template LaunchTemplateName=$LAUNCH_TEMPLATE_NAME,Version=$LAUNCH_TEMPLATE_VERSION --instance-market-options MarketType=spot
+
+### Launching the Workstation
+
  
- 
-### Create the Spot Instances using Spot Fleet using Instance Specifications
-
- aws ec2 request-spot-fleet --spot-fleet-request-config file://$SPOTFLEET_TEMPLATE_INSTANCESPECS_TEMP_FILE|jq -r '.SpotFleetRequestId'
-
-### Create the Spot Instances using Spot Fleet using the Launch Template
-
-aws ec2 request-spot-fleet --spot-fleet-request-config file://$SPOTFLEET_TEMPLATE_LAUNCHTEMPLATE_TEMP_FILE|jq -r '.SpotFleetRequestId'
+### Prepping the Docker images
 
 
-### Workshop Cleanup
+
+### Creating container registries with ECR
 
 
+### Configuring the AWS CLI
+
+### Pushing our tested images to ECR
+
+
+## ContainerImmersionDay - Lab 2 : Getting Started with ECS
+
+
+
+### Creating the ALB
+
+### Creating the Task Definitions
+
+### Creating the Services
+
+### Testing our service deployments from the console and the ALB
+
+### More in-depth logging with CloudWatch
+
+### Cleanup

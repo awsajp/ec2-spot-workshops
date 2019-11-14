@@ -1,37 +1,85 @@
-## 2-Launching-EC2-Spot-Instances
-   
-  This is a automated version of the EC2 Spot workshop Launching EC2 Spot Instances https://ec2spotworkshops.com/launching_ec2_spot_instances.html
-  
+## ContainerImmersionDay - Lab 1 : Getting Started with Docker and ECR Lab
    
 
-## Deploy the cloud formation template to create the Infrastructure Infra 
+   
 
-Please find the CF yaml at  https://ec2spotworkshops.com/launching_ec2_spot_instances.html
-
-### Create the Launch Template Instances 
-
-aws ec2 create-launch-template --region $DEFAULT_REGION --launch-template-name $LAUNCH_TEMPLATE_NAME --version-description LAUNCH_TEMPLATE_VERSION --launch-template-data "{\"NetworkInterfaces\":[{\"DeviceIndex\":0,\"SubnetId\":\"$DEFAULT_SUBNET\"}],\"ImageId\":\"$AMI_ID\",\"InstanceType\":\"$INSTANCE_TYPE\",\"TagSpecifications\":[{\"ResourceType\":\"instance\",\"Tags\":[{\"Key\":\"Name\",\"Value\":\"$LAUNCH_TEMPLATE_NAME\"}]}]}" | jq -r '.LaunchTemplate.LaunchTemplateId'
+### 1. Setting up the VPC 
 
 
+### 2. Setting up the IAM user and roles
 
-### Create the Spot Instances using Auto scaling Group
 
-aws autoscaling create-auto-scaling-group --cli-input-json file://$ASG_TEMPLATE_TEMP_FILE
 
-### Create the Spot Instances using Run Instances API
+### 3. Launching the Cluster
 
-aws ec2 run-instances --launch-template LaunchTemplateName=$LAUNCH_TEMPLATE_NAME,Version=$LAUNCH_TEMPLATE_VERSION --instance-market-options MarketType=spot
+
+### 4. Launching the Workstation
+
+$ ssh -i cert.pem ec2-user@[public DNS]
+$ sudo yum update -y
+$ sudo yum install -y docker
+$ sudo service docker start
+
+$ sudo usermod -a -G docker ec2-user
+$ docker info
+
  
- 
-### Create the Spot Instances using Spot Fleet using Instance Specifications
+### 5. Prepping the Docker images
 
- aws ec2 request-spot-fleet --spot-fleet-request-config file://$SPOTFLEET_TEMPLATE_INSTANCESPECS_TEMP_FILE|jq -r '.SpotFleetRequestId'
+$ curl -O https://s3-us-west-2.amazonaws.com/apn-bootcamps/microservice-ecs-2017/ecs-lab-code-20170524.tar.gz
 
-### Create the Spot Instances using Spot Fleet using the Launch Template
+$ tar -xvf ecs-lab-code-20170524.tar.gz
+$ cd <path/to/project>/aws-microservices-ecs-bootcamp-v2/web
+$ docker build -t ecs-lab/web .
+$ docker images
+$ docker run -d -p 3000:3000 ecs-lab/web
+$ docker ps 
+$ curl localhost:3000/web
+$ cd ../api 
+$ docker build -t ecs-lab/api .
+$ docker images
+$ docker run -d -p 8000:8000 ecs-lab/api
+$ curl localhost:8000/api
 
-aws ec2 request-spot-fleet --spot-fleet-request-config file://$SPOTFLEET_TEMPLATE_LAUNCHTEMPLATE_TEMP_FILE|jq -r '.SpotFleetRequestId'
 
 
-### Workshop Cleanup
+### 6. Creating container registries with ECR
 
 
+### 7. Configuring the AWS CLI
+
+$ aws configure
+$ aws configure
+AWS Access Key ID: <leave empty> 
+AWS Secret Access Key: <leave empty> 
+Default region name [us-east-1]: us-east-1
+Default output format [json]: <leave empty> 
+
+$ aws ecr get-login
+aws ecr get-login --region us-east-1
+
+### 8. Pushing our tested images to ECR
+
+$ docker tag ecs-lab/web:latest <account_id>.dkr.ecr.us-east-1.amazonaws.com/ecs-lab-web:latest
+$ docker push <account_id>.dkr.ecr.us-east-1.amazonaws.com/ecs-lab-web:latest
+
+$ docker tag ecs-lab/api:latest <account_id>.dkr.ecr.us-east-1.amazonaws.com/ecs-lab-api:latest
+$ docker push <account_id>.dkr.ecr.us-east-1.amazonaws.com/ecs-lab-api:latest
+
+
+
+## ContainerImmersionDay - Lab 2 : Getting Started with ECS
+
+
+
+### 9. Creating the ALB
+
+### 10. Creating the Task Definitions
+
+### 11. Creating the Services
+
+### 12. Testing our service deployments from the console and the ALB
+
+### 13. More in-depth logging with CloudWatch
+
+### 14. Cleanup

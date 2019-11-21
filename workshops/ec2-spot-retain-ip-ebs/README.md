@@ -9,7 +9,11 @@ In this workshop, you will deploy the following:
     Creare an EFS storage
     Retain the IP addresses
     
-    
+### Step1 :  Create an Initial State
+SNO  INSTANCE_ID    DATE  SECONDARY_PRIVATE_IP  
+1    i-dsss       
+
+
 ### Step1 :  Create an EFS storage to store the persistance data/state for spot instances
 
 

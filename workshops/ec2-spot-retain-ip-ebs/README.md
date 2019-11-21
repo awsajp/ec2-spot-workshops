@@ -14,6 +14,7 @@ In this workshop, you will deploy the following:
         - when instance is interrupted, it saves secondary private ip into EFS
         - when instances ls launched again, it checks for available secondary ip in EFS
           if it finds, it ssiigns the secondary private ip
+        - it installs the spot interruption handler to save private ip into the EFS state
           
     Create a Spot fleet of N (say 2 for testing) instances
     Web server prints primary and secondary private ips

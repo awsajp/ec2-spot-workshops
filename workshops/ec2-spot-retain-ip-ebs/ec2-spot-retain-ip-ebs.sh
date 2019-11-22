@@ -61,35 +61,16 @@ if [ ! -f $EFS_MOUNT_POINT/$SPOT_VOLUME_STATUS_FILE ]; then
 fi
 
 
-
-if [ "1" == "2" ]; then
-EBS_VOLUME_ID=$(aws ec2 create-volume --volume-type $EBS_TYPE  --size $EBS_SIZE   --availability-zone $AWS_AVAIALABILITY_ZONE | jq -r '.VolumeId')
-echo "EBS_VOLUME_ID=$EBS_VOLUME_ID"
-aws ec2 wait volume-available  --volume-ids $EBS_VOLUME_ID
-    
-aws ec2 attach-volume --volume-id $EBS_VOLUME_ID --instance-id $INSTANCE_ID --device $EBS_DEV
-sleep 15
-mkfs -t xfs $EBS_DEV
-mount $EBS_DEV /var/www/
-
-yum -y install httpd
-service httpd start
-chkconfig httpd on
-     echo "<html> <body> <h2>Time: $(date) Instance Id: $INSTANCE_ID PRIMARY_PRIVATE_IP: ${array[0]} SECONDARY_PRIVATE_IP: ${array[1]} EBS_VOLUME_ID:$EBS_VOLUME_ID</h2> </body> </html>" >> /var/www/html/index.html
-
-fi
-
-
-
 VOLUME_IDS=$(aws ec2 describe-volumes --region $AWS_REGION  --filters Name=attachment.instance-id,Values=$INSTANCE_ID | jq -r '.Volumes[].VolumeId')
 
 echo "VOLUME_IDS=$VOLUME_IDS"
 volume_array=($VOLUME_IDS)
+ROOT_VOLUME_ID="${volume_array[0]}"
+
 echo "Numner of VolumeIds for the Instance Id $INSTANCE_ID are ${#volume_array[@]}"
 
-
 VOLUME_IDS_STATUS="$(cat $EFS_MOUNT_POINT/$SPOT_VOLUME_STATUS_FILE)"
-echo "VOLUME_IDS_STATUS stored into the EFS is $VOLUME_IDS_STATUS"
+echo "Initial VOLUME_IDS_STATUS read from EFS is $VOLUME_IDS_STATUS"
 
 function get_available_volume_or_ip()
 {
@@ -133,37 +114,32 @@ if [ "${#volume_array[@]}" == "1" ]; then
      aws ec2 attach-volume --volume-id $SECONDARY_VOLUME_ID --instance-id $INSTANCE_ID --device $EBS_DEV
      sleep 15
      mkfs -t xfs $EBS_DEV
-     mount $EBS_DEV /var/www/
 
-     echo "The root volume is ${volume_array[0]} Secondary volume is $SECONDARY_VOLUME_ID So storing this Secondary Volume to EFS..."
+     echo "The root volume is $ROOT_VOLUME_ID Secondary volume is $SECONDARY_VOLUME_ID So storing this Secondary Volume to EFS..."
      echo "$SECONDARY_VOLUME_ID=IN_USE" >> $EFS_MOUNT_POINT/$SPOT_VOLUME_STATUS_FILE
 
   else
-     echo "SECONDARY_VOLUME_ID $SECONDARY_VOLUME_ID  exists in EFS. So let me attach to this Volume."
+     echo "SECONDARY_VOLUME_ID $SECONDARY_VOLUME_ID  exists in EFS. So let me attach to this Volume and change volume status in EFS."
      sleep 10
      aws ec2 attach-volume --volume-id $SECONDARY_VOLUME_ID --instance-id $INSTANCE_ID --device $EBS_DEV
      sleep 15
      sed -i "s/$SECONDARY_VOLUME_ID=AVAILABLE/$SECONDARY_VOLUME_ID=IN_USE/g" $EFS_MOUNT_POINT/$SPOT_VOLUME_STATUS_FILE
   fi
 else
-   echo "Instance already contains two EBS Volumes IP ${volume_array[0]} and Secondary IP ${volume_array[1]} So storing Secondary Volume Id to EFS..."
    SECONDARY_VOLUME_ID="${volume_array[1]}"
+   echo "Instance already contains two EBS ROOT_VOLUME_ID: $ROOT_VOLUME_ID and Secondary Volume: $SECONDARY_VOLUME_ID So storing Secondary Volume Id to EFS..."
    echo "$SECONDARY_VOLUME_ID=IN_USE" >> $EFS_MOUNT_POINT/$SPOT_VOLUME_STATUS_FILE
 fi
 
 SECONDARY_VOLUME_ID_STATUS="$(cat $EFS_MOUNT_POINT/$SPOT_VOLUME_STATUS_FILE)"
-echo "SECONDARY_VOLUME_ID_STATUS stored into the EFS is $SECONDARY_VOLUME_ID_STATUS"
+echo "Final SECONDARY_VOLUME_ID_STATUS stored into the EFS is $SECONDARY_VOLUME_ID_STATUS"
 
-mkdir -p /var/www/
+mkdir -p /var/www/html/
 mount $EBS_DEV /var/www/
 
 yum -y install httpd
 service httpd start
 chkconfig httpd on
-echo "<html> <body> <h2>Time: $(date) Instance Id: $INSTANCE_ID PRIMARY_PRIVATE_IP: ${array[0]} SECONDARY_PRIVATE_IP: ${array[1]} SECONDARY_VOLUME_ID:$SECONDARY_VOLUME_ID</h2> </body> </html>" >> /var/www/html/index.html
-
-
-
 
 if [ "1" == "2" ]; then
 
@@ -182,27 +158,26 @@ function get_available_secondary_ip()
          break
       fi
     
-      #for addr in $mails
-      #do
-       #   echo "addr=$addr"
-      #done
     
     done < "$input"
 }
 
+fi
+
 PRIVATE_IPS=$(curl -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/$MAC/local-ipv4s)
 echo "PRIVATE_IPS=$PRIVATE_IPS"
 array=($PRIVATE_IPS)
+PRIMARY_PRIVATE_IP="${array[0]}"
 echo "Numner of Private IPs for the Instance Id are ${#array[@]}"
 
 
 SECONDARY_PRIVATE_IPS_STATUS="$(cat $EFS_MOUNT_POINT/$SPOT_IP_STATUS_FILE)"
-echo "SECONDARY_PRIVATE_IPS_STATUS stored into the EFS is $SECONDARY_PRIVATE_IPS_STATUS"
+echo "Initial SECONDARY_PRIVATE_IPS_STATUS read from EFS is $SECONDARY_PRIVATE_IPS_STATUS"
 
 
 if [ "${#array[@]}" == "1" ]; then
    echo "Instance $INSTANCE_ID contains only one IP i.e. Primary IP addr ${array[0]}"
-   SECONDARY_PRIVATE_IP=$(get_available_secondary_ip)
+   SECONDARY_PRIVATE_IP=$(get_available_volume_or_ip "IP")
    echo "SECONDARY_PRIVATE_IP from EFS is $SECONDARY_PRIVATE_IP"
    
    if [[ -z $SECONDARY_PRIVATE_IP ]]; then
@@ -215,55 +190,57 @@ if [ "${#array[@]}" == "1" ]; then
      SECONDARY_PRIVATE_IP="${array[1]}"
      echo "The Primary IP is ${array[0]} Secondary IP is ${array[1]} So storing this Secondary Ip to EFS..."
      echo "$SECONDARY_PRIVATE_IP=IN_USE" >> $EFS_MOUNT_POINT/$SPOT_IP_STATUS_FILE
-     
-     SECONDARY_PRIVATE_IPS_STATUS="$(cat $EFS_MOUNT_POINT/$SPOT_IP_STATUS_FILE)"
-     echo "SECONDARY_PRIVATE_IPS_STATUS stored into the EFS is $SECONDARY_PRIVATE_IPS_STATUS"
   else
-     echo "SECONDARY_PRIVATE_IP $SECONDARY_PRIVATE_IP already exists in EFS. So let me assign this IP to myself."
+     echo "SECONDARY_PRIVATE_IP $SECONDARY_PRIVATE_IP already exists in EFS. So let me assign this IP to myself and change status in EFS"
      sleep 45
      aws ec2 assign-private-ip-addresses --network-interface-id $INTERFACE_ID --private-ip-addresses $SECONDARY_PRIVATE_IP
      service network restart
      sed -i "s/$SECONDARY_PRIVATE_IP=AVAILABLE/$SECONDARY_PRIVATE_IP=IN_USE/g" $EFS_MOUNT_POINT/$SPOT_IP_STATUS_FILE
-     SECONDARY_PRIVATE_IPS_STATUS="$(cat $EFS_MOUNT_POINT/$SPOT_IP_STATUS_FILE)"
-     echo "SECONDARY_PRIVATE_IPS_STATUS stored into the EFS is $SECONDARY_PRIVATE_IPS_STATUS"
-     
   fi
   
 else
-   echo "Instance already contains both Primary IP ${array[0]} and Secondary IP ${array[1]} So storing Secondary Ip to EFS..."
    SECONDARY_PRIVATE_IP="${array[1]}"
+   echo "Instance already contains both Primary IP $PRIMARY_PRIVATE_IP and Secondary IP $SECONDARY_PRIVATE_IP So storing Secondary Ip to EFS..."
    echo "$SECONDARY_PRIVATE_IP=IN_USE" >> $EFS_MOUNT_POINT/$SPOT_IP_STATUS_FILE
-   SECONDARY_PRIVATE_IPS_STATUS="$(cat $EFS_MOUNT_POINT/$SPOT_IP_STATUS_FILE)"
-   echo "SECONDARY_PRIVATE_IPS_STATUS stored into the EFS is $SECONDARY_PRIVATE_IPS_STATUS"
-
 fi
 
-     PRIVATE_IPS=$(curl -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/$MAC/local-ipv4s)
-     array=($PRIVATE_IPS)
-     
-     echo "<html> <body> <h2>Time: $(date) Instance Id: $INSTANCE_ID PRIMARY_PRIVATE_IP: ${array[0]} SECONDARY_PRIVATE_IP: ${array[1]} EBS_VOLUME_ID:$EBS_VOLUME_ID</h2> </body> </html>" >> index.html
-     
-  #   echo  "PRIMARY_PRIVATE_IP=${array[0]}" >> /var/www/html/index.html
-  #   echo "SECONDARY_PRIVATE_IP=${array[1]}" >> /var/www/html/index.html
-     
+    SECONDARY_PRIVATE_IPS_STATUS="$(cat $EFS_MOUNT_POINT/$SPOT_IP_STATUS_FILE)"
+    echo "Final SECONDARY_PRIVATE_IPS_STATUS stored into the EFS is $SECONDARY_PRIVATE_IPS_STATUS"
+    echo "<html> <body> <h2>Time: $(date) Instance Id: $INSTANCE_ID PRIMARY_PRIVATE_IP: $PRIMARY_PRIVATE_IP SECONDARY_PRIVATE_IP: $SECONDARY_PRIVATE_IP ROOT_VOLUME_ID: $ROOT_VOLUME_ID SECONDARY_VOLUME_ID:$SECONDARY_VOLUME_ID</h2> </body> </html>" >> /var/www/html/index.html
+
      
 cat <<EOF > /usr/local/bin/spot-instance-termination-notice-handler.sh
 #!/bin/bash
 while sleep 5; do
+
  INSTANCE_ID=\$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+ AWS_REGION=\$(curl -s 169.254.169.254/latest/dynamic/instance-identity/document | jq -r '.region')
+ 
 if [ -z \$(curl -Isf http://169.254.169.254/latest/meta-data/spot/termination-time)]; then
    echo "\$INSTANCE_ID is running fine at \$(date)" >> $EFS_MOUNT_POINT/$SPOT_INSTANCE_STATUS_FILE
    /bin/false
 else
    echo "\$INSTANCE_ID is got spot interruption at \$(date)" >> $EFS_MOUNT_POINT/$SPOT_INSTANCE_STATUS_FILE
+   
    MAC=\$(curl -s http://169.254.169.254/latest/meta-data/mac)
    PRIVATE_IPS=\$(curl -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/\$MAC/local-ipv4s)
    array=(\$PRIVATE_IPS)
    SECONDARY_PRIVATE_IP="\${array[1]}"
    sed -i "s/\$SECONDARY_PRIVATE_IP=IN_USE/\$SECONDARY_PRIVATE_IP=AVAILABLE/g" $EFS_MOUNT_POINT/$SPOT_IP_STATUS_FILE
-   SECONDARY_PRIVATE_IPS_STATUS="\$(cat $EFS_MOUNT_POINT/$SPOT_IP_STATUS_FILE)"
-   echo "SECONDARY_PRIVATE_IPS_STATUS stored into the EFS is \$SECONDARY_PRIVATE_IPS_STATUS"
-   exit 0
+
+   VOLUME_IDS=\$(aws ec2 describe-volumes --region \$AWS_REGION  --filters Name=attachment.instance-id,Values=\$INSTANCE_ID | jq -r '.Volumes[].VolumeId')
+   volume_array=(\$VOLUME_IDS)
+   SECONDARY_VOLUME_ID="\${volume_array[1]}"
+ 
+   service httpd stop
+   umount /var/www/
+   yum -y removed httpd
+   rm -rf /var/www/
+   aws ec2 detach-volume --volume-id \$SECONDARY_VOLUME_ID
+   sed -i "s/\$SECONDARY_VOLUME_ID=IN_USE/\$SECONDARY_VOLUME_ID=AVAILABLE/g" \$EFS_MOUNT_POINT/\$SPOT_VOLUME_STATUS_FILE
+     
+   sleep 120
+ 
   
 fi
 done
@@ -272,4 +249,3 @@ chmod +x /usr/local/bin/spot-instance-termination-notice-handler.sh
 /usr/local/bin/spot-instance-termination-notice-handler.sh &
 
 
-fi

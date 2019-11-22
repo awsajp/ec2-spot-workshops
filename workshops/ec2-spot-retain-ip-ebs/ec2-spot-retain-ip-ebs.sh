@@ -7,7 +7,6 @@ yum update -y
 yum -y install jq amazon-efs-utils
 
 
-
 #Global Settings
 EFS_FS_ID=fs-2b2540aa
 EFS_MOUNT_POINT=/jp
@@ -25,25 +24,17 @@ EBS_DEV=/dev/xvdb
 #SECONDARY_PRIVATE_IP="172.31.81.24"
 MAC=$(curl -s http://169.254.169.254/latest/meta-data/mac)
 INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+AWS_AVAIALABILITY_ZONE=$(curl -s 169.254.169.254/latest/dynamic/instance-identity/document | jq -r '.availabilityZone')
+AWS_REGION=$(curl -s 169.254.169.254/latest/dynamic/instance-identity/document | jq -r '.region')
 INTERFACE_ID=$(curl -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/$MAC/interface-id)
 echo "MAC=$MAC"
 echo "INSTANCE_ID=$INSTANCE_ID"
 echo "INTERFACE_ID=$INTERFACE_ID"
 
-AWS_REGION=$(curl -s 169.254.169.254/latest/dynamic/instance-identity/document | jq -r '.region')
-AWS_AVAIALABILITY_ZONE=$(curl -s 169.254.169.254/latest/dynamic/instance-identity/document | jq -r '.availabilityZone')
-
-aws configure set default.region ${AWS_REGION}
-
-
 
 mkdir -p $EFS_MOUNT_POINT
-
-
-
-
-
 sudo mount -t efs -o tls $EFS_FS_ID:/ $EFS_MOUNT_POINT
+
 
 if [ ! -f $EFS_MOUNT_POINT/$SPOT_IP_STATUS_FILE ]; then
     echo "File $EFS_MOUNT_POINT/$SPOT_IP_STATUS_FILE does not exist. Hence creating..."
@@ -134,35 +125,6 @@ fi
 SECONDARY_VOLUME_ID_STATUS="$(cat $EFS_MOUNT_POINT/$SPOT_VOLUME_STATUS_FILE)"
 echo "Final SECONDARY_VOLUME_ID_STATUS stored into the EFS is $SECONDARY_VOLUME_ID_STATUS"
 
-mkdir -p /var/www/html/
-mount $EBS_DEV /var/www/
-
-yum -y install httpd
-service httpd start
-chkconfig httpd on
-
-if [ "1" == "2" ]; then
-
-function get_available_secondary_ip()
-{
-  
-    input="$EFS_MOUNT_POINT/$SPOT_IP_STATUS_FILE"
-    while IFS= read -r line
-    do
-      #echo "line=$line"
-      
-      mails=$(echo $line | tr "=" "\n")
-      arr=($mails)
-      if [[ "${arr[1]}" == "AVAILABLE" ]]; then
-         echo "${arr[0]}"
-         break
-      fi
-    
-    
-    done < "$input"
-}
-
-fi
 
 PRIVATE_IPS=$(curl -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/$MAC/local-ipv4s)
 echo "PRIVATE_IPS=$PRIVATE_IPS"
@@ -206,6 +168,14 @@ fi
 
     SECONDARY_PRIVATE_IPS_STATUS="$(cat $EFS_MOUNT_POINT/$SPOT_IP_STATUS_FILE)"
     echo "Final SECONDARY_PRIVATE_IPS_STATUS stored into the EFS is $SECONDARY_PRIVATE_IPS_STATUS"
+    
+    mkdir -p /var/www/html/
+    mount $EBS_DEV /var/www/
+    
+    yum -y install httpd
+    service httpd start
+    chkconfig httpd on
+
     echo "<html> <body> <h2>Time: $(date) Instance Id: $INSTANCE_ID PRIMARY_PRIVATE_IP: $PRIMARY_PRIVATE_IP SECONDARY_PRIVATE_IP: $SECONDARY_PRIVATE_IP ROOT_VOLUME_ID: $ROOT_VOLUME_ID SECONDARY_VOLUME_ID:$SECONDARY_VOLUME_ID</h2> </body> </html>" >> /var/www/html/index.html
 
      
@@ -237,8 +207,10 @@ else
    yum -y removed httpd
    rm -rf /var/www/
    aws ec2 detach-volume --volume-id \$SECONDARY_VOLUME_ID
-   sed -i "s/\$SECONDARY_VOLUME_ID=IN_USE/\$SECONDARY_VOLUME_ID=AVAILABLE/g" \$EFS_MOUNT_POINT/\$SPOT_VOLUME_STATUS_FILE
-     
+   sed -i "s/\$SECONDARY_VOLUME_ID=IN_USE/\$SECONDARY_VOLUME_ID=AVAILABLE/g" $EFS_MOUNT_POINT/$SPOT_VOLUME_STATUS_FILE
+    
+   umount $EFS_MOUNT_POINT
+   rm -rf $EFS_MOUNT_POINT
    sleep 120
  
   

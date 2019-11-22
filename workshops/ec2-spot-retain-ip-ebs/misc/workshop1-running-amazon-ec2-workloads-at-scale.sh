@@ -49,7 +49,8 @@ for CFK_STACK_OP_KEY in "${CFK_STACK_OP_KEYS_LIST[@]}"; do
       echo "file_system=$file_system"
     fi
 
-done
+done 
+
 
 sleep 5
 

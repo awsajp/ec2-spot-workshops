@@ -128,18 +128,12 @@ echo "MY_NAME=$MY_NAME SECONDARY_VOLUME_ID=$SECONDARY_VOLUME_ID SECONDARY_PRIVAT
     service httpd start
     chkconfig httpd on
 
-
-    VOLUME_IDS=$(aws ec2 describe-volumes --region $AWS_REGION  --filters Name=attachment.instance-id,Values=$INSTANCE_ID | jq -r '.Volumes[].VolumeId')
-    volume_array=($VOLUME_IDS)
-    ROOT_VOLUME_ID="${volume_array[0]}"
-    SECONDARY_VOLUME_ID="${volume_array[1]}"
-
     PRIVATE_IPS=$(curl -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/$MAC/local-ipv4s)
     array=($PRIVATE_IPS)
     PRIMARY_PRIVATE_IP="${array[0]}"
     SECONDARY_PRIVATE_IP="${array[1]}"    
     
-    echo "<html> <body> <h4>Myname: $MY_NAME Time: $(date) Instance Id: $INSTANCE_ID PUBLIC_IP: $PUBLIC_IP PRIMARY_PRIVATE_IP: $PRIMARY_PRIVATE_IP SECONDARY_PRIVATE_IP: $SECONDARY_PRIVATE_IP ROOT_VOLUME_ID: $ROOT_VOLUME_ID SECONDARY_VOLUME_ID:$SECONDARY_VOLUME_ID</h4> </body> </html>" >> /var/www/html/index.html
+    echo "<html> <body> <h4>Myname: $MY_NAME Time: $(date) Instance Id: $INSTANCE_ID PUBLIC_IP: $PUBLIC_IP SECONDARY_PRIVATE_IP: $SECONDARY_PRIVATE_IP SECONDARY_VOLUME_ID:$SECONDARY_VOLUME_ID</h4> </body> </html>" >> /var/www/html/index.html
 
 
 cat <<EOF > /usr/local/bin/spot-instance-termination-notice-handler.sh
@@ -147,10 +141,10 @@ cat <<EOF > /usr/local/bin/spot-instance-termination-notice-handler.sh
 while sleep 5; do
 
 if [ -z \$(curl -Isf http://169.254.169.254/latest/meta-data/spot/termination-time)]; then
-   echo "$INSTANCE_ID is running fine at \$(date)" >> $EFS_MOUNT_POINT/$SPOT_INSTANCE_STATUS_FILE
+   echo "$INSTANCE_ID with $MY_NAME=$SECONDARY_VOLUME_ID=$SECONDARY_PRIVATE_IP is running fine at \$(date)" >> $EFS_MOUNT_POINT/$SPOT_INSTANCE_STATUS_FILE
    /bin/false
 else
-   echo "$INSTANCE_ID is got spot interruption at \$(date)" >> $EFS_MOUNT_POINT/$SPOT_INSTANCE_STATUS_FILE
+   echo "$INSTANCE_ID with $MY_NAME=$SECONDARY_VOLUME_ID=$SECONDARY_PRIVATE_IP got spot interruption at \$(date)" >> $EFS_MOUNT_POINT/$SPOT_INSTANCE_STATUS_FILE
    service httpd stop
    umount /var/www/
    yum -y removed httpd

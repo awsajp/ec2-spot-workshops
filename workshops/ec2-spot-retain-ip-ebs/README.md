@@ -5,21 +5,21 @@ The purpose of this workshop is to show to how to retain both EBS and private ip
 In this workshop, you will deploy the following:
 
     Creare an EFS storage
-      - all spot instances maintain below two states in EFS
-      - SPOT_INSTANCE_STATUS_FILE - contains state (running or interruption) of spot instances
-      - SPOT_IP_STATUS_FILE contauns secondary private ip of the spot instances
+      - all spot instances maintain one state file in EFS to store secondary ip and EBS volume
+      - SPOT_STATE_FILE - contains state (running or interruption) of spot instances
     Create Lauch Template with user data
-        - each instance runs a web server
-        - when instance is launched for the first time, it allocates an secondary private ip
-        - when instance is interrupted, it saves secondary private ip into EFS
-        - when instances ls launched again, it checks for available secondary ip in EFS
-          if it finds, it ssiigns the secondary private ip
-        - it installs the spot interruption handler to save private ip into the EFS state
+    Create a Spot fleet of N (say 2 for testing) instances. One of the instance named MASTER and remaining are named as SLAVE_#N 
+        - each instance runs a web server. Web Server runs from the secondary EBS volume and prints secondary ip and EBS volume id
+        - when instance is launched for the first time, it allocates an secondary private ip and EBS volume
+          and store them in EFS and set the state to IN_USE
+        - it installs the spot interruption handler.  
+        - when sinstance is interrupted, interruption handler detaches EBS volume and changes the state in EFS to AVAILABLE
+        - when instances ls launched again, it checks if there is IP/EBS exists with state AVAILABLE
+          if it finds, it ssiigns the secondary private ip and EBS to itself and changes the state
           
     Create a Spot fleet of N (say 2 for testing) instances
-    Web server prints primary and secondary private ips
     Test the spot interruption by reducing the target capacity and increase it again after instance is terminated
-    You can see that secondary private ip is always SAME for the instances across the spot terminations
+    You can see that secondary private ip/EBS is always SAME for the instances across the spot terminations
     
 
 

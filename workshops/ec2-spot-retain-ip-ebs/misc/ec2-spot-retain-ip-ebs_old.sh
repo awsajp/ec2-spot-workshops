@@ -12,6 +12,7 @@ EFS_FS_ID=fs-2b2540aa
 EFS_MOUNT_POINT=/jp
 SPOT_IP_STATUS_FILE=spot_ip_status.txt
 SPOT_VOLUME_STATUS_FILE=spot_volume_status.txt
+SPOT_STATE_FILE=spot_state.txt
 SPOT_INSTANCE_STATUS_FILE=spot_instance_status.txt
 
 
@@ -27,6 +28,17 @@ INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
 AWS_AVAIALABILITY_ZONE=$(curl -s 169.254.169.254/latest/dynamic/instance-identity/document | jq -r '.availabilityZone')
 AWS_REGION=$(curl -s 169.254.169.254/latest/dynamic/instance-identity/document | jq -r '.region')
 INTERFACE_ID=$(curl -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/$MAC/interface-id)
+AMI_ID=$(curl -s http://169.254.169.254/latest/meta-data/ami-launch-index)
+
+
+if [ $AMI_ID == "0" ]; then
+    MY_NAME="MASTER"
+else
+    MY_NAME="SLAVE_"$AMI_ID
+fi
+
+echo "MY_NAME=$MY_NAME"
+
 echo "MAC=$MAC"
 echo "INSTANCE_ID=$INSTANCE_ID"
 echo "INTERFACE_ID=$INTERFACE_ID"

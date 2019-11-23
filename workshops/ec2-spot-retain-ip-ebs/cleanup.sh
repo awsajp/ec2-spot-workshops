@@ -28,6 +28,25 @@ echo "MAC=$MAC"
 echo "INSTANCE_ID=$INSTANCE_ID"
 echo "INTERFACE_ID=$INTERFACE_ID"
 
+X=""
+Y=""
+
+function get_available_volume_or_ip()
+{
+    X="xxxx"
+    Y="yyyy"
+    echo "TRUE"
+    
+}
+    get_available_volume_or_ip
+    echo "X=$X, Y=$Y"
+    
+    if [[ ! -z $X ]] &&  [[ ! -z $Y ]]; then
+      echo "both"
+    fi
+
+    
+
 sudo mount -t efs -o tls $EFS_FS_ID:/ $EFS_MOUNT_POINT
 
 
@@ -42,7 +61,6 @@ echo "VOLUME_IDS=$VOLUME_IDS  ${#volume_array[@]}"
 if [ "${#volume_array[@]}" != "1" ]; then
    SECONDARY_VOLUME_ID="${volume_array[1]}"
    aws ec2 detach-volume --volume-id $SECONDARY_VOLUME_ID
-   sed -i "s/\$SECONDARY_VOLUME_ID=IN_USE/\$SECONDARY_VOLUME_ID=AVAILABLE/g" \$EFS_MOUNT_POINT/\$SPOT_VOLUME_STATUS_FILE
 fi
 
 PRIVATE_IPS=$(curl -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/$MAC/local-ipv4s)
@@ -51,10 +69,5 @@ array=($PRIVATE_IPS)
 if [ "${#array[@]}" != "1" ]; then
    SECONDARY_PRIVATE_IP="${array[1]}"
    aws ec2 unassign-private-ip-addresses --network-interface-id $INTERFACE_ID --private-ip-addresses $SECONDARY_PRIVATE_IP
-   sed -i "s/\$SECONDARY_PRIVATE_IP=IN_USE/\$SECONDARY_PRIVATE_IP=AVAILABLE/g" $EFS_MOUNT_POINT/$SPOT_IP_STATUS_FILE
 fi
-
-
-
-
 

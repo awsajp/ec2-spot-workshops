@@ -1,0 +1,13 @@
+{
+    "name": "demo-capacityprovider", 
+    "autoScalingGroupProvider": {
+    "autoScalingGroupArn": "arn:aws:autoscaling:us-east-1:000474600478:autoScalingGroup:788c2211-4ac0-4d60-916b-82b3262d7d5a:autoScalingGroupName/demo-asg",
+            "managedScaling": {
+                "status": "ENABLED",
+                "targetCapacity": 100,
+                "minimumScalingStepSize": 1,
+                "maximumScalingStepSize": 100
+            },
+            "managedTerminationProtection": "ENABLED"
+    }
+}

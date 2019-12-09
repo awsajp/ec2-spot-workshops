@@ -1,0 +1,2 @@
+#!/bin/bash
+echo ECS_CLUSTER=demo-news-blog-scale >> /etc/ecs/ecs.config

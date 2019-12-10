@@ -14,7 +14,12 @@ yum -y install jq amazon-efs-utils
 SLEEP=5
 WORKSHOP_NAME=ecs-fargate-cluster-autoscale
 LAUNCH_TEMPLATE_NAME=ecs-fargate-cluster-autoscale-LT
-ECS_FARGATE_CLLUSTER_NAME=ecs-fargate-cluster-autoscale-EcsFargateCluster
+ASG_NAME_OD=ecs-fargate-cluster-autoscale-asg-od
+ASG_NAME_SPOT=ecs-fargate-cluster-autoscale-asg-spot
+OD_CAPACITY_PROVIDER_NAME=od-capacity_provider_2
+SPOT_CAPACITY_PROVIDER_NAME=spot-capacity_provider_2
+
+ECS_FARGATE_CLLUSTER_NAME=EcsFargateCluster
 LAUNCH_TEMPLATE_VERSION=1
 IAM_INSTANT_PROFILE_ARN=arn:aws:iam::000474600478:instance-profile/ecsInstanceRole
 SECURITY_GROUP=sg-4f3f0d1e
@@ -54,7 +59,7 @@ sed -i.bak  -e "s#%ami-id%#$AMI_ID#g" -e "s#%UserData%#$(cat user-data.txt | bas
 LAUCH_TEMPLATE_ID=lt-07fdb20138ddf466c
 echo "Amazon LAUCH_TEMPLATE_ID is $LAUCH_TEMPLATE_ID"
 
-ASG_NAME=ecs-fargate-cluster-autoscale-asg1-od
+ASG_NAME=$ASG_NAME_OD
 OD_BASE=0
 OD_PERCENTAGE=100
 MIN_SIZE=0
@@ -67,6 +72,7 @@ INSTANCE_TYPE_3=t2.medium
 INSTANCE_TYPE_4=t3.micro
 INSTANCE_TYPE_5=t3.small
 INSTANCE_TYPE_6=t3.medium
+SERVICE_ROLE_ARN="arn:aws:iam::000474600478:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling"
 
 sed -i.bak -e "s#%ASG_NAME%#$ASG_NAME#g"  asg.json
 sed -i.bak -e "s#%LAUNCH_TEMPLATE_NAME%#$LAUNCH_TEMPLATE_NAME#g"  asg.json
@@ -84,12 +90,27 @@ sed -i.bak -e "s#%MAX_SIZE%#$MAX_SIZE#g"  asg.json
 sed -i.bak -e "s#%DESIREDS_SIZE%#$DESIREDS_SIZE#g"  asg.json
 sed -i.bak -e "s#%OD_BASE%#$OD_BASE#g"  asg.json
 sed -i.bak -e "s#%PUBLIC_SUBNET_LIST%#$PUBLIC_SUBNET_LIST#g"  asg.json
+sed -i.bak -e "s#%SERVICE_ROLE_ARN%#$SERVICE_ROLE_ARN#g"  asg.json
 
 aws autoscaling create-auto-scaling-group --cli-input-json file://asg.json
+ASG_ARN=$(aws autoscaling describe-auto-scaling-groups --auto-scaling-group-name $ASG_NAME_OD | jq -r '.AutoScalingGroups[0].AutoScalingGroupARN')
+echo "$ASG_NAME_OD ARN=$ASG_ARN"
+
+TARGET_CAPACITY=100
+CAPACITY_PROVIDER_NAME=$OD_CAPACITY_PROVIDER_NAME
+sed -i.bak -e "s#%CAPACITY_PROVIDER_NAME%#$CAPACITY_PROVIDER_NAME#g"  ecs-capacityprovider.json
+sed -i.bak -e "s#%ASG_ARN%#$ASG_ARN#g"  ecs-capacityprovider.json
+sed -i.bak -e "s#%MAX_SIZE%#$MAX_SIZE#g"  ecs-capacityprovider.json
+sed -i.bak -e "s#%TARGET_CAPACITY%#$TARGET_CAPACITY#g"  ecs-capacityprovider.json
+
+CAPACITY_PROVIDER_ARN=$(aws ecs create-capacity-provider --cli-input-json file://ecs-capacityprovider.json | jq -r '.capacityProvider.capacityProviderArn')
+echo "$OD_CAPACITY_PROVIDER_NAME ARN=$CAPACITY_PROVIDER_ARN"
+
+
 
 cp -Rfp templates/asg.json .
 
-ASG_NAME=ecs-fargate-cluster-autoscale-asg2-spot
+ASG_NAME=$ASG_NAME_SPOT
 OD_PERCENTAGE=0
 
 sed -i.bak -e "s#%ASG_NAME%#$ASG_NAME#g"  asg.json
@@ -108,8 +129,67 @@ sed -i.bak -e "s#%MAX_SIZE%#$MAX_SIZE#g"  asg.json
 sed -i.bak -e "s#%DESIREDS_SIZE%#$DESIREDS_SIZE#g"  asg.json
 sed -i.bak -e "s#%OD_BASE%#$OD_BASE#g"  asg.json
 sed -i.bak -e "s#%PUBLIC_SUBNET_LIST%#$PUBLIC_SUBNET_LIST#g"  asg.json
+sed -i.bak -e "s#%SERVICE_ROLE_ARN%#$SERVICE_ROLE_ARN#g"  asg.json
 
 aws autoscaling create-auto-scaling-group --cli-input-json file://asg.json
+ASG_ARN=$(aws autoscaling describe-auto-scaling-groups --auto-scaling-group-name $ASG_NAME_SPOT | jq -r '.AutoScalingGroups[0].AutoScalingGroupARN')
+echo "$ASG_NAME_SPOT ARN=$ASG_ARN"
+
+cp -Rfp templates/ecs-capacityprovider.json .
+
+TARGET_CAPACITY=100
+CAPACITY_PROVIDER_NAME=$SPOT_CAPACITY_PROVIDER_NAME
+sed -i.bak -e "s#%CAPACITY_PROVIDER_NAME%#$CAPACITY_PROVIDER_NAME#g"  ecs-capacityprovider.json
+sed -i.bak -e "s#%ASG_ARN%#$ASG_ARN#g"  ecs-capacityprovider.json
+sed -i.bak -e "s#%MAX_SIZE%#$MAX_SIZE#g"  ecs-capacityprovider.json
+sed -i.bak -e "s#%TARGET_CAPACITY%#$TARGET_CAPACITY#g"  ecs-capacityprovider.json
+
+CAPACITY_PROVIDER_ARN=$(aws ecs create-capacity-provider --cli-input-json file://ecs-capacityprovider.json | jq -r '.capacityProvider.capacityProviderArn')
+echo "$SPOT_CAPACITY_PROVIDER_NAME ARN=$CAPACITY_PROVIDER_ARN"
+
+
+aws ecs create-cluster --cluster-name $ECS_FARGATE_CLLUSTER_NAME \
+       --capacity-providers $OD_CAPACITY_PROVIDER_NAME $SPOT_CAPACITY_PROVIDER_NAME \
+       --default-capacity-provider-strategy capacityProvider=$OD_CAPACITY_PROVIDER_NAME,base=1,weight=1 \
+         capacityProvider=$SPOT_CAPACITY_PROVIDER_NAME,weight=0
+
+sleep 10
+
+aws ecs put-cluster-capacity-providers   --cluster $ECS_FARGATE_CLLUSTER_NAME \
+     --capacity-providers FARGATE FARGATE_SPOT $OD_CAPACITY_PROVIDER_NAME $SPOT_CAPACITY_PROVIDER_NAME  \
+     --default-capacity-provider-strategy capacityProvider=$OD_CAPACITY_PROVIDER_NAME,base=1,weight=1 \
+         capacityProvider=$SPOT_CAPACITY_PROVIDER_NAME,weight=0  \
+     --region $AWS_REGION
+     
+aws ecs register-task-definition --cli-input-json file://webapp-fargate.json
+
+ECS_SERVICE_NAME=webapp-service-od
+
+aws ecs create-service \
+     --capacity-provider-strategy capacityProvider=$OD_CAPACITY_PROVIDER_NAME,weight=1 capacityProvider=FARGATE_SPOT,weight=0 \
+     --cluster $ECS_FARGATE_CLLUSTER_NAME \
+     --service-name $ECS_SERVICE_NAME \
+     --task-definition webapp-task:1 \
+     --desired-count 2 \
+     --region us-east-1 \
+	 --network-configuration "awsvpcConfiguration={subnets=[subnet-764d7d11],securityGroups=[sg-4f3f0d1e],assignPublicIp="ENABLED"}"
+	 
+ECS_SERVICE_NAME=webapp-service-spot
+
+
+ECS_SERVICE_NAME=webapp-service-mix
+
+
+
+ECS_SERVICE_NAME=webapp-service-fargate
+
+
+
+ECS_SERVICE_NAME=webapp-service-fargate-spot
+
+
+ECS_SERVICE_NAME=webapp-service-fargate-mix
+
 
 
 

@@ -1,2 +1,2 @@
 #!/bin/bash
-echo ECS_CLUSTER=ecs-fargate-cluster-autoscale-EcsFargateCluster >> /etc/ecs/ecs.config
+echo ECS_CLUSTER=EcsFargateCluster >> /etc/ecs/ecs.config

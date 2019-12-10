@@ -38,6 +38,13 @@
   "MinSize": %MIN_SIZE%,
   "MaxSize": %MAX_SIZE%,
   "DesiredCapacity": %DESIREDS_SIZE%,
+  "DefaultCooldown": 300,
+  "HealthCheckGracePeriod": 300, 
   "HealthCheckType": "EC2",
-  "VPCZoneIdentifier": "%PUBLIC_SUBNET_LIST%"
+  "VPCZoneIdentifier": "%PUBLIC_SUBNET_LIST%",
+      "TerminationPolicies": [ 
+        "DEFAULT" 
+  ],
+  "NewInstancesProtectedFromScaleIn": true, 
+  "ServiceLinkedRoleARN": "%SERVICE_ROLE_ARN%"
 }

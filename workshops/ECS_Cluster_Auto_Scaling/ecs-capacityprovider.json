@@ -1,0 +1,13 @@
+{
+    "name": "spot-capacity_provider_1", 
+    "autoScalingGroupProvider": {
+    "autoScalingGroupArn": "",
+            "managedScaling": {
+                "status": "ENABLED",
+                "targetCapacity": 10,
+                "minimumScalingStepSize": 1,
+                "maximumScalingStepSize": 10
+            },
+            "managedTerminationProtection": "ENABLED"
+    }
+}

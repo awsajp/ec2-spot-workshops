@@ -1,5 +1,5 @@
 {
-  "AutoScalingGroupName": "ecs-fargate-cluster-autoscale-asg2-spot",
+  "AutoScalingGroupName": "ecs-fargate-cluster-autoscale-asg-spot",
   "MixedInstancesPolicy": {
     "LaunchTemplate": {
       "LaunchTemplateSpecification": {
@@ -38,6 +38,13 @@
   "MinSize": 0,
   "MaxSize": 10,
   "DesiredCapacity": 0,
+  "DefaultCooldown": 300,
+  "HealthCheckGracePeriod": 300, 
   "HealthCheckType": "EC2",
-  "VPCZoneIdentifier": "subnet-764d7d11,subnet-a2c2fd8c,subnet-cb26e686,subnet-7acbf626,subnet-93d490ad,subnet-313ad03f"
+  "VPCZoneIdentifier": "subnet-764d7d11,subnet-a2c2fd8c,subnet-cb26e686,subnet-7acbf626,subnet-93d490ad,subnet-313ad03f",
+      "TerminationPolicies": [ 
+        "DEFAULT" 
+  ],
+  "NewInstancesProtectedFromScaleIn": true, 
+  "ServiceLinkedRoleARN": "arn:aws:iam::000474600478:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling"
 }

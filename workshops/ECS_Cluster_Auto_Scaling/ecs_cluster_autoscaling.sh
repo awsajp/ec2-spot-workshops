@@ -41,4 +41,13 @@ aws configure set default.region ${AWS_REGION}
 
 #aws autoscaling create-auto-scaling-group --auto-scaling-group-name demo-asg --cli-input-json file://demo-asgconfig.json
 
-aws ecs create-capacity-provider --cli-input-json file://demo-capacityprovider.json
+#aws ecs create-capacity-provider --cli-input-json file://demo-capacityprovider.json
+
+#aws ecs create-cluster --cluster-name demo-news-blog-scale --capacity-providers demo-capacityprovider --default-capacity-provider-strategy capacityProvider=demo-capacityprovider,weight=1
+
+#aws ecs describe-clusters --clusters demo-news-blog-scale --include ATTACHMENTS
+
+#aws ecs register-task-definition --cli-input-json file://demo-sleep-taskdef.json
+
+aws ecs run-task --cluster demo-news-blog-scale --count 5 --task-definition demo-sleep-taskdef:1
+

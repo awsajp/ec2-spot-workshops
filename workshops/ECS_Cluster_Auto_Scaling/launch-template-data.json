@@ -1,0 +1,41 @@
+{
+  "IamInstanceProfile": {
+    "Arn": "arn:aws:iam::000474600478:instance-profile/ecsInstanceRole"
+  },
+  "ImageId": "ami-097e3d1cdb541f43e",
+  "SecurityGroupIds": [
+    "sg-4f3f0d1e"
+  ],
+  "InstanceType": "t3.micro",
+  "BlockDeviceMappings": [
+        {
+            "DeviceName": "/dev/xvdcz",
+            "Ebs": {
+                "VolumeSize": 22,
+                "VolumeType": "gp2",
+                "DeleteOnTermination": true,
+                "Encrypted": true
+                }
+        }
+    ],
+  "TagSpecifications": [
+    {
+      "ResourceType": "instance",
+      "Tags": [
+        {
+          "Key": "Name",
+          "Value": "ecs-fargate-cluster-autoscale"
+        },
+        {
+          "Key": "Env",
+          "Value": "Test"
+        }
+      ]
+    }
+  ],
+  "Monitoring": {
+    "Enabled": true
+  },
+  
+  "UserData": "IyEvYmluL2Jhc2gKZWNobyBFQ1NfQ0xVU1RFUj1lY3MtZmFyZ2F0ZS1jbHVzdGVyLWF1dG9zY2FsZS1FY3NGYXJnYXRlQ2x1c3RlciA+PiAvZXRjL2Vjcy9lY3MuY29uZmlnCg=="
+}

@@ -1,5 +1,5 @@
 {
-    "LaunchConfigurationName": "demo-launchconfig",
+    "LaunchConfigurationName": "demo-launchconfig2",
     "ImageId": "ami-097e3d1cdb541f43e",
     "SecurityGroups": [
         "sg-4f3f0d1e"

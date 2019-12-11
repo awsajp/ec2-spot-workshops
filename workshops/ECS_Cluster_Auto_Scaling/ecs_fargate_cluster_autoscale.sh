@@ -161,42 +161,103 @@ aws ecs put-cluster-capacity-providers   --cluster $ECS_FARGATE_CLLUSTER_NAME \
          capacityProvider=$SPOT_CAPACITY_PROVIDER_NAME,weight=0  \
      --region $AWS_REGION
      
-aws ecs register-task-definition --cli-input-json file://webapp-fargate.json
+aws ecs register-task-definition --cli-input-json file://webapp-fargate-task.json
+WEBAPP_FARGATE_TASK_DEF=$(cat webapp-fargate-task.json | jq -r '.family')
+aws ecs register-task-definition --cli-input-json file://webapp-ec2-task.json
+WEBAPP_EC2_TASK_DEF=$(cat webapp-ec2-task.json | jq -r '.family')
 
-ECS_SERVICE_NAME=webapp-service-od
+# Deploy ECS Service only on the OD instances using EC2 autoscaling Capacity provider dedicated for OD
+
+ECS_SERVICE_NAME=webapp-ec2-service-od
+TASK_COUNT=2
 
 aws ecs create-service \
-     --capacity-provider-strategy capacityProvider=$OD_CAPACITY_PROVIDER_NAME,weight=1 capacityProvider=FARGATE_SPOT,weight=0 \
+     --capacity-provider-strategy capacityProvider=$OD_CAPACITY_PROVIDER_NAME,weight=1 \
      --cluster $ECS_FARGATE_CLLUSTER_NAME \
      --service-name $ECS_SERVICE_NAME \
-     --task-definition webapp-task:1 \
-     --desired-count 2 \
-     --region us-east-1 \
-	 --network-configuration "awsvpcConfiguration={subnets=[subnet-764d7d11],securityGroups=[sg-4f3f0d1e],assignPublicIp="ENABLED"}"
-	 
-ECS_SERVICE_NAME=webapp-service-spot
+     --task-definition $WEBAPP_EC2_TASK_DEF:1 \
+     --desired-count $TASK_COUNT \
+     --region $AWS_REGION 
+     
+    
+# Deploy ECS Service only on the Spot instances using EC2 autoscaling Capacity provider dedicated for spot
+
+ECS_SERVICE_NAME=webapp-ec2-service-spot
+TASK_COUNT=2
+
+aws ecs create-service \
+     --capacity-provider-strategy capacityProvider=$SPOT_CAPACITY_PROVIDER_NAME,weight=1 \
+     --cluster $ECS_FARGATE_CLLUSTER_NAME \
+     --service-name $ECS_SERVICE_NAME \
+     --task-definition $WEBAPP_EC2_TASK_DEF:1 \
+     --desired-count $TASK_COUNT \
+     --region $AWS_REGION 
+
+# Deploy ECS Service  on both OD and  Spot instances using EC2 autoscaling Capacity providers for OD and spot
+
+ECS_SERVICE_NAME=webapp-ec2-service-mix
+TASK_COUNT=6
+
+aws ecs create-service \
+     --capacity-provider-strategy capacityProvider=$OD_CAPACITY_PROVIDER_NAME,weight=1 \
+                                  capacityProvider=$SPOT_CAPACITY_PROVIDER_NAME,weight=3 \
+     --cluster $ECS_FARGATE_CLLUSTER_NAME \
+     --service-name $ECS_SERVICE_NAME \
+     --task-definition $WEBAPP_EC2_TASK_DEF:1 \
+     --desired-count $TASK_COUNT \
+     --region $AWS_REGION
+     
+     
+# Deploy ECS Service only on the FARGATE using default FARGATE Capacity provider 
+
+ECS_SERVICE_NAME=webapp-fargate-service-fargate
+TASK_COUNT=2
+
+aws ecs create-service \
+     --capacity-provider-strategy capacityProvider=FARGATE,weight=1 \
+     --cluster $ECS_FARGATE_CLLUSTER_NAME \
+     --service-name $ECS_SERVICE_NAME \
+     --task-definition $WEBAPP_FARGATE_TASK_DEF:1 \
+     --desired-count $TASK_COUNT \
+     --region $AWS_REGION \
+ 	 --network-configuration "awsvpcConfiguration={subnets=[subnet-764d7d11],securityGroups=[sg-4f3f0d1e],assignPublicIp="ENABLED"}"
 
 
-ECS_SERVICE_NAME=webapp-service-mix
+# Deploy ECS Service only on the FARGATE SPOT using default FARGATE-SPOT Capacity provider 
+
+ECS_SERVICE_NAME=webapp-fargate-service-fargate-spot
+TASK_COUNT=2
+
+aws ecs create-service \
+     --capacity-provider-strategy capacityProvider=FARGATE_SPOT,weight=1 \
+     --cluster $ECS_FARGATE_CLLUSTER_NAME \
+     --service-name $ECS_SERVICE_NAME \
+     --task-definition $WEBAPP_FARGATE_TASK_DEF:1 \
+     --desired-count $TASK_COUNT \
+     --region $AWS_REGION \
+ 	 --network-configuration "awsvpcConfiguration={subnets=[subnet-764d7d11],securityGroups=[sg-4f3f0d1e],assignPublicIp="ENABLED"}"
 
 
+# Deploy ECS Service both on the FARGATE and FARGATE SPOT using default FARGATE and FARGATE-SPOT Capacity provider 
 
-ECS_SERVICE_NAME=webapp-service-fargate
+ECS_SERVICE_NAME=webapp-fargate-service-mix
+TASK_COUNT=2
 
-
-
-ECS_SERVICE_NAME=webapp-service-fargate-spot
-
-
-ECS_SERVICE_NAME=webapp-service-fargate-mix
-
+aws ecs create-service \
+     --capacity-provider-strategy capacityProvider=FARGATE_SPOT,weight=1 \
+     --cluster $ECS_FARGATE_CLLUSTER_NAME \
+     --service-name $ECS_SERVICE_NAME \
+     --task-definition $WEBAPP_FARGATE_TASK_DEF:1 \
+     --desired-count $TASK_COUNT \
+     --region $AWS_REGION \
+ 	 --network-configuration "awsvpcConfiguration={subnets=[subnet-764d7d11],securityGroups=[sg-4f3f0d1e],assignPublicIp="ENABLED"}"
 
 
 
 
 #aws autoscaling create-launch-configuration --cli-input-json file://demo-launchconfig.json --user-data file://demo-userdata.txt
 
-#aws autoscaling create-auto-scaling-group --auto-scaling-group-name demo-asg --cli-input-json file://demo-asgconfig.json
+#aws autoscaling create-auto-scaling-group --auto-scaling-group-name demo-asg2 --cli-input-json file://demo-asgconfig.json
 
 #aws ecs create-capacity-provider --cli-input-json file://demo-capacityprovider.json
 

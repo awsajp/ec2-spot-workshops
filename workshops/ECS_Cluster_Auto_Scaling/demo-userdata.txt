@@ -1,2 +1,2 @@
 #!/bin/bash
-echo ECS_CLUSTER=demo-news-blog-scale >> /etc/ecs/ecs.config
+echo ECS_CLUSTER=FargateCluster1 >> /etc/ecs/ecs.config

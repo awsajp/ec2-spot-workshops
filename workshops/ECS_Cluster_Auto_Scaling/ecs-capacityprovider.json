@@ -1,10 +1,10 @@
 {
-    "name": "spot-capacity_provider_1", 
+    "name": "spot-capacity_provider_2", 
     "autoScalingGroupProvider": {
-    "autoScalingGroupArn": "",
+    "autoScalingGroupArn": "arn:aws:autoscaling:us-east-1:000474600478:autoScalingGroup:69ecaeb9-5844-41b4-8855-7a1b138b5f8d:autoScalingGroupName/ecs-fargate-cluster-autoscale-asg-spot",
             "managedScaling": {
                 "status": "ENABLED",
-                "targetCapacity": 10,
+                "targetCapacity": 100,
                 "minimumScalingStepSize": 1,
                 "maximumScalingStepSize": 10
             },

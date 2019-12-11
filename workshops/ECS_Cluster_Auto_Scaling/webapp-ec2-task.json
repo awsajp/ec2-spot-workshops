@@ -1,5 +1,5 @@
 {
-    "family": "webapp-task", 
+    "family": "webapp-fargate-task", 
     "networkMode": "awsvpc", 
     "containerDefinitions": [
         {

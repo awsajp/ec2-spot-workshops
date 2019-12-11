@@ -1,5 +1,6 @@
 {
     "family": "webapp-fargate-task", 
+    "networkMode": "awsvpc", 
     "containerDefinitions": [
         {
             "name": "fargate-app", 
@@ -22,7 +23,7 @@
         }
     ], 
     "requiresCompatibilities": [
-        "EC2"
+        "FARGATE"
     ], 
     "cpu": "256", 
     "memory": "512"

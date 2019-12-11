@@ -8,22 +8,22 @@
       },
       "Overrides": [
         {
-          "InstanceType": "t2.micro"
+          "InstanceType": "c4.large"
         },
         {
-          "InstanceType": "t2.small"
+          "InstanceType": "c5.large"
         },
         {
-          "InstanceType": "t2.medium"
+          "InstanceType": "m4.large"
         },
         {
-          "InstanceType": "t3.micro"
+          "InstanceType": "m5.large"
         },
         {
-          "InstanceType": "t3.small"
+          "InstanceType": "r4.large"
         },
         {
-          "InstanceType": "t3.medium"
+          "InstanceType": "r5.large"
         }
       ]
     },

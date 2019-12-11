@@ -3,11 +3,13 @@
 echo "Creating the Infrastructure for ECS_Cluster_Auto_Scaling workshop ..."
 
 
-yum update -y
+#yum update -y
 yum -y install jq amazon-efs-utils
 
 
 #Global Defaults
+#DEFAULT_REGION=us-east-1
+SLEEP=5
 WORKSHOP_NAME=ecs-fargate-cluster-autoscale
 LAUNCH_TEMPLATE_NAME=ecs-fargate-cluster-autoscale-LT
 ASG_NAME_OD=ecs-fargate-cluster-autoscale-asg-od
@@ -247,4 +249,21 @@ aws ecs create-service \
      --desired-count $TASK_COUNT \
      --region $AWS_REGION \
  	 --network-configuration "awsvpcConfiguration={subnets=[subnet-764d7d11],securityGroups=[sg-4f3f0d1e],assignPublicIp="ENABLED"}"
+
+
+
+
+#aws autoscaling create-launch-configuration --cli-input-json file://demo-launchconfig.json --user-data file://demo-userdata.txt
+
+#aws autoscaling create-auto-scaling-group --auto-scaling-group-name demo-asg2 --cli-input-json file://demo-asgconfig.json
+
+#aws ecs create-capacity-provider --cli-input-json file://demo-capacityprovider.json
+
+#aws ecs create-cluster --cluster-name demo-news-blog-scale --capacity-providers demo-capacityprovider --default-capacity-provider-strategy capacityProvider=demo-capacityprovider,weight=1
+
+#aws ecs describe-clusters --clusters demo-news-blog-scale --include ATTACHMENTS
+
+#aws ecs register-task-definition --cli-input-json file://demo-sleep-taskdef.json
+
+#aws ecs run-task --cluster demo-news-blog-scale --count 5 --task-definition demo-sleep-taskdef:1
 

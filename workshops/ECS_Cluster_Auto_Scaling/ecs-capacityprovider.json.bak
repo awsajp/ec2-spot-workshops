@@ -1,7 +1,7 @@
 {
-    "name": "spot-capacity_provider_2", 
+    "name": "spot-capacity_provider_3", 
     "autoScalingGroupProvider": {
-    "autoScalingGroupArn": "arn:aws:autoscaling:us-east-1:000474600478:autoScalingGroup:69ecaeb9-5844-41b4-8855-7a1b138b5f8d:autoScalingGroupName/ecs-fargate-cluster-autoscale-asg-spot",
+    "autoScalingGroupArn": "arn:aws:autoscaling:us-east-1:000474600478:autoScalingGroup:c491d903-e28a-442f-beb1-5e6cc7109470:autoScalingGroupName/ecs-fargate-cluster-autoscale-asg-spot",
             "managedScaling": {
                 "status": "ENABLED",
                 "targetCapacity": %TARGET_CAPACITY%,

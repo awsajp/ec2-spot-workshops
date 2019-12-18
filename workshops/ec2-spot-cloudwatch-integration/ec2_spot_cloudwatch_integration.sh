@@ -138,3 +138,64 @@ echo "$OD_CAPACITY_PROVIDER_NAME ARN=$CAPACITY_PROVIDER_ARN"
 
 
 
+zip function.zip lambda_function.py
+
+aws lambda create-function \
+    --function-name my-function \
+    --runtime python3.8 \
+    --zip-file fileb://function.zip \
+    --handler lambda_function.handler \
+    --role  arn:aws:iam::000474600478:role/service-role/execute_my_lambda
+
+aws lambda create-function \
+    --function-name my-function1 \
+    --runtime python3.8 \
+    --zip-file fileb://function.zip \
+    --handler lambda_function.handler
+    
+
+aws events put-rule \
+--name spot-interruption-event \
+--event-pattern \
+'{
+  "source": [
+    "aws.ec2"
+  ],
+  "detail-type": [
+    "EC2 Spot Instance Interruption Warning"
+  ]
+}'
+
+
+aws events put-targets --rule spot-interruption-event --targets "Id"="1","Arn"="arn:aws:lambda:us-east-1:000474600478:function:my-function"
+
+aws iam create-service-linked-role --aws-service-name lambda.amazonaws.com
+
+
+
+
+aws cloudwatch put-metric-alarm --alarm-name SPOT_CAPACITY_OK \
+    --alarm-description "Spot Alarm" \
+    --metric-name GroupTotalInstances --namespace AWS/AutoScaling --statistic Average \
+    --period 300 --threshold 5 --comparison-operator GreaterThanOrEqualToThreshold \
+    --dimensions "Name=AutoScalingGroupName,Value=asg_cwt_spot" --evaluation-periods 1 
+
+
+aws autoscaling put-scaling-policy --policy-name my-simple-scalein-policy \
+--auto-scaling-group-name asg_cwt_od --scaling-adjustment +1 \
+--adjustment-type ChangeInCapacity
+
+aws cloudwatch put-metric-alarm --alarm-name SPOT_CAPACITY_OK2 \
+    --alarm-description "Spot Alarm" \
+    --metric-name GroupTotalInstances --namespace AWS/AutoScaling --statistic Average \
+    --period 300 --threshold 5 --comparison-operator GreaterThanOrEqualToThreshold \
+    --dimensions "Name=AutoScalingGroupName,Value=asg_cwt_spot" --evaluation-periods 1 \
+    --alarm-actions arn:aws:autoscaling:us-east-1:000474600478:scalingPolicy:f0f5d7d1-80cd-4354-94b7-948bec128e37:autoScalingGroupName/asg_cwt_od:policyName/my-simple-scalein-policy
+    
+aws cloudwatch put-metric-alarm --alarm-name Step-Scaling-AlarmHigh-AddCapacity \
+--metric-name CPUUtilization --namespace AWS/EC2 --statistic Average \
+--period 120 --evaluation-periods 2 --threshold 60 \
+--comparison-operator GreaterThanOrEqualToThreshold \
+--dimensions "Name=AutoScalingGroupName,Value=my-asg" \
+--alarm-actions PolicyARN
+

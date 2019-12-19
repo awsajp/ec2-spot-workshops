@@ -1,42 +1,61 @@
-## EC2 Spot Workshop : ECS_Cluster_Auto_Scaling
+## EC2 Spot OD Fallback Strategy
 
 In this workshop, you will deploy the following:
 
-### Step1 :  Create a Launch Template with ECS optimized AMI and with user data configuring ECS Cluster  
+### Step1 : Create a Launch Template 
 TBD
-### Step2 : Create a ASG for only OD instances i.e. ecs-fargate-cluster-autoscale-asg-od with MIN 0 and MAX 10
-TBD
-### Step3 : Create a Capacity Provider using this ASG i.e. od-capacity_provider_3  with Managed Scaling Enabled with target capacity of 100
-TBD
-### Step4 : Create a ASG for pnly Spot instances i.e. ecs-fargate-cluster-autoscale-asg-spot)  with MIN 0 and MAX 10
-TBD
+### Step2 : Create a ASG1_SPOT for only Spot instances 
+OD_BASE=0
+MIN_SIZE=3
+MAX_SIZE=6
+DESIREDS_SIZE=3
+OD_PERCENTAGE=0
+### Step3 : Create a ASG2_OD for only OD instances 
+OD_BASE=0
+MIN_SIZE=0
+MAX_SIZE=3
+DESIREDS_SIZE=0
+OD_PERCENTAGE=100
 
-### Step5 : Create a Capacity Provider using this ASG i.e. spot-capacity_provider_3 with Managed Scaling Enabled with target capacity of 100
+Both ASG1_SPOT and ASG2_OD are used for Solution #1 using CW Alarms
+Create Cloud Watch alarm ASG1_SPOT_CAPACITY_ALARM for ASG1_SPOT if the ASG metric
+GroupTotalInstances<3 for 2 data points with period 1 min
+
+Create Cloud Watch alarm ASG1_SPOT_CAPACITY_OK for ASG1_SPOT if the ASG metric
+GroupTotalInstances>=3 for 1 data points with period 5 min
+
+if Spot Interruption happens in ASG1_SPOT, ASG1_SPOT_CAPACITY_ALARM triggers and OD instance gets created in ASG2_OD
+if Spot Capacity is available in ASG1_SPOT, ASG1_SPOT_CAPACITY_OK triggers and OD instance gets terminated in ASG2_OD
+
+This replacement takes around 5 min as explained in the PPT
+
+### Step4 : Create a Lambda function to handle spot interruption
+
+### Step5 : Create a ASG3_SPOT for only SPOT instances 
+OD_BASE=0
+MIN_SIZE=3
+MAX_SIZE=6
+DESIREDS_SIZE=3
+OD_PERCENTAGE=0
+### Step3 : Create a ASG4_OD for only OD instances 
+OD_BASE=0
+MIN_SIZE=3
+MAX_SIZE=6
+DESIREDS_SIZE=3
+OD_PERCENTAGE=100
+
+Both ASG3_SPOT and ASG4_OD are used for Solution #2 using CW Events
+Create Cloud Watch Event/Rules ASG3_spot-interruption-event and ASG3_spot-Fulfillment-event
+and registers a lambda function as the target.
 
 
-### Step6 : Create an ECS cluster (i.e. EcsFargateCluster) with above two capacity providers and with a default capacity provider strategy
+if Spot Interruption happens in ASG3_SPOT, Event "CW Event: EC2 Spot Instance 
+Interruption Warning" triggers and Lambda increases the desired capacity in ASG4_OD
 
-The default strategy is od-capacity_provider_3,base=1,weight=1  which means any tasks/services will be deployed in OD if strategy is not explicitly specified while launching them
+if Spot Capacity is available in ASG3_SPOT, Event "EC2 Spot Instance 
+Request Fulfillment" triggers and Lambda increases the decreases capacity in ASG4_OD
 
-### Step7 : Add default fargate capacity providers i.e. FARGATE and FARGATE-SPOT to the above cluster
-TBD
-### Step8 :Create a task definition for fargate i.e. webapp-fargate-task
-TBD
-### Step9 :Create a task definition for EC2 i.e. webapp-ec2-task
-TBD
-### Step10 : Deployed 6 Services as follows
-TBD
-Deploy a service i.e. webapp-ec2-service-od (with 2 tasks) to launch tasks ONLY on OD Capacity Providers
-a.	2 tasks gets deployed on OD instances launched from od-capacity_provider_3  
-Deploy a service i.e. webapp-ec2-service-spot (with 2 tasks) to launch tasks ONLY on Spot Capacity Providers
-a.	2 tasks gets deployed on Spot instances launched from spot-capacity_provider_3
-Deploy a service i.e. webapp-ec2-service-mix (with 6 tasks) to launch tasks on both OD(weight=1)  and Spot (weight=3) Capacity Providers
-a.	2 tasks on OD instances from od-capacity_provider_3  and 4 tasks on Spot instances from spot-capacity_provider_3
-Deploy a service i.e. webapp-fargate-service-fargate (with 2 tasks) to launch tasks ONLY on FARGATE Capacity Provider
-a.	2 tasks gets deployed on FARGATE
-Deploy a service i.e. webapp-fargate-service-fargate-spot (with 2 tasks) to launch tasks ONLY FARGATE-SPOT Capacity Provider
-a.	2 tasks gets deployed on FARGATE
-Deploy a service i.e. webapp-fargate-service--mix (with 4 tasks) to launch tasks on both FARGATE(weight=3) and FARGATE-SPOT (weight=1)
-a.	3 tasks gets deployed on FARGATE  and 1 tasks on FARGATE-SPOT
+
+This replacement takes immediateley min as explained in PPT
 
 ### Workshop Cleanup

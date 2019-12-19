@@ -45,6 +45,5 @@
       "TerminationPolicies": [ 
         "DEFAULT" 
   ],
-  "NewInstancesProtectedFromScaleIn": true, 
   "ServiceLinkedRoleARN": "%SERVICE_ROLE_ARN%"
 }

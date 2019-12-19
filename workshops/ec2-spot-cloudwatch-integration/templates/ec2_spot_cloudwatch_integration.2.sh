@@ -60,12 +60,12 @@ MIN_SIZE=3
 MAX_SIZE=6
 DESIREDS_SIZE=3
 PUBLIC_SUBNET_LIST="subnet-764d7d11,subnet-a2c2fd8c,subnet-cb26e686,subnet-7acbf626,subnet-93d490ad,subnet-313ad03f"
-INSTANCE_TYPE_1=m4.large
-INSTANCE_TYPE_2=c4.large
-INSTANCE_TYPE_3=r4.large
-INSTANCE_TYPE_4=m5.large
-INSTANCE_TYPE_5=c5.large
-INSTANCE_TYPE_6=r5.large
+INSTANCE_TYPE_1=t3.nano
+INSTANCE_TYPE_2=t3.micro
+INSTANCE_TYPE_3=t3.small
+INSTANCE_TYPE_4=t3a.nano
+INSTANCE_TYPE_5=t3a.micro
+INSTANCE_TYPE_6=t3a.small
 SERVICE_ROLE_ARN="arn:aws:iam::000474600478:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling"
 
 sed -i.bak -e "s#%ASG_NAME%#$ASG_NAME#g"  asg.json
@@ -86,11 +86,9 @@ sed -i.bak -e "s#%OD_BASE%#$OD_BASE#g"  asg.json
 sed -i.bak -e "s#%PUBLIC_SUBNET_LIST%#$PUBLIC_SUBNET_LIST#g"  asg.json
 sed -i.bak -e "s#%SERVICE_ROLE_ARN%#$SERVICE_ROLE_ARN#g"  asg.json
 
-aws autoscaling create-auto-scaling-group --cli-input-json file://asg.json
+#aws autoscaling create-auto-scaling-group --cli-input-json file://asg.json
 ASG_ARN=$(aws autoscaling describe-auto-scaling-groups --auto-scaling-group-name $ASG_NAME | jq -r '.AutoScalingGroups[0].AutoScalingGroupARN')
 echo "$ASG1_NAME_SPOT ARN=$ASG_ARN"
-
-aws autoscaling enable-metrics-collection --auto-scaling-group-name $ASG1_NAME_SPOT --granularity "1Minute"
 
 
 cp -Rfp templates/asg.json .
@@ -98,9 +96,6 @@ cp -Rfp templates/asg.json .
 ASG_NAME=$ASG2_NAME_OD
 OD_BASE=0
 OD_PERCENTAGE=100
-MIN_SIZE=0
-MAX_SIZE=3
-DESIREDS_SIZE=0
 
 sed -i.bak -e "s#%ASG_NAME%#$ASG_NAME#g"  asg.json
 sed -i.bak -e "s#%LAUNCH_TEMPLATE_NAME%#$LAUNCH_TEMPLATE_NAME#g"  asg.json
@@ -120,11 +115,10 @@ sed -i.bak -e "s#%OD_BASE%#$OD_BASE#g"  asg.json
 sed -i.bak -e "s#%PUBLIC_SUBNET_LIST%#$PUBLIC_SUBNET_LIST#g"  asg.json
 sed -i.bak -e "s#%SERVICE_ROLE_ARN%#$SERVICE_ROLE_ARN#g"  asg.json
 
-aws autoscaling create-auto-scaling-group --cli-input-json file://asg.json
+#aws autoscaling create-auto-scaling-group --cli-input-json file://asg.json
 ASG_ARN=$(aws autoscaling describe-auto-scaling-groups --auto-scaling-group-name $ASG_NAME | jq -r '.AutoScalingGroups[0].AutoScalingGroupARN')
 echo "$ASG2_NAME_OD ARN=$ASG_ARN"
 
-aws autoscaling enable-metrics-collection --auto-scaling-group-name $ASG2_NAME_OD --granularity "1Minute"
 
 ASG2_OD_SCALE_OUT_POLICY=$(aws autoscaling put-scaling-policy --policy-name $ASG2_NAME_OD-Scale-Out-Policy \
 --auto-scaling-group-name $ASG2_NAME_OD --scaling-adjustment +1 \
@@ -133,7 +127,7 @@ ASG2_OD_SCALE_OUT_POLICY=$(aws autoscaling put-scaling-policy --policy-name $ASG
 aws cloudwatch put-metric-alarm --alarm-name ASG1_SPOT_CAPACITY_ALARM \
     --alarm-description "Spot Capacity Insufficient Alarm for $ASG1_NAME_SPOT" \
     --metric-name GroupTotalInstances --namespace AWS/AutoScaling --statistic Average \
-    --period 60 --threshold 3 --comparison-operator LessThanThreshold \
+    --period 60 --threshold $MIN_SIZE --comparison-operator LessThanThreshold \
     --dimensions "Name=AutoScalingGroupName,Value=$ASG1_NAME_SPOT" --evaluation-periods 2 \
     --alarm-actions $ASG2_OD_SCALE_OUT_POLICY
     
@@ -146,7 +140,7 @@ ASG2_OD_SCALE_IN_POLICY=$(aws autoscaling put-scaling-policy --policy-name $ASG2
 aws cloudwatch put-metric-alarm --alarm-name ASG1_SPOT_CAPACITY_OK \
     --alarm-description "Spot Capacity OK Alarm for $ASG1_NAME_SPOT" \
     --metric-name GroupTotalInstances --namespace AWS/AutoScaling --statistic Average \
-    --period 300 --threshold 3 --comparison-operator GreaterThanOrEqualToThreshold \
+    --period 300 --threshold $MIN_SIZE --comparison-operator GreaterThanOrEqualToThreshold \
     --dimensions "Name=AutoScalingGroupName,Value=$ASG1_NAME_SPOT" --evaluation-periods 1 \
     --alarm-actions $ASG2_OD_SCALE_IN_POLICY
     
@@ -156,9 +150,7 @@ cp -Rfp templates/asg.json .
 ASG_NAME=$ASG3_NAME_SPOT
 OD_BASE=0
 OD_PERCENTAGE=0
-MIN_SIZE=3
-MAX_SIZE=6
-DESIREDS_SIZE=3
+
 
 sed -i.bak -e "s#%ASG_NAME%#$ASG_NAME#g"  asg.json
 sed -i.bak -e "s#%LAUNCH_TEMPLATE_NAME%#$LAUNCH_TEMPLATE_NAME#g"  asg.json
@@ -178,20 +170,16 @@ sed -i.bak -e "s#%OD_BASE%#$OD_BASE#g"  asg.json
 sed -i.bak -e "s#%PUBLIC_SUBNET_LIST%#$PUBLIC_SUBNET_LIST#g"  asg.json
 sed -i.bak -e "s#%SERVICE_ROLE_ARN%#$SERVICE_ROLE_ARN#g"  asg.json
 
-aws autoscaling create-auto-scaling-group --cli-input-json file://asg.json
+#aws autoscaling create-auto-scaling-group --cli-input-json file://asg.json
 ASG_ARN=$(aws autoscaling describe-auto-scaling-groups --auto-scaling-group-name $ASG_NAME | jq -r '.AutoScalingGroups[0].AutoScalingGroupARN')
 echo "$ASG3_NAME_SPOT ARN=$ASG_ARN"
 
-aws autoscaling enable-metrics-collection --auto-scaling-group-name $ASG3_NAME_SPOT --granularity "1Minute"
-
 
 cp -Rfp templates/asg.json .
+
 ASG_NAME=$ASG4_NAME_OD
 OD_BASE=0
 OD_PERCENTAGE=100
-MIN_SIZE=3
-MAX_SIZE=6
-DESIREDS_SIZE=3
 
 sed -i.bak -e "s#%ASG_NAME%#$ASG_NAME#g"  asg.json
 sed -i.bak -e "s#%LAUNCH_TEMPLATE_NAME%#$LAUNCH_TEMPLATE_NAME#g"  asg.json
@@ -211,11 +199,23 @@ sed -i.bak -e "s#%OD_BASE%#$OD_BASE#g"  asg.json
 sed -i.bak -e "s#%PUBLIC_SUBNET_LIST%#$PUBLIC_SUBNET_LIST#g"  asg.json
 sed -i.bak -e "s#%SERVICE_ROLE_ARN%#$SERVICE_ROLE_ARN#g"  asg.json
 
-aws autoscaling create-auto-scaling-group --cli-input-json file://asg.json
+#aws autoscaling create-auto-scaling-group --cli-input-json file://asg.json
 ASG_ARN=$(aws autoscaling describe-auto-scaling-groups --auto-scaling-group-name $ASG_NAME | jq -r '.AutoScalingGroups[0].AutoScalingGroupARN')
 echo "$ASG4_NAME_OD ARN=$ASG_ARN"
 
-aws autoscaling enable-metrics-collection --auto-scaling-group-name $ASG4_NAME_OD --granularity "1Minute"
+
+ASG4_OD_SCALE_IN_POLICY=$(aws autoscaling put-scaling-policy --policy-name $ASG4_NAME_OD-Scale-In-Policy \
+--auto-scaling-group-name $ASG4_NAME_OD --scaling-adjustment -1 \
+--adjustment-type ChangeInCapacity | jq -r '.PolicyARN')
+
+
+aws cloudwatch put-metric-alarm --alarm-name ASG3_SPOT_CAPACITY_OK \
+    --alarm-description "Spot Capacity OK Alarm for $ASG3_NAME_SPOT" \
+    --metric-name GroupTotalInstances --namespace AWS/AutoScaling --statistic Average \
+    --period 300 --threshold $MIN_SIZE --comparison-operator GreaterThanOrEqualToThreshold \
+    --dimensions "Name=AutoScalingGroupName,Value=$ASG3_NAME_SPOT" --evaluation-periods 1 \
+    --alarm-actions $ASG4_OD_SCALE_IN_POLICY
+    
 
 zip function.zip lambda_function.py
 
@@ -242,43 +242,112 @@ aws events put-rule \
 
 aws events put-targets --rule ASG3_spot-interruption-event --targets "Id"="1","Arn"="$LAMBDA_ARN"
 
+
+exit 0
+    
+
+
+
+
+#The following example specifies the AWS/EC2 namespace to view all the metrics for Amazon EC2.
+aws cloudwatch list-metrics --namespace AWS/EC2 | jq -r '.[][].MetricName' | wc -l
+
+#To list all the available metrics for a specified resource
+#The following example specifies the AWS/EC2 namespace and the InstanceId dimension to view the
+#results for the specified instance only.
+
+aws cloudwatch list-metrics --namespace AWS/EC2 --dimensions \
+                              Name=InstanceId,Value=i-0913b928725f6a665 \
+                              | jq -r '.[][].MetricName' | wc -l
+                              
+# To list a metric for all resources
+#The following example specifies the AWS/EC2 namespace and a metric name to view the results for the
+#specified metric only.                          
+
+#aws cloudwatch list-metrics --namespace AWS/EC2 --metric-name CPUUtilization
+
+#To get average CPU utilization across your EC2 instances using the AWS CLI
+
+aws cloudwatch get-metric-statistics --namespace AWS/EC2 --metric-name CPUUtilization \
+--dimensions Name=InstanceId,Value=i-0913b928725f6a665 --statistics Maximum \
+--start-time 2019-12-16T12:51:00 --end-time 2019-12-17T12:51:00 --period 360
+
+#To get DiskWriteBytes for the instances in an Auto Scaling group using the AWS CLI
+
+aws cloudwatch get-metric-statistics --namespace AWS/EC2 --metric-name DiskWriteBytes
+--dimensions Name=AutoScalingGroupName,Value=ecs-fargate-cluster-autoscale-asg-od --statistics "Sum" "SampleCount" \
+--start-time 2016-10-16T23:18:00 --end-time 2016-10-18T23:18:00 --period 360
+
+
+aws cloudwatch list-metrics --namespace "AWS/AutoScaling"
+
+exit 0
+
+
+
+  
+
+
+
+
+zip function.zip lambda_function.py
+
+aws lambda create-function \
+    --function-name my-function \
+    --runtime python3.8 \
+    --zip-file fileb://function.zip \
+    --handler lambda_function.handler \
+    --role  arn:aws:iam::000474600478:role/service-role/execute_my_lambda
+
+aws lambda create-function \
+    --function-name my-function1 \
+    --runtime python3.8 \
+    --zip-file fileb://function.zip \
+    --handler lambda_function.handler
+    
+
 aws events put-rule \
---name ASG3_spot-Fulfillment-event \
+--name spot-interruption-event \
 --event-pattern \
 '{
   "source": [
     "aws.ec2"
   ],
   "detail-type": [
-    "EC2 Spot Instance Request Fulfillment"
+    "EC2 Spot Instance Interruption Warning"
   ]
 }'
 
-aws events put-targets --rule ASG3_spot-Fulfillment-event --targets "Id"="1","Arn"="$LAMBDA_ARN"
+
+aws events put-targets --rule spot-interruption-event --targets "Id"="1","Arn"="arn:aws:lambda:us-east-1:000474600478:function:my-function"
+
+aws iam create-service-linked-role --aws-service-name lambda.amazonaws.com
 
 
-aws events put-rule \
---name EC2_Launch_Terminate_Events \
---event-pattern \
-'{
-  "source": [
-    "aws.autoscaling"
-  ],
-  "detail-type": [
-    "EC2 Instance Launch Successful",
-    "EC2 Instance Terminate Successful"
-  ],
-  "detail": {
-    "AutoScalingGroupName": [
-      "ec2-spot-cwt-od-fallback-asg1-spot",
-      "ec2-spot-cwt-od-fallback-asg2-od",
-      "ec2-spot-cwt-od-fallback-asg3-spot",
-      "ec2-spot-cwt-od-fallback-asg4-od"
-    ]
-  }
-}'
-
-aws events put-targets --rule EC2_Launch_Terminate_Events --targets "Id"="1","Arn"="arn:aws:sns:us-east-1:000474600478:awsajp_notification"
 
 
+aws cloudwatch put-metric-alarm --alarm-name SPOT_CAPACITY_OK \
+    --alarm-description "Spot Alarm" \
+    --metric-name GroupTotalInstances --namespace AWS/AutoScaling --statistic Average \
+    --period 300 --threshold 5 --comparison-operator GreaterThanOrEqualToThreshold \
+    --dimensions "Name=AutoScalingGroupName,Value=asg_cwt_spot" --evaluation-periods 1 
+
+
+aws autoscaling put-scaling-policy --policy-name my-simple-scalein-policy \
+--auto-scaling-group-name asg_cwt_od --scaling-adjustment +1 \
+--adjustment-type ChangeInCapacity
+
+aws cloudwatch put-metric-alarm --alarm-name SPOT_CAPACITY_OK2 \
+    --alarm-description "Spot Alarm" \
+    --metric-name GroupTotalInstances --namespace AWS/AutoScaling --statistic Average \
+    --period 300 --threshold 5 --comparison-operator GreaterThanOrEqualToThreshold \
+    --dimensions "Name=AutoScalingGroupName,Value=asg_cwt_spot" --evaluation-periods 1 \
+    --alarm-actions arn:aws:autoscaling:us-east-1:000474600478:scalingPolicy:f0f5d7d1-80cd-4354-94b7-948bec128e37:autoScalingGroupName/asg_cwt_od:policyName/my-simple-scalein-policy
+    
+aws cloudwatch put-metric-alarm --alarm-name Step-Scaling-AlarmHigh-AddCapacity \
+--metric-name CPUUtilization --namespace AWS/EC2 --statistic Average \
+--period 120 --evaluation-periods 2 --threshold 60 \
+--comparison-operator GreaterThanOrEqualToThreshold \
+--dimensions "Name=AutoScalingGroupName,Value=my-asg" \
+--alarm-actions PolicyARN
 

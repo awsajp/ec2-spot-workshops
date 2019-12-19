@@ -1,0 +1,49 @@
+{
+  "AutoScalingGroupName": "ec2-spot-cwt-od-fallback-asg4-od",
+  "MixedInstancesPolicy": {
+    "LaunchTemplate": {
+      "LaunchTemplateSpecification": {
+        "LaunchTemplateName": "ec2-spot-cwt-od-fallback-LT",
+        "Version": "1"
+      },
+      "Overrides": [
+        {
+          "InstanceType": "m4.large"
+        },
+        {
+          "InstanceType": "c4.large"
+        },
+        {
+          "InstanceType": "r4.large"
+        },
+        {
+          "InstanceType": "m5.large"
+        },
+        {
+          "InstanceType": "c5.large"
+        },
+        {
+          "InstanceType": "r5.large"
+        }
+      ]
+    },
+    "InstancesDistribution": {
+      "OnDemandAllocationStrategy": "prioritized",
+      "OnDemandBaseCapacity": 0,
+      "OnDemandPercentageAboveBaseCapacity": 100,
+      "SpotAllocationStrategy": "lowest-price",
+      "SpotInstancePools": 4
+    }
+  },
+  "MinSize": 3,
+  "MaxSize": 6,
+  "DesiredCapacity": 3,
+  "DefaultCooldown": 300,
+  "HealthCheckGracePeriod": 300, 
+  "HealthCheckType": "EC2",
+  "VPCZoneIdentifier": "subnet-764d7d11,subnet-a2c2fd8c,subnet-cb26e686,subnet-7acbf626,subnet-93d490ad,subnet-313ad03f",
+      "TerminationPolicies": [ 
+        "DEFAULT" 
+  ],
+  "ServiceLinkedRoleARN": "arn:aws:iam::000474600478:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling"
+}

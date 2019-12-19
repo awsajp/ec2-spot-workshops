@@ -1,0 +1,16 @@
+{
+  "version": "0",
+  "id": "01234567-0123-0123-0123-012345678901",
+  "detail-type": "EC2 Spot Instance Request Fulfillment",
+  "source": "aws.ec2",
+  "account": "123456789012",
+  "time": "2019-10-27T17:13:16Z",
+  "region": "us-east-1",
+  "resources": [
+    "arn:aws:ec2:us-east-1:123456789012:instance/i-07f845448bb1280ea"
+  ],
+  "detail": {
+    "spot-instance-request-id": "sir-m82vykkk",
+    "instance-id": "i-07f845448bb1280ea"
+  }
+}

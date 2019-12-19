@@ -133,7 +133,7 @@ ASG2_OD_SCALE_OUT_POLICY=$(aws autoscaling put-scaling-policy --policy-name $ASG
 aws cloudwatch put-metric-alarm --alarm-name ASG1_SPOT_CAPACITY_ALARM \
     --alarm-description "Spot Capacity Insufficient Alarm for $ASG1_NAME_SPOT" \
     --metric-name GroupTotalInstances --namespace AWS/AutoScaling --statistic Average \
-    --period 60 --threshold 3 --comparison-operator LessThanThreshold \
+    --period 60 --threshold $MIN_SIZE --comparison-operator LessThanThreshold \
     --dimensions "Name=AutoScalingGroupName,Value=$ASG1_NAME_SPOT" --evaluation-periods 2 \
     --alarm-actions $ASG2_OD_SCALE_OUT_POLICY
     
@@ -146,7 +146,7 @@ ASG2_OD_SCALE_IN_POLICY=$(aws autoscaling put-scaling-policy --policy-name $ASG2
 aws cloudwatch put-metric-alarm --alarm-name ASG1_SPOT_CAPACITY_OK \
     --alarm-description "Spot Capacity OK Alarm for $ASG1_NAME_SPOT" \
     --metric-name GroupTotalInstances --namespace AWS/AutoScaling --statistic Average \
-    --period 300 --threshold 3 --comparison-operator GreaterThanOrEqualToThreshold \
+    --period 300 --threshold $MIN_SIZE --comparison-operator GreaterThanOrEqualToThreshold \
     --dimensions "Name=AutoScalingGroupName,Value=$ASG1_NAME_SPOT" --evaluation-periods 1 \
     --alarm-actions $ASG2_OD_SCALE_IN_POLICY
     
@@ -159,6 +159,7 @@ OD_PERCENTAGE=0
 MIN_SIZE=3
 MAX_SIZE=6
 DESIREDS_SIZE=3
+
 
 sed -i.bak -e "s#%ASG_NAME%#$ASG_NAME#g"  asg.json
 sed -i.bak -e "s#%LAUNCH_TEMPLATE_NAME%#$LAUNCH_TEMPLATE_NAME#g"  asg.json
@@ -186,12 +187,14 @@ aws autoscaling enable-metrics-collection --auto-scaling-group-name $ASG3_NAME_S
 
 
 cp -Rfp templates/asg.json .
+
 ASG_NAME=$ASG4_NAME_OD
 OD_BASE=0
 OD_PERCENTAGE=100
-MIN_SIZE=3
-MAX_SIZE=6
-DESIREDS_SIZE=3
+MIN_SIZE=0
+MAX_SIZE=3
+DESIREDS_SIZE=0
+
 
 sed -i.bak -e "s#%ASG_NAME%#$ASG_NAME#g"  asg.json
 sed -i.bak -e "s#%LAUNCH_TEMPLATE_NAME%#$LAUNCH_TEMPLATE_NAME#g"  asg.json
@@ -217,6 +220,19 @@ echo "$ASG4_NAME_OD ARN=$ASG_ARN"
 
 aws autoscaling enable-metrics-collection --auto-scaling-group-name $ASG4_NAME_OD --granularity "1Minute"
 
+ASG4_OD_SCALE_IN_POLICY=$(aws autoscaling put-scaling-policy --policy-name $ASG4_NAME_OD-Scale-In-Policy \
+--auto-scaling-group-name $ASG4_NAME_OD --scaling-adjustment -1 \
+--adjustment-type ChangeInCapacity | jq -r '.PolicyARN')
+
+
+aws cloudwatch put-metric-alarm --alarm-name ASG3_SPOT_CAPACITY_OK \
+    --alarm-description "Spot Capacity OK Alarm for $ASG3_NAME_SPOT" \
+    --metric-name GroupTotalInstances --namespace AWS/AutoScaling --statistic Average \
+    --period 300 --threshold $MIN_SIZE --comparison-operator GreaterThanOrEqualToThreshold \
+    --dimensions "Name=AutoScalingGroupName,Value=$ASG3_NAME_SPOT" --evaluation-periods 1 \
+    --alarm-actions $ASG4_OD_SCALE_IN_POLICY
+    
+
 zip function.zip lambda_function.py
 
 LAMBDA_ARN=$(aws lambda create-function \
@@ -241,21 +257,6 @@ aws events put-rule \
 
 
 aws events put-targets --rule ASG3_spot-interruption-event --targets "Id"="1","Arn"="$LAMBDA_ARN"
-
-aws events put-rule \
---name ASG3_spot-Fulfillment-event \
---event-pattern \
-'{
-  "source": [
-    "aws.ec2"
-  ],
-  "detail-type": [
-    "EC2 Spot Instance Request Fulfillment"
-  ]
-}'
-
-aws events put-targets --rule ASG3_spot-Fulfillment-event --targets "Id"="1","Arn"="$LAMBDA_ARN"
-
 
 aws events put-rule \
 --name EC2_Launch_Terminate_Events \

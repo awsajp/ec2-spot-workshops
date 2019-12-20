@@ -1,4 +1,6 @@
-## EC2 Spot OD Fallback Strategy
+## EC2 Spot OD Fallback Strategy 
+
+For detailed Architecture diagram, please refer to EC2-Spot-OD-Fallback-Strategy.pptx
 
 In this workshop, you will deploy the following:
 
@@ -56,6 +58,6 @@ if Spot Capacity is available in ASG3_SPOT, Event "EC2 Spot Instance
 Request Fulfillment" triggers and Lambda increases the decreases capacity in ASG4_OD
 
 
-This replacement takes immediateley min as explained in PPT
+This replacement takes immediateley min as explained in PPT. 
 
 ### Workshop Cleanup

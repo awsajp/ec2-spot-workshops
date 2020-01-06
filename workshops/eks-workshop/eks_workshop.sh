@@ -56,5 +56,45 @@ kubectl completion bash >>  ~/.bash_completion
 . /etc/profile.d/bash_completion.sh
 . ~/.bash_completion
 
+rm -vf ${HOME}/.aws/credentials
+
+export ACCOUNT_ID=$(aws sts get-caller-identity --output text --query Account)
+export AWS_REGION=$(curl -s 169.254.169.254/latest/dynamic/instance-identity/document | jq -r '.region')
+
+test -n "$AWS_REGION" && echo AWS_REGION is "$AWS_REGION" || echo AWS_REGION is not set
+
+echo "export ACCOUNT_ID=${ACCOUNT_ID}" | tee -a ~/.bash_profile
+echo "export AWS_REGION=${AWS_REGION}" | tee -a ~/.bash_profile
+aws configure set default.region ${AWS_REGION}
+aws configure get default.region
+
+aws sts get-caller-identity
+
+cd ~/environment
+git clone https://github.com/brentley/ecsdemo-frontend.git
+git clone https://github.com/brentley/ecsdemo-nodejs.git
+git clone https://github.com/brentley/ecsdemo-crystal.git
+
+curl --silent --location "https://github.com/weaveworks/eksctl/releases/download/latest_release/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
 
 
+sudo mv -v /tmp/eksctl /usr/local/bin
+
+eksctl version
+
+eksctl completion bash >> ~/.bash_completion
+. /etc/profile.d/bash_completion.sh
+. ~/.bash_completion
+
+eksctl create cluster --name=eksworkshop-eksctl-test --nodes=3 --managed --alb-ingress-access --region=${AWS_REGION}
+
+kubectl get nodes
+
+STACK_NAME=$(eksctl get nodegroup --cluster eksworkshop-eksctl-test -o json | jq -r '.[].StackName')
+ROLE_NAME=$(aws cloudformation describe-stack-resources --stack-name $STACK_NAME | jq -r '.StackResources[] | select(.ResourceType=="AWS::IAM::Role") | .PhysicalResourceId')
+echo "export ROLE_NAME=${ROLE_NAME}" | tee -a ~/.bash_profile
+
+
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v1.10.1/src/deploy/recommended/kubernetes-dashboard.yaml
+
+kubectl proxy --port=8080 --address='0.0.0.0' --disable-filter=true &

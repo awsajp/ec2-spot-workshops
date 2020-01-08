@@ -1,0 +1,48 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+    name: eksworkshop-eksctl
+    region: $AWS_REGION
+nodeGroups:
+    - name: dev-4vcpu-16gb-spot
+      launchTemplate:
+        LaunchTemplateId: "lt-085f9e77c61605aa8"
+        Version: "4"
+      minSize: 0
+      maxSize: 5
+      desiredCapacity: 1
+      labels:
+        lifecycle: Ec2Spot
+        intent: apps
+      taints:
+        spotInstance: "true:PreferNoSchedule"
+      tags:
+        k8s.io/cluster-autoscaler/node-template/label/lifecycle: Ec2Spot
+        k8s.io/cluster-autoscaler/node-template/label/intent: apps
+        k8s.io/cluster-autoscaler/node-template/taint/spotInstance: "true:PreferNoSchedule"
+      iam:
+        withAddonPolicies:
+          autoScaler: true
+          cloudWatch: true
+          albIngress: true
+    - name: dev-8vcpu-32gb-spot
+      LaunchTemplate:
+        LaunchTemplateId: "lt-085f9e77c61605aa8"
+        Version: "4"
+      minSize: 0
+      maxSize: 5
+      desiredCapacity: 1
+      labels:
+        lifecycle: Ec2Spot
+        intent: apps
+      taints:
+        spotInstance: "true:PreferNoSchedule"
+      tags:
+        k8s.io/cluster-autoscaler/node-template/label/lifecycle: Ec2Spot
+        k8s.io/cluster-autoscaler/node-template/label/intent: apps
+        k8s.io/cluster-autoscaler/node-template/taint/spotInstance: "true:PreferNoSchedule"
+      iam:
+        withAddonPolicies:
+          autoScaler: true
+          cloudWatch: true
+          albIngress: true

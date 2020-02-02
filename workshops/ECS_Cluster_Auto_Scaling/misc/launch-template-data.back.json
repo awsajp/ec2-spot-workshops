@@ -1,10 +1,10 @@
 {
   "IamInstanceProfile": {
-    "Arn": "arn:aws:iam::000474600478:instance-profile/ecslabinstanceprofile"
+    "Arn": "%instanceProfile%"
   },
   "ImageId": "%ami-id%",
   "SecurityGroupIds": [
-    "sg-4f3f0d1e"
+    "%instanceSecurityGroup%"
   ],
   "InstanceType": "t3.micro",
   "BlockDeviceMappings": [
@@ -24,7 +24,7 @@
       "Tags": [
         {
           "Key": "Name",
-          "Value": "ecs-spot-workshop"
+          "Value": "%workshopName%"
         },
         {
           "Key": "Env",
@@ -33,6 +33,15 @@
       ]
     }
   ],
+  "NetworkInterfaces":[
+     {
+     "AssociatePublicIpAddress":true,
+     "DeviceIndex": 0,
+     "Groups":["sg-4f3f0d1e"]
+     }
+    ],
+  "SecurityGroupIds": ["sg-4f3f0d1e"],
+  "SecurityGroups": ["sg-4f3f0d1e"],
   "Monitoring": {
     "Enabled": true
   },

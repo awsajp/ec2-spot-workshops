@@ -1,9 +1,9 @@
 {
-  "AutoScalingGroupName": "ecs-fargate-cluster-autoscale-asg-spot",
+  "AutoScalingGroupName": "ecs-spot-workshop-asg-spot",
   "MixedInstancesPolicy": {
     "LaunchTemplate": {
       "LaunchTemplateSpecification": {
-        "LaunchTemplateName": "ecs-fargate-cluster-autoscale-LT",
+        "LaunchTemplateName": "ecs-spot-workshop-lt",
         "Version": "1"
       },
       "Overrides": [

@@ -1,8 +1,8 @@
 {
   "IamInstanceProfile": {
-    "Arn": "arn:aws:iam::000474600478:instance-profile/ecsInstanceRole"
+    "Arn": "arn:aws:iam::000474600478:instance-profile/ecslabinstanceprofile"
   },
-  "ImageId": "ami-097e3d1cdb541f43e",
+  "ImageId": "ami-07a63940735aebd38",
   "SecurityGroupIds": [
     "sg-4f3f0d1e"
   ],
@@ -24,7 +24,7 @@
       "Tags": [
         {
           "Key": "Name",
-          "Value": "ecs-fargate-cluster-autoscale"
+          "Value": "ecs-spot-workshop"
         },
         {
           "Key": "Env",
@@ -37,5 +37,5 @@
     "Enabled": true
   },
   
-  "UserData": "IyEvYmluL2Jhc2gKZWNobyBFQ1NfQ0xVU1RFUj1FY3NGYXJnYXRlQ2x1c3RlciA+PiAvZXRjL2Vjcy9lY3MuY29uZmlnCg=="
+  "UserData": "IyEvYmluL2Jhc2gKZWNobyBFQ1NfQ0xVU1RFUj1FY3NTcG90V29ya3Nob3BDbHVzdGVyID4+IC9ldGMvZWNzL2Vjcy5jb25maWcK"
 }

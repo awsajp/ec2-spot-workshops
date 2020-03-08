@@ -42,8 +42,11 @@ aws configure set default.region ${AWS_REGION}
 cp -Rfp templates/*.json .
 cp -Rfp templates/*.txt .
 
-export AMI_ID=$(aws ec2 describe-images --owners amazon --filters 'Name=name,Values=amzn2-ami-ecs-hvm-2.0.????????-x86_64-ebs' 'Name=state,Values=available' --output json | jq -r '.Images |   sort_by(.CreationDate) | last(.[]).ImageId')
+#export AMI_ID=$(aws ec2 describe-images --owners amazon --filters 'Name=name,Values=amzn2-ami-ecs-hvm-2.0.????????-x86_64-ebs' 'Name=state,Values=available' --output json | jq -r '.Images |   sort_by(.CreationDate) | last(.[]).ImageId')
+export AMI_ID=$(aws ssm get-parameters --names /aws/service/ecs/optimized-ami/amazon-linux-2/recommended | jq -r 'last(.Parameters[]).Value' | jq -r '.image_id')
 echo "Latest ECS Optimized Amazon AMI_ID is $AMI_ID"
+
+
 
 sed -i.bak -e "s#ECS_FARGATE_CLUSTER_NAME#$ECS_FARGATE_CLUSTER_NAME#g"  user-data.txt
 sed -i.bak -e "s#%instanceProfile%#$IAM_INSTANT_PROFILE_ARN#g"  launch-template-data.json

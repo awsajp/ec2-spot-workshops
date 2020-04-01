@@ -40,23 +40,29 @@ INTERFACE_ID=$(curl -s http://169.254.169.254/latest/meta-data/network/interface
 cp -Rfp templates/*.json .
 cp -Rfp templates/*.txt .
 
-DYNAMOTB_TABLE_NAME=HostSessionaTable
-DYNAMOTB_TABLE_RCU=10
-DYNAMOTB_TABLE_WCU=10
+DYNAMODB_HOST_TABLE_NAME=HostSessionaTable
+DYNAMODB_GSI_ST=ST-index
+DYNAMODB_GSI_InstanceId=InstanceId-index
+
+DYNAMODB_INSTANCEID_TABLE_NAME=InstanceIdTable
+DYNAMODB_GSI_ST=ST-index
+
+
+DYNAMODB_TABLE_RCU=10
+DYNAMODB_TABLE_WCU=10
 
 aws dynamodb create-table \
-              --table-name $DYNAMOTB_TABLE_NAME \
+              --table-name $DYNAMODB_HOST_TABLE_NAME \
               --attribute-definitions \
                AttributeName=Host,AttributeType=S \
               --key-schema \
               AttributeName=Host,KeyType=HASH \
               --provisioned-throughput \
-              ReadCapacityUnits=$DYNAMOTB_TABLE_RCU,WriteCapacityUnits=$DYNAMOTB_TABLE_WCU
+              ReadCapacityUnits=$DYNAMODB_TABLE_RCU,WriteCapacityUnits=$DYNAMODB_TABLE_WCU
 
-aws dynamodb describe-table --table-name $DYNAMOTB_TABLE_NAME | grep TableStatus
+aws dynamodb describe-table --table-name $DYNAMODB_HOST_TABLE_NAME | grep TableStatus
 
 
-echo "Countdown"
 InstanceId="i-0bc1d1582222ea4222"
 VOLUME_ID="vol-0e4c922222ss6e"
 IP="1.1.1.1"
@@ -69,7 +75,7 @@ END=2
 for (( NUM=$START; NUM<=$END; NUM++ ))
 do
 	aws dynamodb put-item \
-          --table-name $DYNAMOTB_TABLE_NAME \
+          --table-name $DYNAMODB_HOST_TABLE_NAME \
           --item \
           "{\"Host\": {\"S\": \"host$NUM\"}, \"InstanceId\": {\"S\": \"$InstanceId\"},
           \"ST\": {\"S\": \"$ST\"}, \"IP\": {\"S\": \"$IP\"}, \"EBS\": {\"S\": \"$VOLUME_ID\"}}"
@@ -77,47 +83,97 @@ done
 
 HOST="host1"
 aws dynamodb query \
-        --table-name $DYNAMOTB_TABLE_NAME \
+        --table-name $DYNAMODB_HOST_TABLE_NAME \
         --key-condition-expression "Host = :name" \
         --expression-attribute-values "{\":name\":{\"S\":\"$HOST\"}}"
 
 
 aws dynamodb update-table \
---table-name $DYNAMOTB_TABLE_NAME \
+--table-name $DYNAMODB_HOST_TABLE_NAME \
 --attribute-definitions AttributeName=ST,AttributeType=S \
 --global-secondary-index-updates \
-"[{\"Create\":{\"IndexName\": \"ST-index\",\"KeySchema\":[{\"AttributeName\":
+"[{\"Create\":{\"IndexName\": \"$DYNAMODB_GSI_ST\",\"KeySchema\":[{\"AttributeName\":
 \"ST\",\"KeyType\":\"HASH\"}], \
 \"ProvisionedThroughput\": {\"ReadCapacityUnits\": 10, \"WriteCapacityUnits\": 10
 },\"Projection\":{\"ProjectionType\":\"ALL\"}}}]"
 
-aws dynamodb describe-table --table-name $DYNAMOTB_TABLE_NAME | grep IndexStatus
+aws dynamodb describe-table --table-name $DYNAMODB_HOST_TABLE_NAME | grep IndexStatus
 
 aws dynamodb query \
-        --table-name $DYNAMOTB_TABLE_NAME \
-        --index-name ST-index \
+        --table-name $DYNAMODB_HOST_TABLE_NAME \
+        --index-name $DYNAMODB_GSI_ST \
         --key-condition-expression "ST = :name" \
         --expression-attribute-values '{":name":{"S":"FREE"}}'
 
 aws dynamodb update-table \
---table-name $DYNAMOTB_TABLE_NAME \
+--table-name $DYNAMODB_HOST_TABLE_NAME \
 --attribute-definitions AttributeName=InstanceId,AttributeType=S \
 --global-secondary-index-updates \
-"[{\"Create\":{\"IndexName\": \"InstanceId-index\",\"KeySchema\":[{\"AttributeName\":
+"[{\"Create\":{\"IndexName\": \"$DYNAMODB_GSI_InstanceId\",\"KeySchema\":[{\"AttributeName\":
 \"InstanceId\",\"KeyType\":\"HASH\"}], \
 \"ProvisionedThroughput\": {\"ReadCapacityUnits\": 10, \"WriteCapacityUnits\": 10
 },\"Projection\":{\"ProjectionType\":\"ALL\"}}}]"
 
-aws dynamodb describe-table --table-name $DYNAMOTB_TABLE_NAME | grep IndexStatus
+aws dynamodb describe-table --table-name $DYNAMODB_HOST_TABLE_NAME | grep IndexStatus
 
 aws dynamodb query \
-        --table-name $DYNAMOTB_TABLE_NAME \
-        --index-name ST-index \
+        --table-name $DYNAMODB_HOST_TABLE_NAME \
+        --index-name $DYNAMODB_GSI_InstanceId \
+        --key-condition-expression "InstanceId = :name" \
+        --expression-attribute-values '{":name":{"S":"i-0bc1d1582222ea4222"}}'
+
+
+
+aws dynamodb create-table \
+              --table-name $DYNAMODB_INSTANCEID_TABLE_NAME \
+              --attribute-definitions \
+               AttributeName=InstanceId,AttributeType=S \
+              --key-schema \
+              AttributeName=InstanceId,KeyType=HASH \
+              --provisioned-throughput \
+              ReadCapacityUnits=$DYNAMODB_TABLE_RCU,WriteCapacityUnits=$DYNAMODB_TABLE_WCU
+
+aws dynamodb describe-table --table-name $DYNAMODB_INSTANCEID_TABLE_NAME | grep TableStatus
+
+
+InstanceId="i-0bc1d1582222ea4222"
+VOLUME_ID="vol-0e4c922222ss6e"
+IP="1.1.1.1"
+ST="FREE"
+
+
+START=1
+END=3
+
+for (( NUM=$START; NUM<=$END; NUM++ ))
+do
+	aws dynamodb put-item \
+          --table-name $DYNAMODB_INSTANCEID_TABLE_NAME \
+          --item \
+          "{\"InstanceId\": {\"S\": \"InstanceId$NUM\"}, 
+          \"ST\": {\"S\": \"$ST\"}, \"IP\": {\"S\": \"$IP\"} }"
+done
+
+
+aws dynamodb update-table \
+--table-name $DYNAMODB_INSTANCEID_TABLE_NAME \
+--attribute-definitions AttributeName=ST,AttributeType=S \
+--global-secondary-index-updates \
+"[{\"Create\":{\"IndexName\": \"$DYNAMODB_GSI_ST\",\"KeySchema\":[{\"AttributeName\":
+\"ST\",\"KeyType\":\"HASH\"}], \
+\"ProvisionedThroughput\": {\"ReadCapacityUnits\": 10, \"WriteCapacityUnits\": 10
+},\"Projection\":{\"ProjectionType\":\"ALL\"}}}]"
+
+aws dynamodb describe-table --table-name $DYNAMODB_INSTANCEID_TABLE_NAME | grep IndexStatus
+
+
+aws dynamodb query \
+        --table-name $DYNAMODB_INSTANCEID_TABLE_NAME \
+        --index-name $DYNAMODB_GSI_ST \
         --key-condition-expression "ST = :name" \
         --expression-attribute-values '{":name":{"S":"FREE"}}'
-
-
-
+        
+        
 
 exit 0
 

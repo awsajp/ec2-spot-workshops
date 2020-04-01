@@ -1,2 +1,0 @@
-#!/bin/bash
-echo ECS_CLUSTER=EcsFargateCluster >> /etc/ecs/ecs.config

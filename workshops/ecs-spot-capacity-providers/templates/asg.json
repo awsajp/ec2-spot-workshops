@@ -1,47 +1,47 @@
 {
-  "AutoScalingGroupName": "ecs-fargate-cluster-autoscale-asg-spot",
+  "AutoScalingGroupName": "%ASG_NAME%",
   "MixedInstancesPolicy": {
     "LaunchTemplate": {
       "LaunchTemplateSpecification": {
-        "LaunchTemplateName": "ecs-fargate-cluster-autoscale-LT",
-        "Version": "1"
+        "LaunchTemplateName": "%LAUNCH_TEMPLATE_NAME%",
+        "Version": "%LAUNCH_TEMPLATE_VERSION%"
       },
       "Overrides": [
         {
-          "InstanceType": "c4.large"
+          "InstanceType": "%INSTANCE_TYPE_1%"
         },
         {
-          "InstanceType": "c5.large"
+          "InstanceType": "%INSTANCE_TYPE_2%"
         },
         {
-          "InstanceType": "m4.large"
+          "InstanceType": "%INSTANCE_TYPE_3%"
         },
         {
-          "InstanceType": "m5.large"
+          "InstanceType": "%INSTANCE_TYPE_4%"
         },
         {
-          "InstanceType": "r4.large"
+          "InstanceType": "%INSTANCE_TYPE_5%"
         },
         {
-          "InstanceType": "r5.large"
+          "InstanceType": "%INSTANCE_TYPE_6%"
         }
       ]
     },
     "InstancesDistribution": {
       "OnDemandAllocationStrategy": "prioritized",
-      "OnDemandBaseCapacity": 0,
-      "OnDemandPercentageAboveBaseCapacity": 0,
+      "OnDemandBaseCapacity": %OD_BASE%,
+      "OnDemandPercentageAboveBaseCapacity": %OD_PERCENTAGE%,
       "SpotAllocationStrategy": "lowest-price",
       "SpotInstancePools": 4
     }
   },
-  "MinSize": 0,
-  "MaxSize": 10,
-  "DesiredCapacity": 0,
+  "MinSize": %MIN_SIZE%,
+  "MaxSize": %MAX_SIZE%,
+  "DesiredCapacity": %DESIREDS_SIZE%,
   "DefaultCooldown": 300,
   "HealthCheckGracePeriod": 300, 
   "HealthCheckType": "EC2",
-  "VPCZoneIdentifier": "subnet-764d7d11,subnet-a2c2fd8c,subnet-cb26e686,subnet-7acbf626,subnet-93d490ad,subnet-313ad03f",
+  "VPCZoneIdentifier": "%PUBLIC_SUBNET_LIST%",
       "TerminationPolicies": [ 
         "DEFAULT" 
   ],

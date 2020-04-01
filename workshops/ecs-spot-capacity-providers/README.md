@@ -1,5 +1,7 @@
 ## EC2 Spot Workshop : ECS_Cluster_Auto_Scaling
 
+
+
 In this workshop, you will deploy the following:
 
 ### Step1 :  Create a Launch Template with ECS optimized AMI and with user data configuring ECS Cluster  
@@ -12,7 +14,6 @@ TBD
 TBD
 
 ### Step5 : Create a Capacity Provider using this ASG i.e. spot-capacity_provider_3 with Managed Scaling Enabled with target capacity of 100
-
 
 ### Step6 : Create an ECS cluster (i.e. EcsFargateCluster) with above two capacity providers and with a default capacity provider strategy
 

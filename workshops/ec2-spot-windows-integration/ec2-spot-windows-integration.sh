@@ -41,11 +41,11 @@ cp -Rfp templates/*.json .
 cp -Rfp templates/*.txt .
 
 DYNAMODB_HOST_TABLE_NAME=HostSessionaTable
+DYNAMODB_INSTANCEID_TABLE_NAME=InstanceIdTable
 DYNAMODB_GSI_ST=ST-index
 DYNAMODB_GSI_InstanceId=InstanceId-index
 
-DYNAMODB_INSTANCEID_TABLE_NAME=InstanceIdTable
-DYNAMODB_GSI_ST=ST-index
+
 
 
 DYNAMODB_TABLE_RCU=10
@@ -173,6 +173,11 @@ aws dynamodb query \
         --key-condition-expression "ST = :name" \
         --expression-attribute-values '{":name":{"S":"FREE"}}'
         
+aws dynamodb query \
+        --table-name $DYNAMODB_INSTANCEID_TABLE_NAME \
+        --index-name $DYNAMODB_GSI_InstanceId \
+        --key-condition-expression "InstanceId = :name" \
+        --expression-attribute-values '{":name":{"S":"i-0bc1d1582222ea433"}}'
         
 
 exit 0

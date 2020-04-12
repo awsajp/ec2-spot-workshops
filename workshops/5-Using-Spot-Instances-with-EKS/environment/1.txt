@@ -1,0 +1,147 @@
+{
+    "DryRun": true, 
+    "ClientToken": "", 
+    "LaunchTemplateName": "", 
+    "VersionDescription": "", 
+    "LaunchTemplateData": {
+        "KernelId": "", 
+        "EbsOptimized": true, 
+        "IamInstanceProfile": {
+            "Arn": "", 
+            "Name": ""
+        }, 
+        "BlockDeviceMappings": [
+            {
+                "DeviceName": "", 
+                "VirtualName": "", 
+                "Ebs": {
+                    "Encrypted": true, 
+                    "DeleteOnTermination": true, 
+                    "Iops": 0, 
+                    "KmsKeyId": "", 
+                    "SnapshotId": "", 
+                    "VolumeSize": 0, 
+                    "VolumeType": "standard"
+                }, 
+                "NoDevice": ""
+            }
+        ], 
+        "NetworkInterfaces": [
+            {
+                "AssociatePublicIpAddress": true, 
+                "DeleteOnTermination": true, 
+                "Description": "", 
+                "DeviceIndex": 0, 
+                "Groups": [
+                    ""
+                ], 
+                "InterfaceType": "", 
+                "Ipv6AddressCount": 0, 
+                "Ipv6Addresses": [
+                    {
+                        "Ipv6Address": ""
+                    }
+                ], 
+                "NetworkInterfaceId": "", 
+                "PrivateIpAddress": "", 
+                "PrivateIpAddresses": [
+                    {
+                        "Primary": true, 
+                        "PrivateIpAddress": ""
+                    }
+                ], 
+                "SecondaryPrivateIpAddressCount": 0, 
+                "SubnetId": ""
+            }
+        ], 
+        "ImageId": "", 
+        "InstanceType": "m5dn.2xlarge", 
+        "KeyName": "", 
+        "Monitoring": {
+            "Enabled": true
+        }, 
+        "Placement": {
+            "AvailabilityZone": "", 
+            "Affinity": "", 
+            "GroupName": "", 
+            "HostId": "", 
+            "Tenancy": "default", 
+            "SpreadDomain": "", 
+            "HostResourceGroupArn": ""
+        }, 
+        "RamDiskId": "", 
+        "DisableApiTermination": true, 
+        "InstanceInitiatedShutdownBehavior": "terminate", 
+        "UserData": "", 
+        "TagSpecifications": [
+            {
+                "ResourceType": "vpc-peering-connection", 
+                "Tags": [
+                    {
+                        "Key": "", 
+                        "Value": ""
+                    }
+                ]
+            }
+        ], 
+        "ElasticGpuSpecifications": [
+            {
+                "Type": ""
+            }
+        ], 
+        "ElasticInferenceAccelerators": [
+            {
+                "Type": "", 
+                "Count": 0
+            }
+        ], 
+        "SecurityGroupIds": [
+            ""
+        ], 
+        "SecurityGroups": [
+            ""
+        ], 
+        "InstanceMarketOptions": {
+            "MarketType": "spot", 
+            "SpotOptions": {
+                "MaxPrice": "", 
+                "SpotInstanceType": "persistent", 
+                "BlockDurationMinutes": 0, 
+                "ValidUntil": "1970-01-01T00:00:00", 
+                "InstanceInterruptionBehavior": "hibernate"
+            }
+        }, 
+        "CreditSpecification": {
+            "CpuCredits": ""
+        }, 
+        "CpuOptions": {
+            "CoreCount": 0, 
+            "ThreadsPerCore": 0
+        }, 
+        "CapacityReservationSpecification": {
+            "CapacityReservationPreference": "none", 
+            "CapacityReservationTarget": {
+                "CapacityReservationId": ""
+            }
+        }, 
+        "LicenseSpecifications": [
+            {
+                "LicenseConfigurationArn": ""
+            }
+        ], 
+        "HibernationOptions": {
+            "Configured": true
+        }
+    }, 
+    "TagSpecifications": [
+        {
+            "ResourceType": "security-group", 
+            "Tags": [
+                {
+                    "Key": "", 
+                    "Value": ""
+                }
+            ]
+        }
+    ]
+}

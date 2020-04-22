@@ -2,7 +2,7 @@
     "family": "webapp-ec2-task", 
     "containerDefinitions": [
         {
-            "name": "fargate-app", 
+            "name": "ec2-app", 
             "image": "httpd:2.4", 
             "portMappings": [
                 {

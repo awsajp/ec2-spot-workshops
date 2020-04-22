@@ -6,6 +6,34 @@ echo "Creating the Infrastructure for ECS_Cluster_Auto_Scaling workshop ..."
 yum update -y
 yum -y install jq
 
+export ACCOUNT_ID=$(aws sts get-caller-identity  --output text --query Account)
+export AWS_REGION=$(curl -s  169.254.169.254/latest/dynamic/instance-identity/document | jq -r '.region')
+echo "export  ACCOUNT_ID=${ACCOUNT_ID}" >> ~/.bash_profile
+echo "export  AWS_REGION=${AWS_REGION}" >> ~/.bash_profile
+aws configure set default.region ${AWS_REGION}
+aws configure get default.region
+
+
+ecs-cli configure profile --profile-name ecs_cli_profile --access-key "<AWS_ACCESS_KEY_ID>" --secret-key "<AWS_SECRET_ACCESS_KEY>"
+
+ecs-cli configure --cluster EcsSpotWorkshopCluster --region us-east-2 --config-name config-EcsSpotWorkshopCluster
+ecs-cli configure default --config-name config-EcsSpotWorkshopCluster
+
+ecs-cli up --launch-type FARGATE --ecs-profile profile_jp
+
+
+aws ecs put-cluster-capacity-providers   \
+        --cluster EcsSpotWorkshopCluster \
+      --capacity-providers FARGATE FARGATE_SPOT\
+         --default-capacity-provider-strategy capacityProvider=FARGATE,base=1,weight=1   \
+         --region us-east-2
+         
+
+aws ecs register-task-definition --cli-input-json file://webapp-fargate-task.json
+
+ 
+ 
+
 
 #Global Defaults
 export WORKSHOP_NAME=ecs-spot-workshop

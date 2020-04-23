@@ -4,9 +4,9 @@
     "autoScalingGroupArn": "%ASG_ARN%",
             "managedScaling": {
                 "status": "ENABLED",
-                "targetCapacity": %TARGET_CAPACITY%,
+                "targetCapacity": 100,
                 "minimumScalingStepSize": 1,
-                "maximumScalingStepSize": %MAX_SIZE%
+                "maximumScalingStepSize": 10
             },
             "managedTerminationProtection": "ENABLED"
     }

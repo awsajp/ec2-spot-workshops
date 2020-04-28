@@ -1,12 +1,19 @@
 #!/bin/bash 
 
-echo "Creating the Infrastructure for ec2-spot-cwt-od-fallback workshop ..."
+echo "Creating the Infrastructure for ECs2 spot to On-demand failover Strategy ..."
 
 
 yum update -y
-yum -y install jq amazon-efs-utils
+yum -y install jq
 
- 
+export ACCOUNT_ID=$(aws sts get-caller-identity  --output text --query Account)
+export AWS_REGION=$(curl -s  169.254.169.254/latest/dynamic/instance-identity/document | jq -r '.region')
+echo "export  ACCOUNT_ID=${ACCOUNT_ID}" >> ~/.bash_profile
+echo "export  AWS_REGION=${AWS_REGION}" >> ~/.bash_profile
+aws configure set default.region ${AWS_REGION}
+aws configure get default.region
+
+
 #Global Defaults
 WORKSHOP_NAME=ec2-spot-cwt-od-fallback
 LAUNCH_TEMPLATE_NAME=$WORKSHOP_NAME-LT

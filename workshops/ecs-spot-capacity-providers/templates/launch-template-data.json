@@ -6,7 +6,7 @@
   "SecurityGroupIds": [
     "%instanceSecurityGroup%"
   ],
-  "InstanceType": "t3.micro",
+  "InstanceType": "t3.large",
   "BlockDeviceMappings": [
         {
             "DeviceName": "/dev/xvdcz",
@@ -24,7 +24,7 @@
       "Tags": [
         {
           "Key": "Name",
-          "Value": "%workshopName%"
+          "Value": "EcsSpotWorkshopCluster"
         },
         {
           "Key": "Env",

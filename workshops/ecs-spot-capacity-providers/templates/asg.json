@@ -3,41 +3,52 @@
   "MixedInstancesPolicy": {
     "LaunchTemplate": {
       "LaunchTemplateSpecification": {
-        "LaunchTemplateName": "%LAUNCH_TEMPLATE_NAME%",
-        "Version": "%LAUNCH_TEMPLATE_VERSION%"
+        "LaunchTemplateName": "ecs-spot-workshop-lt",
+        "Version": "1"
       },
       "Overrides": [
         {
-          "InstanceType": "%INSTANCE_TYPE_1%"
+          "InstanceType": "m4.large"
         },
         {
-          "InstanceType": "%INSTANCE_TYPE_2%"
+          "InstanceType": "m5.large"
         },
         {
-          "InstanceType": "%INSTANCE_TYPE_3%"
+          "InstanceType": "m5a.large"
         },
         {
-          "InstanceType": "%INSTANCE_TYPE_4%"
+          "InstanceType": "m5ad.large"
         },
         {
-          "InstanceType": "%INSTANCE_TYPE_5%"
+          "InstanceType": "m5d.large"
         },
         {
-          "InstanceType": "%INSTANCE_TYPE_6%"
-        }
+          "InstanceType": "m5dn.large"
+        },
+        {
+          "InstanceType": "m5n.large"
+        },
+        {
+          "InstanceType": "t2.large"
+        },
+        {
+          "InstanceType": "t3.large"
+        },
+        {
+          "InstanceType": "t3a.large"
+        }       
       ]
     },
     "InstancesDistribution": {
       "OnDemandAllocationStrategy": "prioritized",
-      "OnDemandBaseCapacity": %OD_BASE%,
+      "OnDemandBaseCapacity": 0,
       "OnDemandPercentageAboveBaseCapacity": %OD_PERCENTAGE%,
-      "SpotAllocationStrategy": "lowest-price",
-      "SpotInstancePools": 4
+      "SpotAllocationStrategy": "capacity-optimized"
     }
   },
-  "MinSize": %MIN_SIZE%,
-  "MaxSize": %MAX_SIZE%,
-  "DesiredCapacity": %DESIREDS_SIZE%,
+  "MinSize": 0,
+  "MaxSize": 10,
+  "DesiredCapacity": 0,
   "DefaultCooldown": 300,
   "HealthCheckGracePeriod": 300, 
   "HealthCheckType": "EC2",

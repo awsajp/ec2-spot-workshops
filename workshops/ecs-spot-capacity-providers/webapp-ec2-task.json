@@ -2,7 +2,7 @@
     "family": "webapp-ec2-task", 
     "containerDefinitions": [
         {
-            "name": "fargate-app", 
+            "name": "ec2-app", 
             "image": "httpd:2.4", 
             "portMappings": [
                 {
@@ -25,5 +25,5 @@
         "EC2"
     ], 
     "cpu": "256", 
-    "memory": "512"
+    "memory": "1024"
 }

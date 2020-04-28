@@ -1,0 +1,114 @@
+{
+  "AutoScalingGroupName": "mmt-ecs-asg",
+  "MixedInstancesPolicy": {
+    "LaunchTemplate": {
+      "LaunchTemplateSpecification": {
+        "LaunchTemplateName": "ecs-spot-workshop-lt",
+        "Version": "5"
+      },
+      "Overrides": [
+        	            {
+                    "InstanceType": "r5d.8xlarge",
+                    "WeightedCapacity": "32"
+                },	
+					            {
+                    "InstanceType": "m5d.4xlarge",
+                    "WeightedCapacity": "16"
+                },	
+					            {
+                    "InstanceType": "r5d.4xlarge",
+                    "WeightedCapacity": "16"
+                },	
+					            {
+                    "InstanceType": "m5ad.4xlarge",
+                    "WeightedCapacity": "16"
+                },	
+					            {
+                    "InstanceType": "r5.2xlarge",
+                    "WeightedCapacity": "8"
+                },	
+					            {
+                    "InstanceType": "r5ad.2xlarge",
+                    "WeightedCapacity": "8"
+                },	
+					            {
+                    "InstanceType": "r5a.2xlarge",
+                    "WeightedCapacity": "8"
+                },	
+					            {
+                    "InstanceType": "m5.2xlarge",
+                    "WeightedCapacity": "8"
+                },
+					            {
+                    "InstanceType": "m5ad.2xlarge",
+                    "WeightedCapacity": "8"
+                },	
+				{
+                    "InstanceType": "m5a.2xlarge",
+                    "WeightedCapacity": "8"
+                },	
+				{
+                    "InstanceType": "r5d.2xlarge",
+                    "WeightedCapacity": "8"
+                },	
+				{
+                    "InstanceType": "m5d.2xlarge",
+                    "WeightedCapacity": "8"
+                },	
+					{
+                    "InstanceType": "t3.2xlarge",
+                    "WeightedCapacity": "8"
+                },	
+					{
+                    "InstanceType": "t3a.2xlarge",
+                    "WeightedCapacity": "8"
+                },	
+						{
+                    "InstanceType": "m4.4xlarge",
+                    "WeightedCapacity": "16"
+                },	
+	
+					{
+                    "InstanceType": "r4.4xlarge",
+                    "WeightedCapacity": "16"
+                },	
+							{
+                    "InstanceType": "m4.2xlarge",
+                    "WeightedCapacity": "8"
+                },	
+		
+							{
+                    "InstanceType": "r4.2xlarge",
+                    "WeightedCapacity": "8"
+                },	
+		
+							{
+                    "InstanceType": "r3.2xlarge",
+                    "WeightedCapacity": "8"
+                },	
+		
+							{
+                    "InstanceType": "t2.2xlarge",
+                    "WeightedCapacity": "8"
+                }
+      ]
+    },
+    "InstancesDistribution": {
+      "OnDemandAllocationStrategy": "prioritized",
+      "OnDemandBaseCapacity": 0,
+      "OnDemandPercentageAboveBaseCapacity": 50,
+      "SpotAllocationStrategy": "capacity-optimized"
+    }
+  },
+  "MinSize": 500,
+  "MaxSize": 650,
+  "DesiredCapacity": 530,
+  "DefaultCooldown": 300,
+  "HealthCheckGracePeriod": 300, 
+  "HealthCheckType": "EC2",
+  "VPCZoneIdentifier": "subnet-764d7d11,subnet-a2c2fd8c",
+      "TerminationPolicies": [ 
+        "DEFAULT" 
+  ],
+  "ServiceLinkedRoleARN": "arn:aws:iam::000474600478:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling"
+}

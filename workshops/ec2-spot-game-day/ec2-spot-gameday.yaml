@@ -4,11 +4,63 @@ Description: EC2 Spot Game Day Template
 Mappings:
   CidrMappings:
     public-subnet-1:
-      CIDR: 10.0.1.0/24
+      CIDR: 10.0.0.0/24
     public-subnet-2:
+      CIDR: 10.0.1.0/24
+    public-subnet-3:
       CIDR: 10.0.2.0/24
+    private-subnet-1:
+      CIDR: 10.0.3.0/24
+    private-subnet-2:
+      CIDR: 10.0.4.0/24
+    private-subnet-3:
+      CIDR: 10.0.5.0/24
     vpc:
       CIDR: 10.0.0.0/16
+
+  AmazonLinux2Ami:
+    us-east-2:
+      AMI: ami-0f7919c33c90f5b58
+    us-east-1:
+      AMI: ami-0323c3dd2da7fb37d
+    us-west-1:
+      AMI: ami-06fcc1f0bc2c8943f
+    us-west-2:
+      AMI: ami-0d6621c01e8c2de2c
+    af-south-1:
+      AMI: ami-N/A
+    ap-east-1:
+      AMI: ami-N/A
+    ap-south-1:
+      AMI: ami-0470e33cd681b2476
+    ap-northeast-3:
+      AMI: ami-no
+    ap-northeast-2:
+      AMI: ami-01288945bd24ed49a
+    ap-southeast-1:
+      AMI: ami-0ec225b5e01ccb706
+    ap-southeast-2:
+      AMI: ami-0970010f37c4f9c8d
+    ap-northeast-1:
+      AMI: ami-0f310fced6141e627
+    ca-central-1:
+      AMI: ami-054362537f5132ce2
+    eu-central-1:
+      AMI: ami-076431be05aaf8080
+    eu-west-1:
+      AMI: ami-06ce3edf0cff21f07
+    eu-west-2:
+      AMI: ami-01a6e31ac994bbc09
+    eu-south-1:
+      AMI: ami-N/A
+    eu-west-3:
+      AMI: ami-00077e3fed5089981
+    eu-north-1:
+      AMI: ami-0b7a46b4bd694e8a6
+    me-south-1:
+      AMI: ami-N/A
+    sa-east-1:
+      AMI: ami-003449ffb2605a74c
 Metadata:
   Author:
     Description: Jayaprakash Alawala <jalawala@amazon.com>
@@ -69,11 +121,63 @@ Outputs:
     Value:
       Ref: vpc
 Parameters:
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the EC2 instances
+    Type: AWS::EC2::KeyPair::KeyName
+    MinLength: 1
   sourceCidr:
     Default: 0.0.0.0/0
     Description: Optional - CIDR/IP range for instance ssh/http access and load balancer http
       access
     Type: String
+  NodeAutoScalingGroupDesiredSize:
+    Type: Number
+    Description: Desired size of Node Group ASG.
+    Default: 2
+  OnDemandBaseCapacity:
+    Type: Number
+    Description: "on-demand base capacity"
+    Default: 1
+  OnDemandPercentageAboveBaseCapacity:
+    Type: Number
+    Description: "on-demand percentage above base capacity(0-100)"
+    Default: 0
+
+  SpotInstancePools:
+    Type: Number
+    Description: "spot instance pools(1-20)"
+    Default: 2
+
+  InstanceTypesOverride:
+    Type: String
+    Description: "multiple spot instances to override(seperated by comma)"
+    Default: "m4.large,m5.large,c4.large,c5.large,r4.large,r5.large,t3.large,t3a.large"
+
+  NodeAutoScalingGroupMinSize:
+    Type: Number
+    Description: Minimum size of Node Group ASG.
+    Default: 2
+
+  NodeAutoScalingGroupDesiredSize:
+    Type: Number
+    Description: Desired size of Node Group ASG.
+    Default: 2
+
+  NodeAutoScalingGroupMaxSize:
+    Type: Number
+    Description: Maximum size of Node Group ASG.
+    Default: 10
+
+  ASGNameKey:
+    Description: Name of the ASG Name.
+    Type: String
+    Default: "SpotGameDayASG"
+
+  LTNameKey:
+    Description: Name of the Launch Template Name
+    Type: String
+    Default: "SpotGameDayLT"
+
 Resources:
   attachGateway:
     DependsOn:
@@ -95,7 +199,7 @@ Resources:
     DependsOn:
     - publicSubnet1
     Properties:
-      Description: Running Amazon EC2 Workloads at Scale - Cloud9 environment
+      Description: Spot GameDay - Cloud9 environment
       InstanceType: t2.micro
       SubnetId:
         Ref: publicSubnet1
@@ -312,7 +416,7 @@ Resources:
     Properties:
       Tags:
       - Key: Name
-        Value: Running Amazon EC2 Workloads at Scale - public route table
+        Value: Spot GameDay - public route table
       VpcId:
         Ref: vpc
     Type: AWS::EC2::RouteTable
@@ -332,7 +436,7 @@ Resources:
       MapPublicIpOnLaunch: true
       Tags:
       - Key: Name
-        Value: Running Amazon EC2 Workloads at Scale - public subnet 1
+        Value: Spot GameDay - public subnet 1
       VpcId:
         Ref: vpc
     Type: AWS::EC2::Subnet
@@ -363,7 +467,7 @@ Resources:
       MapPublicIpOnLaunch: true
       Tags:
       - Key: Name
-        Value: Running Amazon EC2 Workloads at Scale - public subnet 2
+        Value: Spot GameDay - public subnet 2
       VpcId:
         Ref: vpc
     Type: AWS::EC2::Subnet
@@ -378,23 +482,176 @@ Resources:
       SubnetId:
         Ref: publicSubnet2
     Type: AWS::EC2::SubnetRouteTableAssociation
-  MyLaunchTemplate:
+  publicSubnet3:
+    DependsOn: attachGateway
+    Properties:
+      AvailabilityZone:
+        Fn::Select:
+          - 2
+          - Fn::GetAZs:
+              Ref: AWS::Region
+      CidrBlock:
+        Fn::FindInMap:
+          - CidrMappings
+          - public-subnet-3
+          - CIDR
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: Spot GameDay - public subnet 3
+      VpcId:
+        Ref: vpc
+    Type: AWS::EC2::Subnet
+
+
+  publicSubnet3RouteTableAssociation:
+    DependsOn:
+      - publicRouteTable
+      - publicSubnet3
+      - attachGateway
+    Properties:
+      RouteTableId:
+        Ref: publicRouteTable
+      SubnetId:
+        Ref: publicSubnet3
+    Type: AWS::EC2::SubnetRouteTableAssociation
+
+  privateSubnet1:
+    Properties:
+      AvailabilityZone:
+        Fn::Select:
+          - 0
+          - Fn::GetAZs:
+              Ref: AWS::Region
+      CidrBlock:
+        Fn::FindInMap:
+          - CidrMappings
+          - private-subnet-1
+          - CIDR
+      Tags:
+        - Key: Name
+          Value: Spot GameDay - private subnet 1
+      VpcId:
+        Ref: vpc
+    Type: AWS::EC2::Subnet
+privateSubnet2:
+  Properties:
+    AvailabilityZone:
+      Fn::Select:
+        - 1
+        - Fn::GetAZs:
+            Ref: AWS::Region
+    CidrBlock:
+      Fn::FindInMap:
+        - CidrMappings
+        - private-subnet-2
+        - CIDR
+    Tags:
+      - Key: Name
+        Value: Spot GameDay - private subnet 2
+    VpcId:
+      Ref: vpc
+  Type: AWS::EC2::Subnet
+
+  privateSubnet3:
+    Properties:
+      AvailabilityZone:
+        Fn::Select:
+          - 2
+          - Fn::GetAZs:
+              Ref: AWS::Region
+      CidrBlock:
+        Fn::FindInMap:
+          - CidrMappings
+          - private-subnet-3
+          - CIDR
+      Tags:
+        - Key: Name
+          Value: Spot GameDay - private subnet 3
+      VpcId:
+        Ref: vpc
+    Type: AWS::EC2::Subnet
+
+  MyLT:
     Type: AWS::EC2::LaunchTemplate
     Properties:
       LaunchTemplateData:
-        InstanceType: c4.large
+        InstanceType: t3.large
         DisableApiTermination: 'true'
-        KeyName: MyKeyPair
-        ImageId: ami-04d5cc9b88example
+        KeyName:
+          Ref: KeyName
+        ImageId:
+          Fn::FindInMap:
+            - AmazonLinux2AMI
+            - Ref: AWS::Region
+            - AMI
         IamInstanceProfile:
           Arn:
             Fn::GetAtt:
             - instanceProfile
             - Arn
-        SecurityGroupIds:
-        - sg-083cd3bfb8example
-      LaunchTemplateName: GameDayLaunchTemplate
-             
+        SecurityGroupIds: !Ref instanceSecurityGroup
+        TagSpecifications:
+          - ResourceType: instance
+            Tags:
+              - Key: Name
+                Value: !Sub "${LTNameKey}-LT"
+        UserData:
+          Fn::Base64: !Sub |
+            #!/bin/bash
+            yum update -y
+            yum install httpd -y
+            chkconfig httpd on
+            instanceid=$(curl http://169.254.169.254/latest/meta-data/instance-id)
+            echo "hello from instance id $instanceid" > /var/www/html/index.html
+            service httpd start
+      LaunchTemplateName: !Ref LTNameKey
+  MyASG:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      AutoScalingGroupName: !Ref ASGNameKey
+      DesiredCapacity: !Ref NodeAutoScalingGroupDesiredSize
+      #LaunchConfigurationName: !Ref NodeLaunchConfig
+      # LaunchTemplate:
+      #   LaunchTemplateId: !Ref MyLaunchTemplate
+      #   Version: !GetAtt MyLaunchTemplate.LatestVersionNumber
+      MixedInstancesPolicy:
+        InstancesDistribution:
+          OnDemandAllocationStrategy: prioritized
+          OnDemandBaseCapacity: !Ref OnDemandBaseCapacity
+          OnDemandPercentageAboveBaseCapacity: !Ref OnDemandPercentageAboveBaseCapacity
+          SpotAllocationStrategy: capacity-optimized
+          SpotInstancePools: !Ref SpotInstancePools
+          # SpotMaxPrice: String
+        LaunchTemplate:
+          LaunchTemplateSpecification:
+            LaunchTemplateId: !Ref MyLT
+            # LaunchTemplateName: String
+            Version: !GetAtt MyLT.LatestVersionNumber
+          Overrides:
+            - InstanceType: !Select [0, !Split [ ",", !Ref InstanceTypesOverride ] ]
+            - InstanceType: !Select [1, !Split [ ",", !Ref InstanceTypesOverride ] ]
+            - InstanceType: !Select [2, !Split [ ",", !Ref InstanceTypesOverride ] ]
+            - InstanceType: !Select [3, !Split [ ",", !Ref InstanceTypesOverride ] ]
+            - InstanceType: !Select [4, !Split [ ",", !Ref InstanceTypesOverride ] ]
+            - InstanceType: !Select [5, !Split [ ",", !Ref InstanceTypesOverride ] ]
+            - InstanceType: !Select [6, !Split [ ",", !Ref InstanceTypesOverride ] ]
+            - InstanceType: !Select [7, !Split [ ",", !Ref InstanceTypesOverride ] ]
+      MinSize: !Ref NodeAutoScalingGroupMinSize
+      MaxSize: !Ref NodeAutoScalingGroupMaxSize
+      VPCZoneIdentifier:
+        - !Ref publicSubnet1
+        - !Ref publicSubnet2
+        - !Ref publicSubnet3
+      Tags:
+        - Key: Name
+          Value: !Sub "${ASGNameKey}-${LTNameKey}-ASG"
+          PropagateAtLaunch: 'true'
+    UpdatePolicy:
+      AutoScalingRollingUpdate:
+        MinInstancesInService: !Ref NodeAutoScalingGroupDesiredSize
+        MaxBatchSize: '1'
+        PauseTime: 'PT5M'
   vpc:
     Properties:
       CidrBlock:
@@ -406,6 +663,6 @@ Resources:
       EnableDnsSupport: true
       Tags:
       - Key: Name
-        Value: Running Amazon EC2 Workloads at Scale - workshop template
+        Value: Spot GameDay - workshop template
     Type: AWS::EC2::VPC
 ...

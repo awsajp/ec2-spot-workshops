@@ -3,10 +3,10 @@
 echo "Creating the Infrastructure for ec2-spot-cwt-od-fallback workshop ..."
 
 
-#yum update -y
-#yum -y install jq amazon-efs-utils
+yum update -y
+yum -y install jq amazon-efs-utils
 
-
+ 
 #Global Defaults
 WORKSHOP_NAME=ec2-spot-cwt-od-fallback
 LAUNCH_TEMPLATE_NAME=$WORKSHOP_NAME-LT

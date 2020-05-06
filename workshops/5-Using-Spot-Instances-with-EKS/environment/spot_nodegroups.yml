@@ -1,0 +1,52 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+    name: eksworkshop-eksctl
+    region: us-east-1
+nodeGroups:
+    - name: dev-4vcpu-16gb-spot
+      minSize: 0
+      maxSize: 5
+      desiredCapacity: 1
+      instancesDistribution:
+        instanceTypes: ["m5.xlarge", "m5d.xlarge", "m4.xlarge","t3.xlarge","t3a.xlarge","m5a.xlarge","t2.xlarge"] 
+        onDemandBaseCapacity: 0
+        onDemandPercentageAboveBaseCapacity: 0
+        spotInstancePools: 4
+      labels:
+        lifecycle: Ec2Spot
+        intent: apps
+      taints:
+        spotInstance: "true:PreferNoSchedule"
+      tags:
+        k8s.io/cluster-autoscaler/node-template/label/lifecycle: Ec2Spot
+        k8s.io/cluster-autoscaler/node-template/label/intent: apps
+        k8s.io/cluster-autoscaler/node-template/taint/spotInstance: "true:PreferNoSchedule"
+      iam:
+        withAddonPolicies:
+          autoScaler: true
+          cloudWatch: true
+          albIngress: true
+    - name: dev-8vcpu-32gb-spot
+      minSize: 0
+      maxSize: 5
+      desiredCapacity: 1
+      instancesDistribution:
+        instanceTypes: ["m5.2xlarge", "m5d.2xlarge", "m4.2xlarge","t3.2xlarge","t3a.2xlarge","m5a.2xlarge","t2.2xlarge"] 
+        onDemandBaseCapacity: 0
+        onDemandPercentageAboveBaseCapacity: 0
+        spotInstancePools: 4
+      labels:
+        lifecycle: Ec2Spot
+        intent: apps
+      taints:
+        spotInstance: "true:PreferNoSchedule"
+      tags:
+        k8s.io/cluster-autoscaler/node-template/label/lifecycle: Ec2Spot
+        k8s.io/cluster-autoscaler/node-template/label/intent: apps
+        k8s.io/cluster-autoscaler/node-template/taint/spotInstance: "true:PreferNoSchedule"
+      iam:
+        withAddonPolicies:
+          autoScaler: true
+          cloudWatch: true
+          albIngress: true

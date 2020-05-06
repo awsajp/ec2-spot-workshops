@@ -1,0 +1,41 @@
+---
+apiVersion: v1 
+kind: Service 
+metadata: 
+  name: monte-carlo-pi-service2 
+spec: 
+  type: LoadBalancer 
+  ports: 
+    - port: 80 
+      targetPort: 8080 
+  selector: 
+    app: monte-carlo-pi-service2 
+--- 
+apiVersion: apps/v1 
+kind: Deployment 
+metadata: 
+  name: monte-carlo-pi-service2 
+  labels: 
+    app: monte-carlo-pi-service2 
+spec: 
+  replicas: 10
+  selector: 
+    matchLabels: 
+      app: monte-carlo-pi-service2 
+  template: 
+    metadata: 
+      labels: 
+        app: monte-carlo-pi-service2 
+    spec:
+      nodeSelector:
+        spotsa3: jp3
+      containers: 
+        - name: monte-carlo-pi-service2 
+          image: ruecarlo/monte-carlo-pi-service
+          securityContext: 
+            privileged: false 
+            readOnlyRootFilesystem: true 
+            allowPrivilegeEscalation: false 
+          ports: 
+            - containerPort: 8080 
+

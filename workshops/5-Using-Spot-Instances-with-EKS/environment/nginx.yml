@@ -1,0 +1,41 @@
+---
+apiVersion: v1 
+kind: Service 
+metadata: 
+  name: nginx-service 
+spec: 
+  type: LoadBalancer 
+  ports: 
+    - port: 80 
+      targetPort: 80
+  selector: 
+    app: nginx-service 
+--- 
+apiVersion: apps/v1 
+kind: Deployment 
+metadata: 
+  name: nginx-service 
+  labels: 
+    app: nginx-service 
+spec: 
+  replicas: 2 
+  selector: 
+    matchLabels: 
+      app: nginx-service 
+  template: 
+    metadata: 
+      labels: 
+        app: nginx-service 
+    spec:
+      nodeSelector:
+        spotsa: jp
+      containers: 
+        - name: nginx-service 
+          image: nginx:latest
+          securityContext: 
+            privileged: false 
+            readOnlyRootFilesystem: true 
+            allowPrivilegeEscalation: false 
+          ports: 
+            - containerPort: 80 
+

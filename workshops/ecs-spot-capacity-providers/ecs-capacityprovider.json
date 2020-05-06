@@ -1,7 +1,7 @@
 {
-    "name": "%CAPACITY_PROVIDER_NAME%", 
+    "name": "CP-SPOT", 
     "autoScalingGroupProvider": {
-    "autoScalingGroupArn": "%ASG_ARN%",
+    "autoScalingGroupArn": "arn:aws:autoscaling:us-east-1:000474600478:autoScalingGroup:706f9e54-fe79-46e3-a5c5-e95d77833f8e:autoScalingGroupName/EcsSpotWorkshop-ASG-SPOT",
             "managedScaling": {
                 "status": "ENABLED",
                 "targetCapacity": 100,

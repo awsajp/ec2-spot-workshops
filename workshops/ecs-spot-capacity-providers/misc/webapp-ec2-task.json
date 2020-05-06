@@ -1,10 +1,12 @@
 {
-    "family": "webapp-fargate-task", 
-    "networkMode": "awsvpc", 
+    "family": "ec2-task", 
     "containerDefinitions": [
         {
-            "name": "fargate-app", 
+            "name": "ec2-app", 
             "image": "httpd:2.4", 
+            "cpu": 448,
+            "memory": 896,
+            "memoryReservation": 896,            
             "portMappings": [
                 {
                     "containerPort": 80, 
@@ -23,8 +25,6 @@
         }
     ], 
     "requiresCompatibilities": [
-        "FARGATE"
-    ], 
-    "cpu": "256", 
-    "memory": "1024"
+        "EC2"
+    ]
 }

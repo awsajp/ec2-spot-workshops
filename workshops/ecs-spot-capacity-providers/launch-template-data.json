@@ -1,10 +1,10 @@
 {
   "IamInstanceProfile": {
-    "Arn": "%instanceProfile%"
+    "Arn": "arn:aws:iam::000474600478:instance-profile/ecslabinstanceprofile"
   },
-  "ImageId": "%ami-id%",
+  "ImageId": "ami-0aee8ced190c05726",
   "SecurityGroupIds": [
-    "%instanceSecurityGroup%"
+    "sg-03ccfca80f9fddf4d"
   ],
   "InstanceType": "t3.large",
   "BlockDeviceMappings": [
@@ -37,5 +37,5 @@
     "Enabled": true
   },
   
-  "UserData": "%UserData%"
+  "UserData": "IyEvYmluL2Jhc2gKCmVjaG8gRUNTX0NMVVNURVI9RWNzU3BvdFdvcmtzaG9wID4+IC9ldGMvZWNzL2Vjcy5jb25maWcKZWNobyAiRUNTX0VOQUJMRV9TUE9UX0lOU1RBTkNFX0RSQUlOSU5HPXRydWUiID4+IC9ldGMvZWNzL2Vjcy5jb25maWcKZWNobyAiRUNTX0NPTlRBSU5FUl9TVE9QX1RJTUVPVVQ9MzBzIiA+PiAvZXRjL2Vjcy9lY3MuY29uZmln"
 }

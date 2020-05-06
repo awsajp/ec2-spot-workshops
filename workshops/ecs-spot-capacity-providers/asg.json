@@ -1,5 +1,5 @@
 {
-  "AutoScalingGroupName": "%ASG_NAME%",
+  "AutoScalingGroupName": "EcsSpotWorkshop-ASG-SPOT",
   "MixedInstancesPolicy": {
     "LaunchTemplate": {
       "LaunchTemplateSpecification": {
@@ -42,7 +42,7 @@
     "InstancesDistribution": {
       "OnDemandAllocationStrategy": "prioritized",
       "OnDemandBaseCapacity": 0,
-      "OnDemandPercentageAboveBaseCapacity": %OD_PERCENTAGE%,
+      "OnDemandPercentageAboveBaseCapacity": 0,
       "SpotAllocationStrategy": "capacity-optimized"
     }
   },
@@ -52,10 +52,10 @@
   "DefaultCooldown": 300,
   "HealthCheckGracePeriod": 300, 
   "HealthCheckType": "EC2",
-  "VPCZoneIdentifier": "%PUBLIC_SUBNET_LIST%",
+  "VPCZoneIdentifier": "subnet-07a877ee28959daa3,subnet-015fc3e06f653980a,subnet-003ef0ebc04c89b2d",
       "TerminationPolicies": [ 
         "DEFAULT" 
   ],
   "NewInstancesProtectedFromScaleIn": true, 
-  "ServiceLinkedRoleARN": "%SERVICE_ROLE_ARN%"
+  "ServiceLinkedRoleARN": "arn:aws:iam::000474600478:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling_ec2"
 }

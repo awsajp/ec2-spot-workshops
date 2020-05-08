@@ -171,7 +171,7 @@ Parameters:
   InstanceTypesOverride:
     Type: String
     Description: "multiple spot instances to override(seperated by comma)"
-    Default: "m4.large,m5.large,c4.large,c5.large,r4.large,r5.large,t3.large,t3a.large"
+    Default: "t3.large,m5.large"
 
   NodeAutoScalingGroupMinSize:
     Type: Number
@@ -616,12 +616,6 @@ Resources:
           Overrides:
             - InstanceType: !Select [0, !Split [ ",", !Ref InstanceTypesOverride ] ]
             - InstanceType: !Select [1, !Split [ ",", !Ref InstanceTypesOverride ] ]
-            - InstanceType: !Select [2, !Split [ ",", !Ref InstanceTypesOverride ] ]
-            - InstanceType: !Select [3, !Split [ ",", !Ref InstanceTypesOverride ] ]
-            - InstanceType: !Select [4, !Split [ ",", !Ref InstanceTypesOverride ] ]
-            - InstanceType: !Select [5, !Split [ ",", !Ref InstanceTypesOverride ] ]
-            - InstanceType: !Select [6, !Split [ ",", !Ref InstanceTypesOverride ] ]
-            - InstanceType: !Select [7, !Split [ ",", !Ref InstanceTypesOverride ] ]
       MinSize: !Ref NodeAutoScalingGroupMinSize
       MaxSize: !Ref NodeAutoScalingGroupMaxSize
       VPCZoneIdentifier:

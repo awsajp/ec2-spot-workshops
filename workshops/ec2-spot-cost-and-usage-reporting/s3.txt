@@ -1,0 +1,254 @@
+{
+    "GroupDefinitions": [
+        {
+            "Type": "DIMENSION", 
+            "Key": "SERVICE"
+        }, 
+        {
+            "Type": "TAG", 
+            "Key": "Environment"
+        }
+    ], 
+    "ResultsByTime": [
+        {
+            "Estimated": false, 
+            "TimePeriod": {
+                "Start": "2019-09-01", 
+                "End": "2019-10-01"
+            }, 
+            "Total": {}, 
+            "Groups": [
+                {
+                    "Keys": [
+                        "Amazon Simple Storage Service", 
+                        "Environment$"
+                    ], 
+                    "Metrics": {
+                        "BlendedCost": {
+                            "Amount": "0.00754", 
+                            "Unit": "USD"
+                        }, 
+                        "UnblendedCost": {
+                            "Amount": "0.00754", 
+                            "Unit": "USD"
+                        }, 
+                        "UsageQuantity": {
+                            "Amount": "3848.0027566558", 
+                            "Unit": "N/A"
+                        }
+                    }
+                }
+            ]
+        }, 
+        {
+            "Estimated": false, 
+            "TimePeriod": {
+                "Start": "2019-10-01", 
+                "End": "2019-11-01"
+            }, 
+            "Total": {}, 
+            "Groups": [
+                {
+                    "Keys": [
+                        "Amazon Simple Storage Service", 
+                        "Environment$"
+                    ], 
+                    "Metrics": {
+                        "BlendedCost": {
+                            "Amount": "0.0956", 
+                            "Unit": "USD"
+                        }, 
+                        "UnblendedCost": {
+                            "Amount": "0.0956", 
+                            "Unit": "USD"
+                        }, 
+                        "UsageQuantity": {
+                            "Amount": "24463.7427612061", 
+                            "Unit": "N/A"
+                        }
+                    }
+                }
+            ]
+        }, 
+        {
+            "Estimated": false, 
+            "TimePeriod": {
+                "Start": "2019-11-01", 
+                "End": "2019-12-01"
+            }, 
+            "Total": {}, 
+            "Groups": [
+                {
+                    "Keys": [
+                        "Amazon Simple Storage Service", 
+                        "Environment$"
+                    ], 
+                    "Metrics": {
+                        "BlendedCost": {
+                            "Amount": "0.1302", 
+                            "Unit": "USD"
+                        }, 
+                        "UnblendedCost": {
+                            "Amount": "0.1302", 
+                            "Unit": "USD"
+                        }, 
+                        "UsageQuantity": {
+                            "Amount": "30162.0579062589", 
+                            "Unit": "N/A"
+                        }
+                    }
+                }
+            ]
+        }, 
+        {
+            "Estimated": false, 
+            "TimePeriod": {
+                "Start": "2019-12-01", 
+                "End": "2020-01-01"
+            }, 
+            "Total": {}, 
+            "Groups": [
+                {
+                    "Keys": [
+                        "Amazon Simple Storage Service", 
+                        "Environment$"
+                    ], 
+                    "Metrics": {
+                        "BlendedCost": {
+                            "Amount": "0.31246", 
+                            "Unit": "USD"
+                        }, 
+                        "UnblendedCost": {
+                            "Amount": "0.31246", 
+                            "Unit": "USD"
+                        }, 
+                        "UsageQuantity": {
+                            "Amount": "67700.1901540402", 
+                            "Unit": "N/A"
+                        }
+                    }
+                }
+            ]
+        }, 
+        {
+            "Estimated": false, 
+            "TimePeriod": {
+                "Start": "2020-01-01", 
+                "End": "2020-02-01"
+            }, 
+            "Total": {}, 
+            "Groups": [
+                {
+                    "Keys": [
+                        "Amazon Simple Storage Service", 
+                        "Environment$"
+                    ], 
+                    "Metrics": {
+                        "BlendedCost": {
+                            "Amount": "0.414125", 
+                            "Unit": "USD"
+                        }, 
+                        "UnblendedCost": {
+                            "Amount": "0.414125", 
+                            "Unit": "USD"
+                        }, 
+                        "UsageQuantity": {
+                            "Amount": "90053.1750758933", 
+                            "Unit": "N/A"
+                        }
+                    }
+                }
+            ]
+        }, 
+        {
+            "Estimated": false, 
+            "TimePeriod": {
+                "Start": "2020-02-01", 
+                "End": "2020-03-01"
+            }, 
+            "Total": {}, 
+            "Groups": [
+                {
+                    "Keys": [
+                        "Amazon Simple Storage Service", 
+                        "Environment$"
+                    ], 
+                    "Metrics": {
+                        "BlendedCost": {
+                            "Amount": "1.4417099078", 
+                            "Unit": "USD"
+                        }, 
+                        "UnblendedCost": {
+                            "Amount": "1.4417099078", 
+                            "Unit": "USD"
+                        }, 
+                        "UsageQuantity": {
+                            "Amount": "259422.9529101588", 
+                            "Unit": "N/A"
+                        }
+                    }
+                }
+            ]
+        }, 
+        {
+            "Estimated": false, 
+            "TimePeriod": {
+                "Start": "2020-03-01", 
+                "End": "2020-04-01"
+            }, 
+            "Total": {}, 
+            "Groups": [
+                {
+                    "Keys": [
+                        "Amazon Simple Storage Service", 
+                        "Environment$"
+                    ], 
+                    "Metrics": {
+                        "BlendedCost": {
+                            "Amount": "2.3419499496", 
+                            "Unit": "USD"
+                        }, 
+                        "UnblendedCost": {
+                            "Amount": "2.3419499496", 
+                            "Unit": "USD"
+                        }, 
+                        "UsageQuantity": {
+                            "Amount": "445213.3755814383", 
+                            "Unit": "N/A"
+                        }
+                    }
+                }
+            ]
+        }, 
+        {
+            "Estimated": false, 
+            "TimePeriod": {
+                "Start": "2020-04-01", 
+                "End": "2020-05-01"
+            }, 
+            "Total": {}, 
+            "Groups": [
+                {
+                    "Keys": [
+                        "Amazon Simple Storage Service", 
+                        "Environment$"
+                    ], 
+                    "Metrics": {
+                        "BlendedCost": {
+                            "Amount": "5.8848347149", 
+                            "Unit": "USD"
+                        }, 
+                        "UnblendedCost": {
+                            "Amount": "5.8848347149", 
+                            "Unit": "USD"
+                        }, 
+                        "UsageQuantity": {
+                            "Amount": "558532.8503933088", 
+                            "Unit": "N/A"
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}

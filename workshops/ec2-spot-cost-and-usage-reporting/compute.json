@@ -1,0 +1,9 @@
+{
+    "Dimensions": {
+        "Key": "SERVICE",
+        "Values": [
+            "Amazon Elastic Compute Cloud - Compute",
+            "Amazon Elastic Load Balancing"
+        ]
+    }
+}

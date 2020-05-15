@@ -6,6 +6,30 @@ echo "Creating the Infrastructure for ECS_Cluster_Auto_Scaling workshop ..."
 yum update -y
 yum -y install jq
 
+sudo yum install -y docker
+sudo service docker start
+
+sudo usermod -a -G docker ec2-user
+cd ~/environment/ec2-spot-workshops/workshops/ecs-immersion-day
+curl -O https://s3-us-west-2.amazonaws.com/apn-bootcamps/microservice-ecs-2017/ecs-lab-code-20170524.tar.gz
+tar -xvf ecs-lab-code-20170524.tar.gz
+
+cd ~/environment/ec2-spot-workshops/workshops/ecs-immersion-day/aws-microservices-ecs-bootcamp-v2/web
+
+docker build -t ecs-lab/web .
+
+docker run -d -p 3000:3000 ecs-lab/web
+
+cd ../api 
+docker build -t ecs-lab/api .
+docker images
+docker run -d -p 8000:8000 ecs-lab/api
+curl localhost:8000/api
+
+
+
+exit 0
+
 export ACCOUNT_ID=$(aws sts get-caller-identity  --output text --query Account)
 export AWS_REGION=$(curl -s  169.254.169.254/latest/dynamic/instance-identity/document | jq -r '.region')
 echo "export  ACCOUNT_ID=${ACCOUNT_ID}" >> ~/.bash_profile
@@ -211,13 +235,7 @@ aws ecs update-service --cluster EcsSpotWorkshop --service ec2-service-split --d
 aws ecs update-service --cluster EcsSpotWorkshop --service ec2-service-split --desired-count 100
 
 
-   aws ecs create-service \
-     --launch-type  EC2 \
-     --cluster EcsSpotWorkshop \
-     --service-name ec2-service-web7 \
-     --task-definition ec2-task:3 \
-     --desired-count 1 \
-     --region us-east-1  
+     
      
 
 aws ecs describe-capacity-providers
@@ -274,17 +292,7 @@ docker exec -it python-signals ps
 docker stop python-signals
 
  docker build --no-cache   . -t web
-docker run -it --rm --name="web"  -p 80:80 web
+docker run -it   --name="web"  -p 80:80 web
 docker exec -it web ps 
 docker stop web
-docker run -it --rm --name="web"  -p 80:80  --net=host  ecs-spot-workshop/web
-aws ecr create-repository \
-    --repository-name ecs-spot-workshop/web \
-    --image-scanning-configuration scanOnPush=true
-    
-aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 000474600478.dkr.ecr.us-east-1.amazonaws.com
-docker build --no-cache  -t ecs-spot-workshop/web .
-
-docker tag ecs-spot-workshop/web:latest 000474600478.dkr.ecr.us-east-1.amazonaws.com/ecs-spot-workshop/web:latest
-docker push 000474600478.dkr.ecr.us-east-1.amazonaws.com/ecs-spot-workshop/web:latest    
 

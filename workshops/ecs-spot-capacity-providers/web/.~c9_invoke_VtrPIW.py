@@ -8,7 +8,6 @@ import time
 import socket
 import sys
 from ec2_metadata import ec2_metadata
-import boto3
 
 
 
@@ -33,7 +32,7 @@ app = Flask(__name__)
 cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
 
- 
+
 @app.route('/')
 @cross_origin()
 def index():
@@ -42,7 +41,7 @@ def index():
     
     response +="<head> <title>Spot Game Day</title> </head>"
   
-    response += "<h2>I am a Simple Web Service Running with below Attributes </h2> <hr/>"
+    response += "<h2>I am a Simple Web ServRunning with below Attributes </h2> <hr/>"
     #hostname = socket.gethostname()    
     #IPAddr = socket.gethostbyname(hostname)   
     #response += "<li>My Host Name is: {}</li>".format(hostname)    
@@ -57,10 +56,7 @@ def index():
     try:
       #instanceId = requests.get(URL)
       #response += "<li>My instanceId is: {}</li>".format(str(instanceId))
-      instanceId = ec2_metadata.instance_id
-      response += "<li>My instance_id is: {}</li>".format(instanceId)
-      lifecycle = getInstanceLifecycle(instanceId)      
-      response += "<li>My Instance lifecycle  is: {}</li>".format(lifecycle)      
+      response += "<li>My instance_id is: {}</li>".format(ec2_metadata.instance_id)
       response += "<li>My availability_zone is: {}</li>".format(ec2_metadata.availability_zone)      
       response += "<li>My ami_launch_index is: {}</li>".format(ec2_metadata.ami_launch_index)      
       response += "<li>My instance_type is: {}</li>".format(ec2_metadata.instance_type)      
@@ -114,16 +110,6 @@ def index():
     #    response += "<h2>Metadata</h2 <hr/> {}".format(json.dumps(metadata.text, indent=4, sort_keys=True))
 
     return response
-
-def getInstanceLifecycle(instanceId):
-  ec2client = boto3.client('ec2', region_name='us-east-1')
-  describeInstance = ec2client.describe_instances(InstanceIds=[instanceId])
-  instanceData=describeInstance['Reservations'][0]['Instances'][0]
-  if 'InstanceLifecycle' in instanceData.keys():
-    return instanceData['InstanceLifecycle']
-  else:
-    return "Ondemand"
-
 
 if __name__ == '__main__':
     killer = GracefulKiller()

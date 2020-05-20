@@ -215,10 +215,19 @@ aws ecs update-service --cluster EcsSpotWorkshop --service ec2-service-split --d
      --launch-type  EC2 \
      --cluster EcsSpotWorkshop \
      --service-name ec2-service-web7 \
-     --task-definition ec2-task:3 \
-     --desired-count 1 \
+     --task-definition ec2-task:8 \
+     --desired-count 2 \
      --region us-east-1  
      
+
+   aws ecs create-service \
+     --launch-type  EC2 \
+     --cluster EcsSpotWorkshop \
+     --service-name ec2-service-web77 \
+     --task-definition ec2-task:7 \
+     --desired-count 2 \
+     --region us-east-1  \
+	    --network-configuration "awsvpcConfiguration={subnets=[subnet-003ef0ebc04c89b2d],securityGroups=[sg-03ccfca80f9fddf4d]}"     
 
 aws ecs describe-capacity-providers
 
@@ -273,11 +282,12 @@ docker run -it --rm --name="python-signals" python-signals
 docker exec -it python-signals ps
 docker stop python-signals
 
- docker build --no-cache   . -t web
+docker build --no-cache   . -t web
 docker run -it --rm --name="web"  -p 80:80 web
 docker exec -it web ps 
 docker stop web
 docker run -it --rm --name="web"  -p 80:80  --net=host  ecs-spot-workshop/web
+docker run -it --rm --name="web"  -p 80:80   ecs-spot-workshop/web
 aws ecr create-repository \
     --repository-name ecs-spot-workshop/web \
     --image-scanning-configuration scanOnPush=true
@@ -288,3 +298,6 @@ docker build --no-cache  -t ecs-spot-workshop/web .
 docker tag ecs-spot-workshop/web:latest 000474600478.dkr.ecr.us-east-1.amazonaws.com/ecs-spot-workshop/web:latest
 docker push 000474600478.dkr.ecr.us-east-1.amazonaws.com/ecs-spot-workshop/web:latest    
 
+x=$(docker images | awk '{print $3}')
+
+docker rmi --force $x

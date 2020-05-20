@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, render_template
 from flask.ext.cors import CORS, cross_origin
 import os
 import requests
@@ -9,11 +9,10 @@ import socket
 import sys
 from ec2_metadata import ec2_metadata
 import boto3
-
+#import urllib
 
 
 class GracefulKiller:
-  kill_now = False
   signals = {
     signal.SIGINT: 'SIGINT',
     signal.SIGTERM: 'SIGTERM'
@@ -24,9 +23,12 @@ class GracefulKiller:
     signal.signal(signal.SIGTERM, self.exit_gracefully)
 
   def exit_gracefully(self, signum, frame):
+    #cam_img = urllib.urlopen("http://localhost:80/").read()
+    #cam_img.write("Received {} signal")
     print("\nReceived {} signal".format(self.signals[signum]))
-    print("Cleaning up resources. End of the program")
-    self.kill_now = True
+    if self.signals[signum] == 'SIGTERM':
+      print("Looks like it's a Spot Interruption. Let's wrap up the processing within next 30 sec ...")
+
     
     
 app = Flask(__name__)
@@ -38,11 +40,12 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 @cross_origin()
 def index():
     
+    #return render_template("index.html")
     response = ""
     
     response +="<head> <title>Spot Game Day</title> </head>"
   
-    response += "<h2>I am a Simple Web Service Running with below Attributes </h2> <hr/>"
+    response += "<h2>I am a Simple Containerized Web App Running with below Attributes </h2> <hr/>"
     #hostname = socket.gethostname()    
     #IPAddr = socket.gethostbyname(hostname)   
     #response += "<li>My Host Name is: {}</li>".format(hostname)    
@@ -58,25 +61,25 @@ def index():
       #instanceId = requests.get(URL)
       #response += "<li>My instanceId is: {}</li>".format(str(instanceId))
       instanceId = ec2_metadata.instance_id
-      response += "<li>My instance_id is: {}</li>".format(instanceId)
+      response += "<li>My instance_id = {}</li>".format(instanceId)
       lifecycle = getInstanceLifecycle(instanceId)      
-      response += "<li>My Instance lifecycle  is: {}</li>".format(lifecycle)      
-      response += "<li>My availability_zone is: {}</li>".format(ec2_metadata.availability_zone)      
-      response += "<li>My ami_launch_index is: {}</li>".format(ec2_metadata.ami_launch_index)      
-      response += "<li>My instance_type is: {}</li>".format(ec2_metadata.instance_type)      
-      response += "<li>My private_ipv4 is: {}</li>".format(ec2_metadata.private_ipv4)  
-      response += "<li>My public_ipv4 is: {}</li>".format(ec2_metadata.public_ipv4)  
-      response += "<li>My Region is: {}</li>".format(ec2_metadata.region)      
-      
+      response += "<li>My Instance lifecycle = {}</li>".format(lifecycle)      
+      response += "<li>My instance_type = {}</li>".format(ec2_metadata.instance_type)      
+      response += "<li>My private_ipv4 = {}</li>".format(ec2_metadata.private_ipv4)  
+      response += "<li>My public_ipv4 = {}</li>".format(ec2_metadata.public_ipv4)       
+      response += "<li>My availability_zone = {}</li>".format(ec2_metadata.availability_zone)      
+      response += "<li>My Region = {}</li>".format(ec2_metadata.region)      
+      response += "<li>My ami_launch_index = {}</li>".format(ec2_metadata.ami_launch_index)      
+ 
       networks = ec2_metadata.network_interfaces
       for nw in networks:
-        response += "<li>My subnet_id is: {}</li>".format(ec2_metadata.network_interfaces[nw].subnet_id)
-        response += "<li>My vpc_id is: {}</li>".format(ec2_metadata.network_interfaces[nw].vpc_id)
+        response += "<li>My subnet_id = {}</li>".format(ec2_metadata.network_interfaces[nw].subnet_id)
+        response += "<li>My vpc_id = {}</li>".format(ec2_metadata.network_interfaces[nw].vpc_id)
         
       URL = "http://localhost:51678/v1/metadata"
       ecs = requests.get(URL).json()
       
-      response += "<li>My ECS Cluster Name is: {}</li>".format(ecs['Cluster'])     
+      response += "<li>My ECS Cluster Name = {}</li>".format(ecs['Cluster'])     
       
       URL = "http://localhost:51678/v1/tasks"
       task_list = requests.get(URL).json()
@@ -84,18 +87,18 @@ def index():
       num = 1
       for task in task_list['Tasks']:
         if task['KnownStatus'] =="RUNNING":
-          response += "<li>Task number {} and Task Id is : {}</li>".format(num, task['Arn'])
-          response += "<li>Task number {} and Task Family is : {}</li>".format(num, task['Family'])     
-          response += "<li>Task number {} and Task Version is : {}</li>".format(num, task['Version'])     
+          response += "<li>Task number {} and Task Id = {}</li>".format(num, task['Arn'])
+          response += "<li>Task number {} and Task Family:Version = {}:{}</li>".format(num, task['Family'], task['Version'])
           num = num + 1
+          
           con=1
           for container in task['Containers']:
-            response += "   <li>Container number {} and DockerId is : {}</li>".format(con, container['DockerId'])
-            response += "   <li>Container number {} and Name is : {}</li>".format(con, container['Name'])     
+            response += "<li>Container number {} and DockerId = {}</li>".format(con, container['DockerId'])
+            response += "<li>Container number {} and Name = {}</li>".format(con, container['Name'])     
             con = con + 1
 
     except:
-      response += "<li>There is an error to access the metadata : {}</li>".format(sys.exc_info()[0])
+      response += "<li>Oops !!! There seems to be an error to access my instance  metadata = {}</li>".format(sys.exc_info()[0])
       
     #response += "<li>My InstanceId is: {}</li>".format(json.dumps(metadata.text, indent=4, sort_keys=True))
 
@@ -116,7 +119,7 @@ def index():
     return response
 
 def getInstanceLifecycle(instanceId):
-  ec2client = boto3.client('ec2', region_name='us-east-1')
+  ec2client = boto3.client('ec2', region_name=ec2_metadata.region)
   describeInstance = ec2client.describe_instances(InstanceIds=[instanceId])
   instanceData=describeInstance['Reservations'][0]['Instances'][0]
   if 'InstanceLifecycle' in instanceData.keys():
@@ -127,7 +130,7 @@ def getInstanceLifecycle(instanceId):
 
 if __name__ == '__main__':
     killer = GracefulKiller()
-    print("Running ...")
+    print("Starting A Simple Web Service ...")
     app.run(port=80,host='0.0.0.0')
 
     #while not killer.kill_now:

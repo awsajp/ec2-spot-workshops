@@ -197,7 +197,7 @@ Resources:
       EnableDnsSupport: true
       Tags:
         - Key: Name
-          Value: Spot GameDay - workshop template
+          Value: SpotGameDay
 
   internetGateway:
     Type: AWS::EC2::InternetGateway
@@ -443,7 +443,7 @@ Resources:
       - vpc
     # DependedOn: JenkinsMasterALBListener, JenkinsMasterALBListenerRule
     Properties:
-      HealthCheckIntervalSeconds: 45
+      HealthCheckIntervalSeconds: 50
       HealthCheckPath: /
       HealthCheckPort: 80
       HealthCheckProtocol: HTTP
@@ -606,7 +606,7 @@ Resources:
                 URL = "http://169.254.169.254/latest/meta-data/spot/termination-time"
                 SpotInt = requests.get(URL)
                 if SpotInt.status_code == 200:
-                  response += "<h1>This Spot Instance Got Interruption and Termination Date is {} </h1> <hr/>".format(SpotInt.text)
+                  response += "<h1>This Spot Instance Got Interruption and Termination Time is {} </h1> <hr/>".format(SpotInt.text)
 
 
                 URL = "http://169.254.169.254/latest/dynamic/instance-identity/document"

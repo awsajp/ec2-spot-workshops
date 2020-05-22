@@ -143,8 +143,9 @@ Parameters:
   KeyName:
     Description: Name of an existing EC2 KeyPair to enable SSH access to the EC2 instances
     Type: AWS::EC2::KeyPair::KeyName
-    Default: 'awsajp_keypair'
+    Default: 'SpotGameDay'
     MinLength: 1
+
   sourceCidr:
     Default: 0.0.0.0/0
     Description: Optional - CIDR/IP range for instance ssh/http access and load balancer http
@@ -163,11 +164,6 @@ Parameters:
     Description: "on-demand percentage above base capacity(0-100)"
     Default: 100
 
-  SpotInstancePools:
-    Type: Number
-    Description: "spot instance pools(1-20)"
-    Default: 2
-
   InstanceTypesOverride:
     Type: String
     Description: "multiple spot instances to override(seperated by comma)"
@@ -176,7 +172,7 @@ Parameters:
   NodeAutoScalingGroupMinSize:
     Type: Number
     Description: Minimum size of Node Group ASG.
-    Default: 2
+    Default: 0
 
   NodeAutoScalingGroupDesiredSize:
     Type: Number
@@ -187,16 +183,6 @@ Parameters:
     Type: Number
     Description: Maximum size of Node Group ASG.
     Default: 10
-
-  ASGNameKey:
-    Description: Name of the ASG Name.
-    Type: String
-    Default: "SpotGameDayASG"
-
-  LTNameKey:
-    Description: Name of the Launch Template Name
-    Type: String
-    Default: "SpotGameDayLT"
 
 Resources:
   vpc:
@@ -443,7 +429,7 @@ Resources:
       - publicSubnet1
       - publicSubnet2
     Properties:
-      Name: SpotGameDayALB
+      Name: SpotGameDay
       Scheme: internet-facing
       SecurityGroups:
         - !Ref loadBalancerSecurityGroup
@@ -457,15 +443,15 @@ Resources:
       - vpc
     # DependedOn: JenkinsMasterALBListener, JenkinsMasterALBListenerRule
     Properties:
-      HealthCheckIntervalSeconds: 15
+      HealthCheckIntervalSeconds: 45
       HealthCheckPath: /
       HealthCheckPort: 80
       HealthCheckProtocol: HTTP
-      HealthCheckTimeoutSeconds: 5
+      HealthCheckTimeoutSeconds: 45
       HealthyThresholdCount: 2
       Matcher:
         HttpCode: 200
-      Name: SpotGameDayTG
+      Name: SpotGameDay
       Port: 80
       Protocol: HTTP
       UnhealthyThresholdCount: 4
@@ -490,6 +476,7 @@ Resources:
   instanceRole:
     Type: AWS::IAM::Role
     Properties:
+      RoleName: "SpotGameDay-InstanceRole"
       AssumeRolePolicyDocument:
         Statement:
           - Action:
@@ -516,6 +503,7 @@ Resources:
     DependsOn:
     - instanceRole
     Properties:
+      InstanceProfileName: "SpotGameDay-InstanceProfile"
       Path: /
       Roles:
         - Ref: instanceRole
@@ -525,16 +513,8 @@ Resources:
     DependsOn:
     - vpc
     Properties:
-      GroupDescription: Allow ssh (22) and http (80)
-      SecurityGroupIngress:
-      - CidrIp: !Ref sourceCidr
-        FromPort: 80
-        IpProtocol: tcp
-        ToPort: 80
-      - CidrIp: !Ref sourceCidr
-        FromPort: 22
-        IpProtocol: tcp
-        ToPort: 22
+      GroupDescription: Allow traffic Only from ALB
+      GroupName: "SpotGameDay-InstanceSG"
       VpcId: !Ref vpc
 
 
@@ -558,6 +538,7 @@ Resources:
     Properties:
       LaunchTemplateData:
         InstanceType: t3.large
+        KeyName : !Ref KeyName
         ImageId:
           Fn::FindInMap:
             - AmazonLinux2AMI
@@ -576,17 +557,112 @@ Resources:
           - ResourceType: instance
             Tags:
               - Key: Name
-                Value: !Sub "${LTNameKey}-LT"
+                Value: "SpotGameDay"
         UserData:
           Fn::Base64: !Sub |
             #!/bin/bash
             yum update -y
-            yum install httpd -y
-            chkconfig httpd on
-            instanceid=$(curl http://169.254.169.254/latest/meta-data/instance-id)
-            echo "hello from instance id $instanceid" > /var/www/html/index.html
-            service httpd start
-      LaunchTemplateName: !Ref LTNameKey
+
+            sudo yum -y install python3 python3-wheel python-pi
+
+            cat <<EOF > requirements.txt
+            Flask==0.10.1
+            Flask-Cors==1.10.2
+            requests
+            boto3
+            EOF
+
+            sudo pip3 install -r requirements.txt
+
+
+            cat <<EOF > app.py
+            from flask import Flask, render_template
+            from flask.ext.cors import CORS, cross_origin
+            import os
+            import requests
+            import json
+            import time
+            import sys
+            import boto3
+
+
+
+
+
+            app = Flask(__name__)
+            cors = CORS(app)
+            app.config['CORS_HEADERS'] = 'Content-Type'
+
+
+            @app.route('/')
+            @cross_origin()
+            def index():
+
+              response = ""
+              response +="<head> <title>Spot Game Day</title> </head>"
+              response += "<h2>I am a Simple Web App Running with below Attributes </h2> <hr/>"
+
+              try:
+                URL = "http://169.254.169.254/latest/meta-data/spot/termination-time"
+                SpotInt = requests.get(URL)
+                if SpotInt.status_code == 200:
+                  response += "<h1>This Spot Instance Got Interruption and Termination Date is {} </h1> <hr/>".format(SpotInt.text)
+
+
+                URL = "http://169.254.169.254/latest/dynamic/instance-identity/document"
+                InstanceData = requests.get(URL).json()
+
+                instanceId = InstanceData['instanceId']
+                response += "<li>My instance_id = {}</li>".format(instanceId)
+                lifecycle = getInstanceLifecycle(instanceId, InstanceData['region'])
+                response += "<li>My Instance lifecycle = {}</li>".format(lifecycle)
+                response += "<li>My instance_type = {}</li>".format(InstanceData['instanceType'])
+                response += "<li>My Intance private_ipv4 = {}</li>".format(InstanceData['privateIp'])
+                response += "<li>My availability_zone = {}</li>".format(InstanceData['availabilityZone'])
+                response += "<li>My Region = {}</li>".format(InstanceData['region'])
+
+                publicIp = requests.get("http://169.254.169.254/latest/meta-data/public-ipv4")
+                response += "<li>My instance_type public_ipv4 = {}</li>".format(publicIp.text)
+                AMIIndexId = requests.get("http://169.254.169.254/latest/meta-data/ami-launch-index")
+                response += "<li>My ami_launch_index = {}</li>".format(AMIIndexId.text)
+
+                AMIId = requests.get("http://169.254.169.254/latest/meta-data/ami-id")
+                response += "<li>My ami_launch_index = {}</li>".format(AMIId.text)
+
+                MacId = requests.get("http://169.254.169.254/latest/meta-data/mac")
+                Mac = MacId.text
+
+                URL = "http://169.254.169.254/latest/meta-data/network/interfaces/macs/" + str(MacId.text) + "/subnet-id"
+                SubnetId = requests.get(URL)
+                response += "<li>My subnet_id = {}</li>".format(SubnetId.text)
+
+                URL = "http://169.254.169.254/latest/meta-data/network/interfaces/macs/" + str(MacId.text) + "/vpc-id"
+                VPCId = requests.get(URL)
+                response += "<li>My vpc_id = {}</li>".format(VPCId.text)
+
+
+              except Exception as inst:
+                response += "<li>Oops !!! Failed to access my instance  metadata with error = {}</li>".format(inst)
+
+              return response
+
+            def getInstanceLifecycle(instanceId, region):
+              ec2client = boto3.client('ec2', region_name=region)
+              describeInstance = ec2client.describe_instances(InstanceIds=[instanceId])
+              instanceData=describeInstance['Reservations'][0]['Instances'][0]
+              if 'InstanceLifecycle' in instanceData.keys():
+                return instanceData['InstanceLifecycle']
+              else:
+                return "Ondemand"
+
+            if __name__ == '__main__':
+              print("Starting A Simple Web Service ...")
+              app.run(port=80,host='0.0.0.0')
+
+            EOF
+
+            python3 app.py
+      LaunchTemplateName: "SpotGameDay"
 
   MyASG:
     DependsOn:
@@ -595,19 +671,14 @@ Resources:
       - publicSubnet2
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
-      AutoScalingGroupName: !Ref ASGNameKey
+      AutoScalingGroupName: "SpotGameDay"
       DesiredCapacity: !Ref NodeAutoScalingGroupDesiredSize
-      #LaunchConfigurationName: !Ref NodeLaunchConfig
-      # LaunchTemplate:
-      #   LaunchTemplateId: !Ref MyLaunchTemplate
-      #   Version: !GetAtt MyLaunchTemplate.LatestVersionNumber
       MixedInstancesPolicy:
         InstancesDistribution:
           OnDemandAllocationStrategy: prioritized
           OnDemandBaseCapacity: !Ref OnDemandBaseCapacity
           OnDemandPercentageAboveBaseCapacity: !Ref OnDemandPercentageAboveBaseCapacity
           SpotAllocationStrategy: capacity-optimized
-          # SpotMaxPrice: String
         LaunchTemplate:
           LaunchTemplateSpecification:
             LaunchTemplateId: !Ref MyLT
@@ -625,13 +696,12 @@ Resources:
         - !Ref MyTG
       Tags:
         - Key: Name
-          Value: !Sub "${ASGNameKey}-${LTNameKey}-ASG"
+          Value: "SpotGameDay"
           PropagateAtLaunch: 'true'
     UpdatePolicy:
       AutoScalingRollingUpdate:
         MinInstancesInService: !Ref NodeAutoScalingGroupDesiredSize
         MaxBatchSize: '1'
         PauseTime: 'PT5M'
-
 
 ...

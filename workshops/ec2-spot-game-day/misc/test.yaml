@@ -1,0 +1,286 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+Description: EC2 Spot Game Day Template
+Mappings:
+  CidrMappings:
+    public-subnet-1:
+      CIDR: 10.0.0.0/24
+    public-subnet-2:
+      CIDR: 10.0.1.0/24
+    public-subnet-3:
+      CIDR: 10.0.2.0/24
+    private-subnet-1:
+      CIDR: 10.0.3.0/24
+    private-subnet-2:
+      CIDR: 10.0.4.0/24
+    private-subnet-3:
+      CIDR: 10.0.5.0/24
+    vpc:
+      CIDR: 10.0.0.0/16
+
+  AmazonLinux2AMI:
+    us-east-2:
+      AMI: ami-0f7919c33c90f5b58
+    us-east-1:
+      AMI: ami-0323c3dd2da7fb37d
+    us-west-1:
+      AMI: ami-06fcc1f0bc2c8943f
+    us-west-2:
+      AMI: ami-0d6621c01e8c2de2c
+    af-south-1:
+      AMI: ami-N/A
+    ap-east-1:
+      AMI: ami-N/A
+    ap-south-1:
+      AMI: ami-0470e33cd681b2476
+    ap-northeast-3:
+      AMI: ami-no
+    ap-northeast-2:
+      AMI: ami-01288945bd24ed49a
+    ap-southeast-1:
+      AMI: ami-0ec225b5e01ccb706
+    ap-southeast-2:
+      AMI: ami-0970010f37c4f9c8d
+    ap-northeast-1:
+      AMI: ami-0f310fced6141e627
+    ca-central-1:
+      AMI: ami-054362537f5132ce2
+    eu-central-1:
+      AMI: ami-076431be05aaf8080
+    eu-west-1:
+      AMI: ami-06ce3edf0cff21f07
+    eu-west-2:
+      AMI: ami-01a6e31ac994bbc09
+    eu-south-1:
+      AMI: ami-N/A
+    eu-west-3:
+      AMI: ami-00077e3fed5089981
+    eu-north-1:
+      AMI: ami-0b7a46b4bd694e8a6
+    me-south-1:
+      AMI: ami-N/A
+    sa-east-1:
+      AMI: ami-003449ffb2605a74c
+Metadata:
+  Author:
+    Description: Jayaprakash Alawala <jalawala@amazon.com>
+  License:
+    Description: 'Copyright 2020 Amazon.com, Inc. and its affiliates. All Rights Reserved.
+
+      Licensed under the Amazon Software License (the "License"). You may not use this file
+      except in compliance with the License. A copy of the License is located at
+
+      http://aws.amazon.com/asl/
+
+      or in the "license" file accompanying this file. This file is distributed on an "AS IS"
+      BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+      License for the specific language governing permissions and limitations under the License.'
+
+
+Outputs:
+  awsRegionId:
+    Description: The AWS Region ID your template was launched in
+    Value: !Ref AWS::Region
+
+  ASG:
+    Description: The Autoscaling Group
+    Value: !Ref MyASG
+
+  MyLT:
+    Description: The Launch Template
+    Value: !Ref MyLT
+
+Parameters:
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the EC2 instances
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: 'awsajp_keypair'
+    MinLength: 1
+  sourceCidr:
+    Default: 0.0.0.0/0
+    Description: Optional - CIDR/IP range for instance ssh/http access and load balancer http
+      access
+    Type: String
+
+  InstanceTypesOverride:
+    Type: String
+    Description: "multiple spot instances to override(seperated by comma)"
+    Default: "t3.large,m5.large"
+
+Resources:
+
+  MyLT:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateData:
+        InstanceType: t3.large
+        ImageId:
+          Fn::FindInMap:
+            - AmazonLinux2AMI
+            - Ref: AWS::Region
+            - AMI
+        IamInstanceProfile:
+          Arn: arn:aws:iam::000474600478:instance-profile/SpotGameDay-instanceProfile-15L6N35K00N6D
+
+        SecurityGroupIds:
+          - sg-07e6201b787e1e594
+
+        TagSpecifications:
+          - ResourceType: instance
+            Tags:
+              - Key: Name
+                Value: test
+        UserData:
+          Fn::Base64: !Sub |
+            #!/bin/bash
+            yum update -y
+
+            sudo yum -y install python3 python3-wheel python-pi
+
+            cat <<EOF > requirements.txt
+            Flask==0.10.1
+            Flask-Cors==1.10.2
+            requests
+            ec2-metadata
+            boto3
+            EOF
+
+            sudo pip3 install -r requirements.txt
+
+
+            cat <<EOF > app.py
+            from flask import Flask, render_template
+            from flask.ext.cors import CORS, cross_origin
+            import os
+            import requests
+            import json
+            import time
+            import sys
+            import boto3
+
+
+
+
+
+            app = Flask(__name__)
+            cors = CORS(app)
+            app.config['CORS_HEADERS'] = 'Content-Type'
+
+
+            @app.route('/')
+            @cross_origin()
+            def index():
+
+              response = ""
+              response +="<head> <title>Spot Game Day</title> </head>"
+              response += "<h2>I am a Simple Web App Running with below Attributes </h2> <hr/>"
+
+              try:
+                URL = "http://169.254.169.254/latest/meta-data/spot/termination-time"
+                SpotInt = requests.get(URL)
+                if SpotInt.status_code == 200:
+                  response += "<h1>This Spot Instance Got Interruption and Termination Date is {} </h1> <hr/>".format(SpotInt.text)
+
+
+                URL = "http://169.254.169.254/latest/dynamic/instance-identity/document"
+                InstanceData = requests.get(URL).json()
+
+                instanceId = InstanceData['instanceId']
+                response += "<li>My instance_id = {}</li>".format(instanceId)
+                lifecycle = getInstanceLifecycle(instanceId, InstanceData['region'])
+                response += "<li>My Instance lifecycle = {}</li>".format(lifecycle)
+                response += "<li>My instance_type = {}</li>".format(InstanceData['instanceType'])
+                response += "<li>My Intance private_ipv4 = {}</li>".format(InstanceData['privateIp'])
+                response += "<li>My availability_zone = {}</li>".format(InstanceData['availabilityZone'])
+                response += "<li>My Region = {}</li>".format(InstanceData['region'])
+
+                publicIp = requests.get("http://169.254.169.254/latest/meta-data/public-ipv4")
+                response += "<li>My instance_type public_ipv4 = {}</li>".format(publicIp.text)
+                AMIIndexId = requests.get("http://169.254.169.254/latest/meta-data/ami-launch-index")
+                response += "<li>My ami_launch_index = {}</li>".format(AMIIndexId.text)
+
+                AMIId = requests.get("http://169.254.169.254/latest/meta-data/ami-id")
+                response += "<li>My ami_launch_index = {}</li>".format(AMIId.text)
+
+                MacId = requests.get("http://169.254.169.254/latest/meta-data/mac")
+                Mac = MacId.text
+
+                URL = "http://169.254.169.254/latest/meta-data/network/interfaces/macs/" + str(MacId.text) + "/subnet-id"
+                SubnetId = requests.get(URL)
+                response += "<li>My subnet_id = {}</li>".format(SubnetId.text)
+
+                URL = "http://169.254.169.254/latest/meta-data/network/interfaces/macs/" + str(MacId.text) + "/vpc-id"
+                VPCId = requests.get(URL)
+                response += "<li>My vpc_id = {}</li>".format(VPCId.text)
+
+
+              except Exception as inst:
+                response += "<li>Oops !!! Failed to access my instance  metadata with error = {}</li>".format(inst)
+
+              return response
+
+            def getInstanceLifecycle(instanceId, region):
+              ec2client = boto3.client('ec2', region_name=region)
+              describeInstance = ec2client.describe_instances(InstanceIds=[instanceId])
+              instanceData=describeInstance['Reservations'][0]['Instances'][0]
+              if 'InstanceLifecycle' in instanceData.keys():
+                return instanceData['InstanceLifecycle']
+              else:
+                return "Ondemand"
+
+            if __name__ == '__main__':
+              print("Starting A Simple Web Service ...")
+              app.run(port=80,host='0.0.0.0')
+
+
+
+            EOF
+
+            python3 app.py
+      LaunchTemplateName: gameday-test
+
+  MyASG:
+    DependsOn:
+      - MyLT
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      AutoScalingGroupName: gameday-test
+      DesiredCapacity: 1
+      #LaunchConfigurationName: !Ref NodeLaunchConfig
+      # LaunchTemplate:
+      #   LaunchTemplateId: !Ref MyLaunchTemplate
+      #   Version: !GetAtt MyLaunchTemplate.LatestVersionNumber
+      MixedInstancesPolicy:
+        InstancesDistribution:
+          OnDemandAllocationStrategy: prioritized
+          OnDemandBaseCapacity: 0
+          OnDemandPercentageAboveBaseCapacity: 50
+          SpotAllocationStrategy: capacity-optimized
+          # SpotMaxPrice: String
+        LaunchTemplate:
+          LaunchTemplateSpecification:
+            LaunchTemplateId: !Ref MyLT
+            # LaunchTemplateName: String
+            Version: !GetAtt MyLT.LatestVersionNumber
+          Overrides:
+            - InstanceType: !Select [0, !Split [ ",", !Ref InstanceTypesOverride ] ]
+            - InstanceType: !Select [1, !Split [ ",", !Ref InstanceTypesOverride ] ]
+      MinSize: 1
+      MaxSize: 2
+      VPCZoneIdentifier:
+        - subnet-0ffa4862080bd77a6
+        - subnet-0e596d6e99651b881
+      TargetGroupARNs:
+        - arn:aws:elasticloadbalancing:us-east-1:000474600478:targetgroup/SpotGameDayTG/8de0f3f5a9af1cfc
+      Tags:
+        - Key: Name
+          Value: test
+          PropagateAtLaunch: 'true'
+    UpdatePolicy:
+      AutoScalingRollingUpdate:
+        MinInstancesInService: 2
+        MaxBatchSize: '1'
+        PauseTime: 'PT5M'
+
+
+...

@@ -85,6 +85,16 @@ Outputs:
       - instanceProfile
       - Arn
 
+  Cloud9instanceProfile:
+    Description: Cloud9 Instance profile ARN
+    Value:
+      Fn::GetAtt:
+        - Cloud9instanceProfile
+        - Arn
+
+
+
+
   instanceSecurityGroup:
     Description: Instance security group
     Value: !Ref instanceSecurityGroup
@@ -491,6 +501,17 @@ Resources:
         Version: 2012-10-17
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AdministratorAccess
+
+  Cloud9instanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    DependsOn:
+      - Cloud9instanceRole
+    Properties:
+      InstanceProfileName: "EcsSpotWorkshop-Cloud9InstanceProfile"
+      Path: /
+      Roles:
+        - Ref: Cloud9instanceRole
+
 
   cloud9Environment:
     Type: AWS::Cloud9::EnvironmentEC2

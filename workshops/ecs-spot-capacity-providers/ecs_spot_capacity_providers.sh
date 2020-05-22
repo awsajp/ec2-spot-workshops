@@ -301,3 +301,8 @@ docker push 000474600478.dkr.ecr.us-east-1.amazonaws.com/ecs-spot-workshop/web:l
 x=$(docker images | awk '{print $3}')
 
 docker rmi --force $x
+export PUBLIC_SUBNET_LIST=$(aws ec2 describe-subnets --filters "Name=tag:aws:cloudformation:stack-name,Values=Quick-Start-VPC" | jq -r '.Subnets | map(.SubnetId) | join(",")')
+
+echo "Public subnet list is $PUBLIC_SUBNET_LIST"
+
+export SECURITY_GROUP=$( aws ec2 describe-security-groups --filters Name=vpc-id,Values=$vpc  Name=group-name,Values='default' | jq -r '.SecurityGroups[0].GroupId')

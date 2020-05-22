@@ -1,9 +1,9 @@
 {
-    "family": "fargate-task", 
-    "networkMode": "awsvpc", 
+    "family": "fargate-task",
+    "networkMode": "awsvpc",
     "containerDefinitions": [
         {
-            "name": "fargate-app", 
+            "name": "fargate-webapp-container", 
             "image": "httpd:2.4", 
             "cpu": 448,
             "memory": 896,

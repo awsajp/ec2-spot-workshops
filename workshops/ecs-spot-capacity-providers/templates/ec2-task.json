@@ -1,8 +1,8 @@
 {
-    "family": "ec2-webapp-task", 
+    "family": "ec2-task",
     "containerDefinitions": [
         {
-            "name": "ec2-webapp-container, 
+            "name": "ec2-task-container,
             "image": "DOCKER_IMAGE_URI", 
             "cpu": 448,
             "memory": 896,

@@ -1,0 +1,54 @@
+{
+    "family": "ecs-firelens", 
+    "networkMode": "awsvpc",
+    "taskRoleArn": "arn:aws:iam::123456789012:role/ecs_task_iam_role",    
+    "containerDefinitions": [
+        {
+            "essential": true,
+            "name": "firelens_log_router_sumo", 
+            "image": "amazon/aws-for-fluent-bit:latest", 
+            "memory": 100,
+            "firelensConfiguration": {
+              "type": "fluentbit",
+              "options": {
+                 "enable-ecs-log-metadata": "true"
+               }
+             }
+        },
+            {
+      "essential": true,
+      "image": "httpd:2.4",
+      "name": "app",
+      "cpu": 448,
+      "memory": 896,
+      "memoryReservation": 896,   
+     "portMappings": [
+            {
+              "containerPort": 80, 
+              "protocol": "tcp"
+            }
+      ],      
+      "logConfiguration": {
+        "logDriver": "awsfirelens",
+        "options": {
+          "Name": "http",
+          "Host": "https://endpoint6.collection.us2.sumologic.com",
+          "URI": "/receiver/v1/http/ZaVnC4dhaV1CJ0m1U3asD8dgzI1jRJ9JjP8bTYsVj5_oh0tLc8s3K3CLOvm4o9kmV8YFPLlW3jNar7CBmOriI4CgIUv2INEniXXaPjkwxje7UjotzvTtww==",
+          "Port": "443",
+          "tls": "on",
+          "tls.verify": "off",
+          "Format": "json_lines"
+         }
+       },
+        "entryPoint": [
+                "sh", "-c"
+            ], 
+        "command": [
+                "/bin/sh -c \"echo '<html> <head> <title>Amazon ECS Sample App</title> <style>body {margin-top: 40px; background-color: #333;} </style> </head><body> <div style=color:white;text-align:center> <h1>Amazon ECS Sample App</h1> <h2>Congratulations!</h2> <p>Your application is now running on a container in Amazon ECS.</p> </div></body></html>' >  /usr/local/apache2/htdocs/index.html && httpd-foreground\""
+            ]       
+    }
+    ], 
+    "requiresCompatibilities": [
+        "FARGATE"
+    ]
+}

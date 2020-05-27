@@ -2,7 +2,7 @@
     "family": "ec2-webapp-task", 
     "containerDefinitions": [
         {
-            "name": "ec2-webapp-container, 
+            "name": "ec2-webapp-container",
             "image": "httpd:2.4", 
             "cpu": 448,
             "memory": 896,

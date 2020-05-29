@@ -1,13 +1,12 @@
 {
     "family": "fargate-task",
+    "cpu": "512",
+    "memory": "1024",    
     "networkMode": "awsvpc",
     "containerDefinitions": [
         {
             "name": "fargate-webapp-container", 
             "image": "httpd:2.4", 
-            "cpu": 448,
-            "memory": 896,
-            "memoryReservation": 896,             
             "portMappings": [
                 {
                     "containerPort": 80, 

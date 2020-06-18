@@ -39,7 +39,7 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 def index():
     #return render_template("index3.html")
     response = ""
-    response +="<head> <title>Spot Game Day</title> </head>"
+    response +="<head> <title>ECS Spot Workshop</title> </head>"
     response += "<h2>I am a Simple Containerized Web App Running with below Attributes </h2> <hr/>"
 
     try:

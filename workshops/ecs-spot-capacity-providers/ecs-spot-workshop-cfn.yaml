@@ -485,6 +485,7 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
         - arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceAutoscaleRole
+        - arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess
 
   Cloud9instanceRole:
     Type: AWS::IAM::Role

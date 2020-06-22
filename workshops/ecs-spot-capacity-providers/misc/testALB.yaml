@@ -107,16 +107,6 @@ Resources:
           IpProtocol: -1
       VpcId: vpc-0b2cfd7b526d5b41a
 
-  MyALB: # This is the Application Load Balancer that resides in front of your Jenkins Master instance and is responsible for port-mapping requests from TCP:80 to TCP:8080
-    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
-    Properties:
-      Name: "EcsSpotWorkshop1"
-      Scheme: internet-facing
-      SecurityGroups:
-        - !Ref loadBalancerSecurityGroup
-      Subnets:
-        - subnet-0c07359b41da1e17c
-        - subnet-01e89d5cc1b12f515
 
   MyTG: # This is the Target Group used by the JenkinsMasterALB load balancer when Jenkins is running on an EC2 instance
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
@@ -130,7 +120,7 @@ Resources:
       HealthyThresholdCount: 2
       Matcher:
         HttpCode: 200
-      Name: "EcsSpotWorkshop-TG"
+      Name: "EcsSpotWorkshop"
       Port: 80
       Protocol: HTTP
       UnhealthyThresholdCount: 4
@@ -139,14 +129,13 @@ Resources:
   MyALBListener: # This is the ALB Listener used to access the Jenkins Master
     Type: AWS::ElasticLoadBalancingV2::Listener
     DependsOn:
-      - MyALB
       - MyTG
     # DepenededOn: None
     Properties:
       DefaultActions:
         - Type: forward
           TargetGroupArn: !Ref MyTG
-      LoadBalancerArn: !Ref MyALB
+      LoadBalancerArn: arn:aws:elasticloadbalancing:us-east-1:000474600478:loadbalancer/app/EcsSpotWorkshop/91d411e24a72c854
       Port: 80
       Protocol: HTTP
 

@@ -219,7 +219,7 @@ Resources:
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: "EcsSpotWorkshop"
+          Value: "EcsSpotWorkshop publicSubnet1"
       VpcId: !Ref vpc
 
   publicSubnet2:
@@ -239,7 +239,7 @@ Resources:
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: "EcsSpotWorkshop"
+          Value: "EcsSpotWorkshop publicSubnet2"
       VpcId: !Ref vpc
 
 
@@ -258,7 +258,7 @@ Resources:
           - CIDR
       Tags:
         - Key: Name
-          Value: "EcsSpotWorkshop"
+          Value: "EcsSpotWorkshop privateSubnet1"
       VpcId: !Ref vpc
 
 
@@ -277,7 +277,7 @@ Resources:
           - CIDR
       Tags:
         - Key: Name
-          Value: ECS Spot Workshop - private subnet 2
+          Value: "EcsSpotWorkshop privateSubnet2"
       VpcId: !Ref vpc
 
   publicRouteTable:
@@ -288,7 +288,7 @@ Resources:
     Properties:
       Tags:
         - Key: Name
-          Value: ECS Spot Workshop - public route table
+          Value: "EcsSpotWorkshop Public Route Table"
       VpcId: !Ref vpc
 
   RouteTablePrivate: # Create a route table which will be used within the VPC
@@ -299,7 +299,7 @@ Resources:
       VpcId: !Ref vpc
       Tags:
         - Key: Name
-          Value: ECS Spot Workshop - private route table
+          Value: "EcsSpotWorkshop Private Route Table"
 
   publicSubnet1RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation

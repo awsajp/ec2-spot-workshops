@@ -12,7 +12,7 @@ import boto3
  
 
 
-class GracefulKiller:
+class Ec2SpotInterruptionHandler:
   signals = {
     signal.SIGINT: 'SIGINT',
     signal.SIGTERM: 'SIGTERM'
@@ -25,7 +25,7 @@ class GracefulKiller:
   def exit_gracefully(self, signum, frame):
     print("\nReceived {} signal".format(self.signals[signum]))
     if self.signals[signum] == 'SIGTERM':
-      print("Looks like it due to a Spot Interruption. Let's wrap up the processing within next 30 sec ...")
+      print("Looks like there is a Spot Interruption. Let's wrap up the processing to avoid forceful killing of the applucation in next 30 sec ...")
 
     
     
@@ -113,6 +113,6 @@ def getInstanceLifecycle(instanceId, region):
 
 
 if __name__ == '__main__':
-    killer = GracefulKiller()
+    handler = Ec2SpotInterruptionHandler()
     print("Starting A Simple Web Service ...")
     app.run(port=80,host='0.0.0.0')

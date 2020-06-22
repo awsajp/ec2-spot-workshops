@@ -306,3 +306,21 @@ export PUBLIC_SUBNET_LIST=$(aws ec2 describe-subnets --filters "Name=tag:aws:clo
 echo "Public subnet list is $PUBLIC_SUBNET_LIST"
 
 export SECURITY_GROUP=$( aws ec2 describe-security-groups --filters Name=vpc-id,Values=$vpc  Name=group-name,Values='default' | jq -r '.SecurityGroups[0].GroupId')
+
+
+aws ec2 update-security-group-rule-descriptions-ingress --group-id $SECURITY_GROUP --ip-permissions '[{"IpProtocol": "tcp", "FromPort": 8080, "ToPort": 8080, "IpRanges": [{"CidrIp": "0.0.0.0/0", "Description": "C3Vis Visualization Tools Access"}]}]'
+
+aws ec2 authorize-security-group-ingress \
+    --group-id $SECURITY_GROUP \
+    --protocol tcp \
+    --port 8080 \
+    --cidr 0.0.0.0/0
+
+
+Option1:
+aws ecs delete-cluster     --cluster MyCluster
+Option 2:
+aws ecs put-cluster-capacity-providers   --cluster MyCluster    --capacity-providers []   --default-capacity-provider-strategy []
+aws ecs delete-capacity-provider      --capacity-provider ExampleCapacityProvider
+
+

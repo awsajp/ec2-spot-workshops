@@ -142,13 +142,6 @@ Outputs:
     Description:  The list of private subnets in the VPC
     Value: !Join [",", [!Ref privateSubnet1, !Ref privateSubnet2]]
 
-  cloud9Environment:
-    Description: Cloud9 environment
-    Value:
-      Fn::GetAtt:
-        - cloud9Environment
-        - Name
-
   ecrRepository:
     Description: The ecrRepository
     Value: !Ref ecrRepository
@@ -512,20 +505,6 @@ Resources:
       Path: /
       Roles:
         - Ref: Cloud9instanceRole
-
-
-  cloud9Environment:
-    Type: AWS::Cloud9::EnvironmentEC2
-    DependsOn:
-      - publicSubnet1
-      - Cloud9instanceRole
-    Properties:
-      Description: ECS Spot Workshop - Cloud9 environment
-      Name: EcsSpotWorkshop
-      InstanceType: t3.medium
-      SubnetId:
-        Ref: publicSubnet1
-
 
   instanceProfile:
     Type: AWS::IAM::InstanceProfile

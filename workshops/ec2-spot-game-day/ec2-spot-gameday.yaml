@@ -371,9 +371,6 @@ Resources:
       AllocationId: !GetAtt EIPNATGateway.AllocationId
       SubnetId: !Ref publicSubnet1
 
-
-
-
   publicRoute: # Add a default route to the route table, pointing to the Internet Gateway
     Type: AWS::EC2::Route
     DependsOn:

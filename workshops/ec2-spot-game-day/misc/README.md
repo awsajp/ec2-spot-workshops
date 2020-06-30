@@ -160,3 +160,13 @@ base64_bytes = base64.b64encode(message_bytes)
 base64_message = base64_bytes.decode('ascii')
 
 print(base64_message)
+
+
+base64_message = 'UHl0aG9uIGlzIGZ1bg=='
+
+
+base64_bytes = x.encode('utf-8')
+message_bytes = base64.b64decode(base64_bytes)
+message = message_bytes.decode('utf-8')
+
+print(message)

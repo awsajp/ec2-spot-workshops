@@ -47,7 +47,45 @@ sudo su
 echo  "this is a test for root volume " > /rootvolume/test1/file1.txt
 
 
-sudo mkdir /volume1
+sudo mkdir -p /volume1
+sudo mkdir -p /volume2
+sudo mkdir -p /volume3
+
+sudo mkfs -t xfs /dev/xvdb
+sudo mount /dev/xvdb /volume2
+
+sudo mkfs -t xfs /dev/xvdc
+sudo mount /dev/xvdc /volume3
+
+sudo echo  "this is a test for volume1" > /volume1/state.txt
+sudo echo  "this is a test for volume2" > /volume2/state.txt
+sudo echo  "this is a test for volume3" > /volume3/state.txt
+
+https://stackoverflow.com/questions/42551408/putitem-in-dynamodb-table-by-cloudformation
+
+
+sudo mkdir -p /volume1
+sudo mkdir -p /volume2
+sudo mkdir -p /volume3
+
+sudo mkfs -t xfs /dev/nvme1n1
+sudo mount /dev/nvme1n1 /volume2
+
+sudo mkfs -t xfs /dev/nvme2n1
+sudo mount /dev/nvme2n1 /volume3
+
+sudo echo  "this is a test for volume1" > /volume1/state.txt
+sudo echo  "this is a test for volume2" > /volume2/state.txt
+sudo echo  "this is a test for volume3" > /volume3/state.txt
+
+from sh import mount
+
+mount("/dev/nvme1n1", "/volume2", "-t xfs")
+
+os.system("sudo mount /dev/nvme1n1 /volume2")
+os.system("sudo mount /dev/nvme2n1 /volume3")
+
+
 sudo mkfs -t xfs /dev/xvdb
 sudo mount /dev/xvdb /volume1
 sudo chown -R ec2-user: /volume1/
@@ -95,11 +133,13 @@ if spot interruption
    create snapshot from volume
    create an AMI for root from snapshot
    if same AZ
-	   attach additiional volumes
+	   attach additional volumes, AMI
+	   update status of previos entry
+	   add a new entry for this instanceid
    else
        create snapshots
-	   create volume
-	   attach
+	   create volume in different AZ
+	   attach volumes
 	   delete volume
 	   
        

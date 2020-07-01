@@ -1,7 +1,6 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: >-
-  EKS cluster (dedicated VPC: true, dedicated IAM: true) [created and managed by
-  eksctl]
+  EKS cluster (dedicated VPC: true, dedicated IAM: true)
 
 Parameters:
   BootstrapArguments:
@@ -1015,8 +1014,6 @@ Resources:
         - Key: Name
           Value: !Sub '${AWS::StackName}/SG'
       VpcId: !Ref VPC
-
-
 
 Outputs:
   ARN:

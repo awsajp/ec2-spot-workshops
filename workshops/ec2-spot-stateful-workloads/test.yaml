@@ -1,0 +1,467 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+Description: EC2 Spot Game Day Template
+Mappings:
+  CidrMappings:
+    public-subnet-1:
+      CIDR: 10.0.0.0/24
+    public-subnet-2:
+      CIDR: 10.0.1.0/24
+    public-subnet-3:
+      CIDR: 10.0.2.0/24
+    private-subnet-1:
+      CIDR: 10.0.3.0/24
+    private-subnet-2:
+      CIDR: 10.0.4.0/24
+    private-subnet-3:
+      CIDR: 10.0.5.0/24
+    vpc:
+      CIDR: 10.0.0.0/16
+
+  AmazonLinux2AMI:
+    us-east-2:
+      AMI: ami-0f7919c33c90f5b58
+    us-east-1:
+      AMI: ami-0323c3dd2da7fb37d
+    us-west-1:
+      AMI: ami-06fcc1f0bc2c8943f
+    us-west-2:
+      AMI: ami-0d6621c01e8c2de2c
+    af-south-1:
+      AMI: ami-N/A
+    ap-east-1:
+      AMI: ami-N/A
+    ap-south-1:
+      AMI: ami-0470e33cd681b2476
+    ap-northeast-3:
+      AMI: ami-no
+    ap-northeast-2:
+      AMI: ami-01288945bd24ed49a
+    ap-southeast-1:
+      AMI: ami-0ec225b5e01ccb706
+    ap-southeast-2:
+      AMI: ami-0970010f37c4f9c8d
+    ap-northeast-1:
+      AMI: ami-0f310fced6141e627
+    ca-central-1:
+      AMI: ami-054362537f5132ce2
+    eu-central-1:
+      AMI: ami-076431be05aaf8080
+    eu-west-1:
+      AMI: ami-06ce3edf0cff21f07
+    eu-west-2:
+      AMI: ami-01a6e31ac994bbc09
+    eu-south-1:
+      AMI: ami-N/A
+    eu-west-3:
+      AMI: ami-00077e3fed5089981
+    eu-north-1:
+      AMI: ami-0b7a46b4bd694e8a6
+    me-south-1:
+      AMI: ami-N/A
+    sa-east-1:
+      AMI: ami-003449ffb2605a74c
+Metadata:
+  Author:
+    Description: Jayaprakash Alawala <jalawala@amazon.com>
+  License:
+    Description: 'Copyright 2020 Amazon.com, Inc. and its affiliates. All Rights Reserved.
+
+      Licensed under the Amazon Software License (the "License"). You may not use this file
+      except in compliance with the License. A copy of the License is located at
+
+      http://aws.amazon.com/asl/
+
+      or in the "license" file accompanying this file. This file is distributed on an "AS IS"
+      BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+      License for the specific language governing permissions and limitations under the License.'
+
+
+Outputs:
+  awsRegionId:
+    Description: The AWS Region ID your template was launched in
+    Value: !Ref AWS::Region
+
+
+  instanceProfile:
+    Description: Instance profile ARN
+    Value:
+      Fn::GetAtt:
+      - instanceProfile
+      - Arn
+
+  instanceSecurityGroup:
+    Description: Instance security group
+    Value: !Ref instanceSecurityGroup
+
+
+  vpc:
+    Description: The VPC
+    Value: !Ref vpc
+
+
+  LaunchTemplate:
+    Description: The Launch Template
+    Value: !Ref LaunchTemplate
+
+
+Parameters:
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the EC2 instances
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: 'awsajp_keypair'
+    MinLength: 1
+
+  vpc:
+    Type: String
+    Description: "VPC used for testing"
+    Default: "vpc-0b2cfd7b526d5b41a"
+
+  Ec2SpotStatefulPublicSubnet1:
+    Type: String
+    Description: "Ec2SpotStatefulPublicSubnet1 used for testing"
+    Default: "subnet-0c07359b41da1e17c"
+
+  sourceCidr:
+    Default: 0.0.0.0/0
+    Description: Optional - CIDR/IP range for instance ssh/http access and load balancer http
+      access
+    Type: String
+  NodeAutoScalingGroupDesiredSize:
+    Type: Number
+    Description: Desired size of Node Group ASG.
+    Default: 2
+  OnDemandBaseCapacity:
+    Type: Number
+    Description: "on-demand base capacity"
+    Default: 2
+  OnDemandPercentageAboveBaseCapacity:
+    Type: Number
+    Description: "on-demand percentage above base capacity(0-100)"
+    Default: 100
+
+  InstanceTypesOverride:
+    Type: String
+    Description: "multiple spot instances to override(seperated by comma)"
+    Default: "t3.large,m5.large"
+
+  NodeAutoScalingGroupMinSize:
+    Type: Number
+    Description: Minimum size of Node Group ASG.
+    Default: 0
+
+  NodeAutoScalingGroupDesiredSize:
+    Type: Number
+    Description: Desired size of Node Group ASG.
+    Default: 2
+
+  NodeAutoScalingGroupMaxSize:
+    Type: Number
+    Description: Maximum size of Node Group ASG.
+    Default: 10
+
+Resources:
+
+  instanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: "Ec2SpotCassandra-InstanceRole"
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+        Version: 2012-10-17
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM
+      Path: /
+      Policies:
+        - PolicyName: EC2DescribeInstances
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: ec2:DescribeInstances
+                Resource: "*"
+
+  instanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    DependsOn:
+    - instanceRole
+    Properties:
+      InstanceProfileName: "Ec2SpotCassandra-InstanceProfile"
+      Path: /
+      Roles:
+        - Ref: instanceRole
+
+  instanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      SecurityGroupIngress:
+        - CidrIp:
+            Ref: sourceCidr
+          FromPort: 22
+          IpProtocol: tcp
+          ToPort: 22
+        - CidrIp:
+            Ref: sourceCidr
+          FromPort: 80
+          IpProtocol: tcp
+          ToPort: 80
+      GroupDescription: Allow traffic from Internet
+      GroupName: "Ec2SpotCassandra-InstanceSG"
+      VpcId: !Ref vpc
+
+  LaunchTemplate:
+    DependsOn:
+      - instanceProfile
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateData:
+        InstanceType: t3.large
+        KeyName : !Ref KeyName
+        BlockDeviceMappings:
+          - DeviceName: /dev/xvda
+            Ebs:
+              VolumeType: gp2
+              DeleteOnTermination: 'false'
+              VolumeSize: '8'
+          - DeviceName: /dev/xvdb
+            Ebs:
+              VolumeType: gp2
+              DeleteOnTermination: 'false'
+              VolumeSize: '8'
+          - DeviceName: /dev/xvdc
+            Ebs:
+              VolumeType: gp2
+              DeleteOnTermination: 'false'
+              VolumeSize: '8'
+        ImageId:
+          Fn::FindInMap:
+            - AmazonLinux2AMI
+            - Ref: AWS::Region
+            - AMI
+        IamInstanceProfile:
+          Arn:
+            Fn::GetAtt:
+            - instanceProfile
+            - Arn
+
+        SecurityGroupIds:
+          - !Ref instanceSecurityGroup
+
+        TagSpecifications:
+          - ResourceType: instance
+            Tags:
+              - Key: Name
+                Value: "Ec2SpotCassandra"
+        UserData:
+          Fn::Base64: !Sub |
+            #!/bin/bash
+            yum update -y
+
+            sudo yum -y install python3 python3-wheel python-pi
+
+            cat <<EOF > requirements.txt
+            Flask==0.10.1
+            Flask-Cors==1.10.2
+            requests
+            boto3
+            EOF
+
+            sudo pip3 install -r requirements.txt
+
+
+            cat <<EOF > app.py
+            from flask import Flask, render_template
+            from flask.ext.cors import CORS, cross_origin
+            import os
+            import requests
+            import json
+            import time
+            import sys
+            import boto3
+            import datetime
+
+            app = Flask(__name__)
+            cors = CORS(app)
+            app.config['CORS_HEADERS'] = 'Content-Type'
+
+
+            @app.route('/')
+            @cross_origin()
+            def index():
+
+              response = ""
+              response +="<head> <title>Ec2 Spot Stateful Workload</title> </head>"
+              response += "<h2>Here is the status of the all the EBS volumes on this EC2 instance </h2> <hr/>"
+
+              try:
+                URL = "http://169.254.169.254/latest/meta-data/spot/termination-time"
+                SpotInt = requests.get(URL)
+                if SpotInt.status_code == 200:
+                  response += "<h1>This Spot Instance Got Interruption and Termination Date is {} </h1> <hr/>".format(SpotInt.text)
+
+                v1 = open('/volume1/state.txt', 'r')
+                v2 = open('/volume2/state.txt', 'r')
+                v3 = open('/volume3/state.txt', 'r')
+
+                response += "<h3>Status of Volume1 </h3> <hr/>"
+                for x in v1:
+                  response += "<li>{}</li>".format(x)
+
+                #response += v1.read()
+                response += "<h3>Status of Volume2 </h3> <hr/>"
+                for x in v2:
+                  response += "<li>{}</li>".format(x)
+                #response += v2.read()
+                response += "<h3>Status of Volume3 </h3> <hr/>"
+                for x in v3:
+                  response += "<li>{}</li>".format(x)
+                #response += v3.read()
+                v1.close()
+                v2.close()
+                v3.close()
+
+              except Exception as inst:
+                response += "<li>Oops !!! Failed to access my instance  metadata with error = {}</li>".format(inst)
+
+              return response
+
+            def mountVolumes():
+
+              os.system("sudo mkdir -p /volume1")
+              os.system("sudo mkdir -p /volume2")
+              os.system("sudo mkdir -p /volume3")
+
+              os.system("sudo mkfs -t xfs /dev/xvdb")
+              os.system("sudo mount /dev/xvdb /volume2")
+
+              os.system("sudo mkfs -t xfs /dev/xvdc")
+              os.system("sudo mount /dev/xvdc /volume3")
+
+              instanceId = InstanceData['instanceId']
+
+              ec2client = boto3.client('ec2', region_name=InstanceData['region'])
+              describeInstance = ec2client.describe_instances(InstanceIds=[instanceId])
+              instanceData=describeInstance['Reservations'][0]['Instances'][0]
+              if 'InstanceLifecycle' in instanceData.keys():
+                lifecycle = instanceData['InstanceLifecycle']
+              else:
+                lifecycle =  "Ondemand"
+
+
+              instance_type = InstanceData['instanceType']
+              privateIp = InstanceData['privateIp']
+              availability_zone = InstanceData['availabilityZone']
+              Region = InstanceData['region']
+
+              publicIpV4 = requests.get("http://169.254.169.254/latest/meta-data/public-ipv4")
+              publicIp = publicIpV4.text
+
+              AMIId = requests.get("http://169.254.169.254/latest/meta-data/ami-id")
+              AMI = AMIId.text
+
+              v1 = open('/volume1/state.txt', 'a')
+              v2 = open('/volume2/state.txt', 'a')
+              v3 = open('/volume3/state.txt', 'a')
+
+              current_time = datetime.datetime.now()
+              header = "current_time                 InstanceId             privateIp    publicIp        instance_type     AZ        \n"
+              value = str(current_time)+"  "+instanceId+"  "+privateIp   +"  "+ publicIp +"   "+instance_type+"  "+availability_zone+"\n"
+
+              v1.write(header)
+              v2.write(header)
+              v3.write(header)
+
+              v1.write(value)
+              v2.write(value)
+              v3.write(value)
+
+              v1.close()
+              v2.close()
+              v3.close()
+
+
+
+            def getInstanceLifecycle(instanceId, region):
+              ec2client = boto3.client('ec2', region_name=region)
+              describeInstance = ec2client.describe_instances(InstanceIds=[instanceId])
+              instanceData=describeInstance['Reservations'][0]['Instances'][0]
+              if 'InstanceLifecycle' in instanceData.keys():
+                return instanceData['InstanceLifecycle']
+              else:
+                return "Ondemand"
+
+            if __name__ == '__main__':
+              print("Starting A Simple Web Service ...")
+              mountVolumes()
+              app.run(port=80,host='0.0.0.0')
+
+            EOF
+
+            python3 app.py
+      LaunchTemplateName: "Ec2SpotCassandra"
+
+  Ec2SpotStatefulSpotFleetRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: "Ec2SpotStatefulSpotFleetRole"
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - spotfleet.amazonaws.com
+        Version: 2012-10-17
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetTaggingRole
+      Path: /
+
+  Ec2SpotStatefulDLSpotFleet:
+    Type: AWS::EC2::SpotFleet
+    DependsOn: LaunchTemplate
+    Properties:
+      SpotFleetRequestConfigData:
+        AllocationStrategy: capacityOptimized
+        IamFleetRole:
+          Fn::GetAtt:
+            - Ec2SpotStatefulSpotFleetRole
+            - Arn
+        LaunchTemplateConfigs:
+          - LaunchTemplateSpecification:
+              LaunchTemplateId: !Ref LaunchTemplate
+              Version: !GetAtt LaunchTemplate.LatestVersionNumber
+            Overrides:
+              - SubnetId: !Ref Ec2SpotStatefulPublicSubnet1
+                InstanceType: "m4.large"
+                WeightedCapacity: 1
+              - SubnetId: !Ref Ec2SpotStatefulPublicSubnet1
+                InstanceType: "m5.large"
+                WeightedCapacity: 1
+              - SubnetId: !Ref Ec2SpotStatefulPublicSubnet1
+                InstanceType: "c4.large"
+                WeightedCapacity: 1
+              - SubnetId: !Ref Ec2SpotStatefulPublicSubnet1
+                InstanceType: "c5.large"
+                WeightedCapacity: 1
+              - SubnetId: !Ref Ec2SpotStatefulPublicSubnet1
+                InstanceType: "r4.large"
+                WeightedCapacity: 1
+              - SubnetId: !Ref Ec2SpotStatefulPublicSubnet1
+                InstanceType: "r5.large"
+                WeightedCapacity: 1
+              - SubnetId: !Ref Ec2SpotStatefulPublicSubnet1
+                InstanceType: "t3a.large"
+                WeightedCapacity: 1
+              - SubnetId: !Ref Ec2SpotStatefulPublicSubnet1
+                InstanceType: "t3.large"
+                WeightedCapacity: 1
+        TargetCapacity: 1
+        Type: request
+...

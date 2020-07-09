@@ -8,9 +8,6 @@
       },
       "Overrides": [
         {
-          "InstanceType": "m4.large"
-        },
-        {
           "InstanceType": "m5.large"
         },
         {
@@ -29,13 +26,16 @@
           "InstanceType": "m5n.large"
         },
         {
-          "InstanceType": "t2.large"
-        },
-        {
           "InstanceType": "t3.large"
         },
         {
           "InstanceType": "t3a.large"
+        },
+        {
+          "InstanceType": "m4.large"
+        },
+        {
+          "InstanceType": "t2.large"
         }       
       ]
     },
@@ -56,6 +56,5 @@
       "TerminationPolicies": [ 
         "DEFAULT" 
   ],
-  "NewInstancesProtectedFromScaleIn": true, 
-  "ServiceLinkedRoleARN": "%SERVICE_ROLE_ARN%"
+  "NewInstancesProtectedFromScaleIn": true
 }

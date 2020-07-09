@@ -1,0 +1,136 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+Description: ECS Spot Workshop CFN Template
+Mappings:
+  CidrMappings:
+    public-subnet-1:
+      CIDR: 10.0.0.0/24
+    public-subnet-2:
+      CIDR: 10.0.1.0/24
+    public-subnet-3:
+      CIDR: 10.0.2.0/24
+    private-subnet-1:
+      CIDR: 10.0.3.0/24
+    private-subnet-2:
+      CIDR: 10.0.4.0/24
+    private-subnet-3:
+      CIDR: 10.0.5.0/24
+    vpc:
+      CIDR: 10.0.0.0/16
+
+  AmazonLinux2AMI:
+    us-east-1:
+      AMI: ami-0aee8ced190c05726
+    us-east-2:
+      AMI: ami-0d9ef3d936a8fa1c6
+    us-west-1:
+      AMI: ami-0fc0ce1549e302a52
+    us-west-2:
+      AMI: ami-088bb4cd2f62fc0e1
+    ap-southeast-1:
+      AMI: ami-0fd3e3d7875748187
+    ap-southeast-2:
+      AMI: ami-029bf83e14803c25f
+    ap-south-1:
+      AMI: ami-0b9d66ddb2a9f47d1
+    ap-northeast-1:
+      AMI: ami-03179588b2f59f257
+    ap-northeast-2:
+      AMI: ami-N/A
+    ap-northeast-3:
+      AMI: ami-N/A
+    ca-central-1:
+      AMI: ami-0c54fd41f64065620
+    eu-central-1:
+      AMI: ami-0d2e4df42e13655e0
+    eu-west-1:
+      AMI: ami-0a74b180a0c97ecd1
+    eu-west-2:
+      AMI: ami-04967dd60612d3b49
+    eu-south-1:
+      AMI: ami-N/A
+    eu-west-3:
+      AMI: ami-032a9f3e531acca53
+    eu-north-1:
+      AMI: ami-0431cac535d281688
+    me-south-1:
+      AMI: ami-N/A
+    sa-east-1:
+      AMI: ami-0d6ac368fff49ff2d
+Metadata:
+  Author:
+    Description: Jayaprakash Alawala <jalawala@amazon.com>
+  License:
+    Description: 'Copyright 2020 Amazon.com, Inc. and its affiliates. All Rights Reserved.
+
+      Licensed under the Amazon Software License (the "License"). You may not use this file
+      except in compliance with the License. A copy of the License is located at
+
+      http://aws.amazon.com/asl/
+
+      or in the "license" file accompanying this file. This file is distributed on an "AS IS"
+      BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+      License for the specific language governing permissions and limitations under the License.'
+
+
+Outputs:
+  awsRegionId:
+    Description: The AWS Region ID your template was launched in
+    Value: !Ref AWS::Region
+
+  awsRegionId:
+    Description: The AWS Region ID your template was launched in
+    Value: !Ref ECSAMI
+
+Parameters:
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the EC2 instances
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: 'awsajp_keypair'
+    MinLength: 1
+
+  sourceCidr:
+    Default: 0.0.0.0/0
+    Description: Optional - CIDR/IP range for instance ssh/http access and load balancer http
+      access
+    Type: String
+
+  ECSAMI:
+    Description: AMI ID
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ecs/optimized-ami/amazon-linux-2/recommended/image_id
+
+Resources:
+
+  autoScalingServiceLinkedRole:
+    Type: AWS::IAM::ServiceLinkedRole
+    Properties:
+      AWSServiceName: autoscaling.amazonaws.com
+      Description: Default Service-Linked Role enables access to AWS Services and Resources
+        used or managed by Auto Scaling
+
+  MyLT:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateData:
+        InstanceType: t3.large
+        ImageId: !Ref ECSAMI
+        IamInstanceProfile: arn:aws:iam::000474600478:role/EcsSpotWorkshop-EcsInstanceRole
+        SecurityGroupIds:
+          - sg-0c38f4495617e4598
+
+        TagSpecifications:
+          - ResourceType: instance
+            Tags:
+              - Key: Name
+                Value: "EcsSpotWorkshop2"
+        UserData:
+          Fn::Base64: !Sub |
+            #!/bin/bash
+            echo "ECS_CLUSTER=EcsSpotWorkshop" >> /etc/ecs/ecs.config
+            echo "ECS_ENABLE_SPOT_INSTANCE_DRAINING=true" >> /etc/ecs/ecs.config
+            echo "ECS_CONTAINER_STOP_TIMEOUT=30s" >> /etc/ecs/ecs.config
+            echo "ECS_ENABLE_CONTAINER_METADATA=true" >> /etc/ecs/ecs.config
+      LaunchTemplateName: "EcsSpotWorkshop2"
+
+...

@@ -77,68 +77,6 @@ Metadata:
       License for the specific language governing permissions and limitations under the License.'
 
 
-Outputs:
-  awsRegionId:
-    Description: The AWS Region ID your template was launched in
-    Value: !Ref AWS::Region
-
-  instanceProfile:
-    Description: Instance profile ARN
-    Value:
-      Fn::GetAtt:
-      - instanceProfile
-      - Arn
-
-  instanceSecurityGroup:
-    Description: Instance security group
-    Value: !Ref instanceSecurityGroup
-
-  loadBalancerSecurityGroup:
-    Description: Load Balancer security group
-    Value: !Ref loadBalancerSecurityGroup
-
-  publicSubnet1:
-    Description: Public subnet 1
-    Value: !Ref publicSubnet1
-  publicSubnet2:
-    Description: Public subnet 2
-    Value: !Ref publicSubnet2
-
-  privateSubnet1:
-    Description: Private subnet 1
-    Value: !Ref privateSubnet1
-
-  privateSubnet2:
-    Description: Private subnet 2
-    Value: !Ref privateSubnet2
-  vpc:
-    Description: The VPC
-    Value: !Ref vpc
-
-  ASG:
-    Description: The Autoscaling Group
-    Value: !Ref MyASG
-
-  MyLT:
-    Description: The Launch Template
-    Value: !Ref MyLT
-
-  MyALBDNSName:
-    Description: The Application Load Balancer
-    Value: !GetAtt MyALB.DNSName
-
-  MyTG:
-    Description: The Target Group
-    Value: !Ref MyTG
-
-  VPCPublicSubnets:
-    Description:  The list of public subnets in the VPC
-    Value: !Join [",", [!Ref publicSubnet1, !Ref publicSubnet2]]
-
-  VPCPrivateSubnets:
-    Description:  The list of private subnets in the VPC
-    Value: !Join [",", [!Ref privateSubnet1, !Ref privateSubnet2]]
-
 Parameters:
   KeyName:
     Description: Name of an existing EC2 KeyPair to enable SSH access to the EC2 instances
@@ -155,14 +93,21 @@ Parameters:
     Type: Number
     Description: Desired size of Node Group ASG.
     Default: 2
+    
   OnDemandBaseCapacity:
     Type: Number
     Description: "on-demand base capacity"
     Default: 2
+    
   OnDemandPercentageAboveBaseCapacity:
     Type: Number
     Description: "on-demand percentage above base capacity(0-100)"
     Default: 100
+    
+  SpotInstancePools:
+    Type: Number
+    Description: "spot instance pools(1-20)"
+    Default: 2
 
   InstanceTypesOverride:
     Type: String
@@ -183,6 +128,11 @@ Parameters:
     Type: Number
     Description: Maximum size of Node Group ASG.
     Default: 10
+
+  AMAZONLINUX2AMI:
+    Description: AMI ID
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ecs/optimized-ami/amazon-linux-2/recommended/image_id
 
 Resources:
   vpc:
@@ -223,11 +173,7 @@ Resources:
           - 0
           - Fn::GetAZs:
               Ref: AWS::Region
-      CidrBlock:
-        Fn::FindInMap:
-          - CidrMappings
-          - public-subnet-1
-          - CIDR
+      CidrBlock: 10.0.0.0/24
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
@@ -243,15 +189,75 @@ Resources:
           - 1
           - Fn::GetAZs:
               Ref: AWS::Region
-      CidrBlock:
-        Fn::FindInMap:
-          - CidrMappings
-          - public-subnet-2
-          - CIDR
+      CidrBlock: 10.0.1.0/24
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
           Value: Spot GameDay - public subnet 2
+      VpcId: !Ref vpc
+
+  publicSubnet3:
+    Type: AWS::EC2::Subnet
+    DependsOn: attachGateway
+    Properties:
+      AvailabilityZone:
+        Fn::Select:
+          - 2
+          - Fn::GetAZs:
+              Ref: AWS::Region
+      CidrBlock: 10.0.2.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: Spot GameDay - public subnet 3
+      VpcId: !Ref vpc
+
+  publicSubnet4:
+    Type: AWS::EC2::Subnet
+    DependsOn: attachGateway
+    Properties:
+      AvailabilityZone:
+        Fn::Select:
+          - 3
+          - Fn::GetAZs:
+              Ref: AWS::Region
+      CidrBlock: 10.0.3.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: Spot GameDay - public subnet 4
+      VpcId: !Ref vpc
+
+  publicSubnet5:
+    Type: AWS::EC2::Subnet
+    DependsOn: attachGateway
+    Properties:
+      AvailabilityZone:
+        Fn::Select:
+          - 4
+          - Fn::GetAZs:
+              Ref: AWS::Region
+      CidrBlock: 10.0.4.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: Spot GameDay - public subnet 5
+      VpcId: !Ref vpc
+
+  publicSubnet6:
+    Type: AWS::EC2::Subnet
+    DependsOn: attachGateway
+    Properties:
+      AvailabilityZone:
+        Fn::Select:
+          - 5
+          - Fn::GetAZs:
+              Ref: AWS::Region
+      CidrBlock: 10.0.5.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: Spot GameDay - public subnet 6
       VpcId: !Ref vpc
 
 
@@ -263,11 +269,7 @@ Resources:
           - 0
           - Fn::GetAZs:
               Ref: AWS::Region
-      CidrBlock:
-        Fn::FindInMap:
-          - CidrMappings
-          - private-subnet-1
-          - CIDR
+      CidrBlock: 10.0.6.0/24
       Tags:
         - Key: Name
           Value: Spot GameDay - private subnet 1
@@ -282,15 +284,26 @@ Resources:
           - 1
           - Fn::GetAZs:
               Ref: AWS::Region
-      CidrBlock:
-        Fn::FindInMap:
-          - CidrMappings
-          - private-subnet-2
-          - CIDR
+      CidrBlock: 10.0.7.0/24
       Tags:
         - Key: Name
           Value: Spot GameDay - private subnet 2
       VpcId: !Ref vpc
+
+  privateSubnet3:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone:
+        Fn::Select:
+          - 2
+          - Fn::GetAZs:
+              Ref: AWS::Region
+      CidrBlock: 10.0.8.0/24
+      Tags:
+        - Key: Name
+          Value: Spot GameDay - private subnet 3
+      VpcId: !Ref vpc
+
 
   publicRouteTable:
     Type: AWS::EC2::RouteTable
@@ -303,10 +316,9 @@ Resources:
           Value: Spot GameDay - public route table
       VpcId: !Ref vpc
 
-  RouteTablePrivate: # Create a route table which will be used within the VPC
+  RouteTablePrivate:
     Type: AWS::EC2::RouteTable
     DependsOn: vpc
-    # DependedOn: DefaultRoute, SubnetPrivateARouteTableAssociation, SubnetPrivateBRouteTableAssociation, SubnetPrivateCRouteTableAssociation
     Properties:
       VpcId: !Ref vpc
       Tags:
@@ -333,7 +345,47 @@ Resources:
       RouteTableId: !Ref publicRouteTable
       SubnetId: !Ref publicSubnet2
 
-  privateSubnet1RouteTableAssociation: # Associate the route table with the first of the three subnets in the VPC...
+  publicSubnet3RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn:
+      - publicRouteTable
+      - publicSubnet3
+      - attachGateway
+    Properties:
+      RouteTableId: !Ref publicRouteTable
+      SubnetId: !Ref publicSubnet3
+
+  publicSubnet4RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn:
+      - publicRouteTable
+      - publicSubnet4
+      - attachGateway
+    Properties:
+      RouteTableId: !Ref publicRouteTable
+      SubnetId: !Ref publicSubnet4
+
+  publicSubnet5RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn:
+      - publicRouteTable
+      - publicSubnet5
+      - attachGateway
+    Properties:
+      RouteTableId: !Ref publicRouteTable
+      SubnetId: !Ref publicSubnet5
+
+  publicSubnet6RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn:
+      - publicRouteTable
+      - publicSubnet6
+      - attachGateway
+    Properties:
+      RouteTableId: !Ref publicRouteTable
+      SubnetId: !Ref publicSubnet6
+
+  privateSubnet1RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     DependsOn:
       - RouteTablePrivate
@@ -343,7 +395,7 @@ Resources:
       RouteTableId: !Ref RouteTablePrivate
       SubnetId: !Ref privateSubnet1
 
-  privateSubnet2RouteTableAssociation: # ... and the second of three subnets...
+  privateSubnet2RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     DependsOn:
       - RouteTablePrivate
@@ -352,6 +404,16 @@ Resources:
     Properties:
       RouteTableId: !Ref RouteTablePrivate
       SubnetId: !Ref privateSubnet2
+
+  privateSubnet3RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn:
+      - RouteTablePrivate
+      - privateSubnet3
+    Properties:
+      RouteTableId: !Ref RouteTablePrivate
+      SubnetId: !Ref privateSubnet3
+
 
   EIPNATGateway:
     Type: AWS::EC2::EIP
@@ -382,12 +444,11 @@ Resources:
       GatewayId: !Ref internetGateway
       RouteTableId: !Ref publicRouteTable
 
-  privateRoute: # Add a default route to the route table, pointing to the NAT Gateway
+  privateRoute:
     Type: AWS::EC2::Route
     DependsOn:
       - RouteTablePrivate
       - NATGateway
-    # DependedOn: None
     Properties:
       DestinationCidrBlock: 0.0.0.0/0
       NatGatewayId: !Ref NATGateway
@@ -419,12 +480,16 @@ Resources:
           ToPort: 80
       VpcId: !Ref vpc
 
-  MyALB: # This is the Application Load Balancer that resides in front of your Jenkins Master instance and is responsible for port-mapping requests from TCP:80 to TCP:8080
+  SpotGameDayALB:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     DependsOn:
       - loadBalancerSecurityGroup
       - publicSubnet1
       - publicSubnet2
+      - publicSubnet3
+      - publicSubnet4
+      - publicSubnet5
+      - publicSubnet6
     Properties:
       Name: SpotGameDay
       Scheme: internet-facing
@@ -433,12 +498,15 @@ Resources:
       Subnets:
         - !Ref publicSubnet1
         - !Ref publicSubnet2
+        - !Ref publicSubnet3
+        - !Ref publicSubnet4
+        - !Ref publicSubnet5
+        - !Ref publicSubnet6
 
-  MyTG: # This is the Target Group used by the JenkinsMasterALB load balancer when Jenkins is running on an EC2 instance
+  SpotGameDayTG:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     DependsOn:
       - vpc
-    # DependedOn: JenkinsMasterALBListener, JenkinsMasterALBListenerRule
     Properties:
       HealthCheckIntervalSeconds: 50
       HealthCheckPath: /
@@ -454,21 +522,18 @@ Resources:
       UnhealthyThresholdCount: 4
       VpcId: !Ref vpc
 
-  MyALBListener: # This is the ALB Listener used to access the Jenkins Master
+  SpotGameDayALBListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     DependsOn:
-      - MyALB
-      - MyTG
-    # DepenededOn: None
+      - SpotGameDayALB
+      - SpotGameDayTG
     Properties:
       DefaultActions:
         - Type: forward
-          TargetGroupArn: !Ref MyTG
-      LoadBalancerArn: !Ref MyALB
+          TargetGroupArn: !Ref SpotGameDayTG
+      LoadBalancerArn: !Ref SpotGameDayALB
       Port: 80
       Protocol: HTTP
-
-
 
   instanceRole:
     Type: AWS::IAM::Role
@@ -514,8 +579,6 @@ Resources:
       GroupName: "SpotGameDay-InstanceSG"
       VpcId: !Ref vpc
 
-
-
   instanceSecurityGroupIngress:
     Type: AWS::EC2::SecurityGroupIngress
     DependsOn:
@@ -528,7 +591,7 @@ Resources:
       SourceSecurityGroupId: !Ref loadBalancerSecurityGroup
       ToPort: 80
 
-  MyLT:
+  SpotGameDayLT:
     DependsOn:
       - instanceProfile
     Type: AWS::EC2::LaunchTemplate
@@ -536,11 +599,7 @@ Resources:
       LaunchTemplateData:
         InstanceType: t3.large
         KeyName : !Ref KeyName
-        ImageId:
-          Fn::FindInMap:
-            - AmazonLinux2AMI
-            - Ref: AWS::Region
-            - AMI
+        ImageId: !Ref AMAZONLINUX2AMI
         IamInstanceProfile:
           Arn:
             Fn::GetAtt:
@@ -581,9 +640,6 @@ Resources:
             import time
             import sys
             import boto3
-
-
-
 
 
             app = Flask(__name__)
@@ -661,11 +717,15 @@ Resources:
             python3 app.py
       LaunchTemplateName: "SpotGameDay"
 
-  MyASG:
+  SpotGameDayASG:
     DependsOn:
-      - MyLT
+      - SpotGameDayLT
       - publicSubnet1
       - publicSubnet2
+      - publicSubnet3
+      - publicSubnet4
+      - publicSubnet5
+      - publicSubnet6
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
       AutoScalingGroupName: "SpotGameDay"
@@ -675,12 +735,12 @@ Resources:
           OnDemandAllocationStrategy: prioritized
           OnDemandBaseCapacity: !Ref OnDemandBaseCapacity
           OnDemandPercentageAboveBaseCapacity: !Ref OnDemandPercentageAboveBaseCapacity
-          SpotAllocationStrategy: capacity-optimized
+          SpotAllocationStrategy: lowest-price
+          SpotInstancePools: !Ref SpotInstancePools
         LaunchTemplate:
           LaunchTemplateSpecification:
-            LaunchTemplateId: !Ref MyLT
-            # LaunchTemplateName: String
-            Version: !GetAtt MyLT.LatestVersionNumber
+            LaunchTemplateId: !Ref SpotGameDayLT
+            Version: !GetAtt SpotGameDayLT.LatestVersionNumber
           Overrides:
             - InstanceType: !Select [0, !Split [ ",", !Ref InstanceTypesOverride ] ]
             - InstanceType: !Select [1, !Split [ ",", !Ref InstanceTypesOverride ] ]
@@ -689,8 +749,12 @@ Resources:
       VPCZoneIdentifier:
         - !Ref publicSubnet1
         - !Ref publicSubnet2
+        - !Ref publicSubnet3
+        - !Ref publicSubnet4
+        - !Ref publicSubnet5
+        - !Ref publicSubnet6
       TargetGroupARNs:
-        - !Ref MyTG
+        - !Ref SpotGameDayTG
       Tags:
         - Key: Name
           Value: "SpotGameDay"
@@ -700,5 +764,92 @@ Resources:
         MinInstancesInService: !Ref NodeAutoScalingGroupDesiredSize
         MaxBatchSize: '1'
         PauseTime: 'PT5M'
+
+
+Outputs:
+  awsRegionId:
+    Description: The AWS Region ID your template was launched in
+    Value: !Ref AWS::Region
+
+  instanceProfile:
+    Description: Instance profile ARN
+    Value:
+      Fn::GetAtt:
+        - instanceProfile
+        - Arn
+
+  instanceSecurityGroup:
+    Description: Instance security group
+    Value: !Ref instanceSecurityGroup
+
+  loadBalancerSecurityGroup:
+    Description: Load Balancer security group
+    Value: !Ref loadBalancerSecurityGroup
+
+  publicSubnet1:
+    Description: Public subnet 1
+    Value: !Ref publicSubnet1
+
+  publicSubnet2:
+    Description: Public subnet 2
+    Value: !Ref publicSubnet2
+
+  publicSubnet3:
+    Description: Public subnet 3
+    Value: !Ref publicSubnet3
+
+  publicSubnet4:
+    Description: Public subnet 4
+    Value: !Ref publicSubnet4
+
+  publicSubnet5:
+    Description: Public subnet 5
+    Value: !Ref publicSubnet5
+
+  publicSubnet6:
+    Description: Public subnet 6
+    Value: !Ref publicSubnet6
+
+  privateSubnet1:
+    Description: Private subnet 1
+    Value: !Ref privateSubnet1
+
+  privateSubnet2:
+    Description: Private subnet 2
+    Value: !Ref privateSubnet2
+
+  privateSubnet3:
+    Description: Private subnet 3
+    Value: !Ref privateSubnet3
+
+  vpc:
+    Description: The VPC
+    Value: !Ref vpc
+
+  ASG:
+    Description: The Autoscaling Group
+    Value: !Ref SpotGameDayASG
+
+  SpotGameDayLT:
+    Description: The Launch Template
+    Value: !Ref SpotGameDayLT
+
+  SpotGameDayALBDNSName:
+    Description: The Application Load Balancer
+    Value: !GetAtt SpotGameDayALB.DNSName
+
+  SpotGameDayTG:
+    Description: The Target Group
+    Value: !Ref SpotGameDayTG
+
+  VPCPublicSubnets:
+    Description:  The list of public subnets in the VPC
+    Value: !Join [",", [!Ref publicSubnet1, !Ref publicSubnet2, !Ref publicSubnet3, !Ref publicSubnet4, !Ref publicSubnet5, !Ref publicSubnet6]]
+
+  VPCPrivateSubnets:
+    Description:  The list of private subnets in the VPC
+    Value: !Join [",", [!Ref privateSubnet1, !Ref privateSubnet2, !Ref privateSubnet3]]
+
+
 
 ...

@@ -1,66 +1,7 @@
 ---
 AWSTemplateFormatVersion: 2010-09-09
 Description: EC2 Spot Game Day Template
-Mappings:
-  CidrMappings:
-    public-subnet-1:
-      CIDR: 10.0.0.0/24
-    public-subnet-2:
-      CIDR: 10.0.1.0/24
-    public-subnet-3:
-      CIDR: 10.0.2.0/24
-    private-subnet-1:
-      CIDR: 10.0.3.0/24
-    private-subnet-2:
-      CIDR: 10.0.4.0/24
-    private-subnet-3:
-      CIDR: 10.0.5.0/24
-    vpc:
-      CIDR: 10.0.0.0/16
 
-  AmazonLinux2AMI:
-    us-east-2:
-      AMI: ami-0f7919c33c90f5b58
-    us-east-1:
-      AMI: ami-0323c3dd2da7fb37d
-    us-west-1:
-      AMI: ami-06fcc1f0bc2c8943f
-    us-west-2:
-      AMI: ami-0d6621c01e8c2de2c
-    af-south-1:
-      AMI: ami-N/A
-    ap-east-1:
-      AMI: ami-N/A
-    ap-south-1:
-      AMI: ami-0470e33cd681b2476
-    ap-northeast-3:
-      AMI: ami-no
-    ap-northeast-2:
-      AMI: ami-01288945bd24ed49a
-    ap-southeast-1:
-      AMI: ami-0ec225b5e01ccb706
-    ap-southeast-2:
-      AMI: ami-0970010f37c4f9c8d
-    ap-northeast-1:
-      AMI: ami-0f310fced6141e627
-    ca-central-1:
-      AMI: ami-054362537f5132ce2
-    eu-central-1:
-      AMI: ami-076431be05aaf8080
-    eu-west-1:
-      AMI: ami-06ce3edf0cff21f07
-    eu-west-2:
-      AMI: ami-01a6e31ac994bbc09
-    eu-south-1:
-      AMI: ami-N/A
-    eu-west-3:
-      AMI: ami-00077e3fed5089981
-    eu-north-1:
-      AMI: ami-0b7a46b4bd694e8a6
-    me-south-1:
-      AMI: ami-N/A
-    sa-east-1:
-      AMI: ami-003449ffb2605a74c
 Metadata:
   Author:
     Description: Jayaprakash Alawala <jalawala@amazon.com>
@@ -132,17 +73,13 @@ Parameters:
   AMAZONLINUX2AMI:
     Description: AMI ID
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
-    Default: /aws/service/ecs/optimized-ami/amazon-linux-2/recommended/image_id
+    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
 
 Resources:
   vpc:
     Type: AWS::EC2::VPC
     Properties:
-      CidrBlock:
-        Fn::FindInMap:
-          - CidrMappings
-          - vpc
-          - CIDR
+      CidrBlock: 10.0.0.0/16
       EnableDnsHostnames: true
       EnableDnsSupport: true
       Tags:
@@ -400,7 +337,6 @@ Resources:
     DependsOn:
       - RouteTablePrivate
       - privateSubnet2
-    # DependedOn: None
     Properties:
       RouteTableId: !Ref RouteTablePrivate
       SubnetId: !Ref privateSubnet2
@@ -420,7 +356,6 @@ Resources:
     DependsOn:
       - attachGateway
       - vpc
-    # DependedOn: NATGateway
     Properties:
       Domain: vpc
 
@@ -433,7 +368,7 @@ Resources:
       AllocationId: !GetAtt EIPNATGateway.AllocationId
       SubnetId: !Ref publicSubnet1
 
-  publicRoute: # Add a default route to the route table, pointing to the Internet Gateway
+  publicRoute:
     Type: AWS::EC2::Route
     DependsOn:
       - publicRouteTable
@@ -605,7 +540,6 @@ Resources:
             Fn::GetAtt:
             - instanceProfile
             - Arn
-
         SecurityGroupIds:
           - !Ref instanceSecurityGroup
 
@@ -849,7 +783,5 @@ Outputs:
   VPCPrivateSubnets:
     Description:  The list of private subnets in the VPC
     Value: !Join [",", [!Ref privateSubnet1, !Ref privateSubnet2, !Ref privateSubnet3]]
-
-
 
 ...

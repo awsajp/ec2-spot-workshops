@@ -25,7 +25,7 @@ aws ecs create-cluster \
 --cluster-name EcsSpotWorkshop \
 --capacity-providers FARGATE FARGATE_SPOT \
 --region $AWS_REGION \
---default-capacity-provider-strategy capacityProvider=FARGATE,base=1,weight=1 
+--default-capacity-provider-strategy capacityProvider=FARGATE,base=1,weight=1
 
 #Create ECS Tasks for FARGATE Capacity Providers
 aws ecs register-task-definition --cli-input-json file://webapp-fargate-task.json
@@ -55,8 +55,8 @@ aws ecs create-service \
      --task-definition webapp-fargate-task:1 \
      --desired-count 2\
      --region us-east-2\
-     --network-configuration "awsvpcConfiguration={subnets=[$PUBLIC_SUBNET_LIST],securityGroups=[$SECURITY_GROUP],assignPublicIp="ENABLED"}" 
-          
+     --network-configuration "awsvpcConfiguration={subnets=[$PUBLIC_SUBNET_LIST],securityGroups=[$SECURITY_GROUP],assignPublicIp="ENABLED"}"
+
 # Deploy ECS Service only on the FARGATE_SPOT Capacity Provider
 aws ecs create-service \
      --capacity-provider-strategy capacityProvider=FARGATE_SPOT,weight=1 \
@@ -65,9 +65,9 @@ aws ecs create-service \
      --task-definition webapp-fargate-task:1 \
      --desired-count 2 \
      --region us-east-2 \
-     --network-configuration "awsvpcConfiguration={subnets=[$PUBLIC_SUBNET_LIST],securityGroups=[$SECURITY_GROUP],assignPublicIp="ENABLED"}" 
-          
-# Deploy ECS Service  on both FARGATE and FARGATE_SPOT Capacity Providers                   
+     --network-configuration "awsvpcConfiguration={subnets=[$PUBLIC_SUBNET_LIST],securityGroups=[$SECURITY_GROUP],assignPublicIp="ENABLED"}"
+
+# Deploy ECS Service  on both FARGATE and FARGATE_SPOT Capacity Providers
 aws ecs create-service \
      --capacity-provider-strategy capacityProvider=FARGATE,weight=3 capacityProvider=FARGATE_SPOT,weight=1 \
      --cluster EcsSpotWorkshop \
@@ -75,13 +75,13 @@ aws ecs create-service \
      --task-definition webapp-fargate-task:1  \
      --desired-count 4\
      --region us-east-2 \
-     --network-configuration "awsvpcConfiguration={subnets=[$PUBLIC_SUBNET_LIST],securityGroups=[$SECURITY_GROUP],assignPublicIp="ENABLED"}" 
-          
-#Create an EC2 launch template          
+     --network-configuration "awsvpcConfiguration={subnets=[$PUBLIC_SUBNET_LIST],securityGroups=[$SECURITY_GROUP],assignPublicIp="ENABLED"}"
+
+#Create an EC2 launch template
 cp templates/user-data.txt .
-cp templates/launch-template-data.json .       
-                              
-# Go to AWS IAM console and copy the ARN for the instance-profile 
+cp templates/launch-template-data.json .
+
+# Go to AWS IAM console and copy the ARN for the instance-profile
 export IAM_INSTANT_PROFILE_ARN="arn:aws:iam::000474600478:instance-profile/ecslabinstanceprofile"
 export AMI_ID=$(aws ssm get-parameters --names  /aws/service/ecs/optimized-ami/amazon-linux-2/recommended | jq -r 'last(.Parameters[]).Value' | jq -r '.image_id')
 echo "Latest  ECS Optimized Amazon AMI_ID is $AMI_ID"
@@ -106,7 +106,7 @@ sed -i -e "s#%ASG_NAME%#$ASG_NAME#g"   -e "s#%OD_PERCENTAGE%#$OD_PERCENTAGE#g"  
 aws autoscaling  create-auto-scaling-group --cli-input-json file://asg.json
 ASG_ARN=$(aws autoscaling  describe-auto-scaling-groups --auto-scaling-group-name $ASG_NAME| jq -r '.AutoScalingGroups[0].AutoScalingGroupARN')
 echo "$ASG_NAME  ARN=$ASG_ARN"
- 
+
 #Creating a Capacity Provider using ASG with EC2 On-demand instances.
 cp -Rfp templates/ecs-capacityprovider.json .
 
@@ -161,7 +161,7 @@ aws ecs create-service \
      --desired-count 2\
      --region $AWS_REGION
 
-     
+
 # Deploy ECS Service only on the EC2 Spot autoscaling Capacity Provider
 aws ecs create-service \
      --capacity-provider-strategy capacityProvider=ec2spot-capacity_provider,weight=1 \
@@ -169,7 +169,7 @@ aws ecs create-service \
      --service-name webapp-ec2-service-spot \
      --task-definition webapp-ec2-task:1 \
      --desired-count 2 \
-     --region $AWS_REGION 
+     --region $AWS_REGION
 
 # Deploy ECS Service  on both EC2 demand and Spot  autoscaling Capacity Providers
 aws ecs create-service \
@@ -180,9 +180,9 @@ aws ecs create-service \
      --task-definition webapp-ec2-task:1 \
      --desired-count 6 \
      --region $AWS_REGION
-     
-     
-     
+
+
+
 aws ecs update-cluster-settings --cluster EcsSpotWorkshop  --settings name=containerInsights,value=enabled
 
 export ClusterName=EcsSpotWorkshop
@@ -212,7 +212,7 @@ aws ecs create-service \
      --task-definition ec2-task:1 \
      --desired-count 10 \
      --region $AWS_REGION
-     
+
 aws ecs update-service --cluster EcsSpotWorkshop --service ec2-service-split --desired-count 6
 
 aws ecs update-service --cluster EcsSpotWorkshop --service ec2-service-split --desired-count 100
@@ -224,8 +224,8 @@ aws ecs update-service --cluster EcsSpotWorkshop --service ec2-service-split --d
      --service-name ec2-service-web7 \
      --task-definition ec2-task:8 \
      --desired-count 2 \
-     --region us-east-1  
-     
+     --region us-east-1
+
 
    aws ecs create-service \
      --launch-type  EC2 \
@@ -234,7 +234,7 @@ aws ecs update-service --cluster EcsSpotWorkshop --service ec2-service-split --d
      --task-definition ec2-task:7 \
      --desired-count 2 \
      --region us-east-1  \
-	    --network-configuration "awsvpcConfiguration={subnets=[subnet-003ef0ebc04c89b2d],securityGroups=[sg-03ccfca80f9fddf4d]}"     
+	    --network-configuration "awsvpcConfiguration={subnets=[subnet-003ef0ebc04c89b2d],securityGroups=[sg-03ccfca80f9fddf4d]}"
 
 aws ecs describe-capacity-providers
 
@@ -247,7 +247,7 @@ aws ecs describe-tasks --cluster  EcsSpotWorkshop --tasks arn:aws:ecs:us-east-1:
 
 
  aws cloudwatch get-dashboard --dashboard-name EcsSpotWorkshop
- 
+
 aws cloudwatch put-dashboard --dashboard-name EcsSpotWorkshop2 --dashboard-body file://cwt-dashboard.json
 
 
@@ -280,7 +280,7 @@ docker run -p 8080:80 test
 
  docker build --no-cache   . -t loop
  docker run -d loop
- 
+
  docker exec d39571f3b9c3 ps -ef
 
 docker inspect -f '{{.State.ExitCode}}' d39571f3b9c3
@@ -291,19 +291,19 @@ docker stop python-signals
 
 docker build --no-cache   . -t web
 docker run -it --rm --name="web"  -p 80:80 web
-docker exec -it web ps 
+docker exec -it web ps
 docker stop web
 docker run -it --rm --name="web"  -p 80:80  --net=host  ecs-spot-workshop/web
 docker run -it --rm --name="web"  -p 80:80   ecs-spot-workshop/web
 aws ecr create-repository \
     --repository-name ecs-spot-workshop/web \
     --image-scanning-configuration scanOnPush=true
-    
+
 aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 000474600478.dkr.ecr.us-east-1.amazonaws.com
 docker build --no-cache  -t ecs-spot-workshop/web .
 
 docker tag ecs-spot-workshop/web:latest 000474600478.dkr.ecr.us-east-1.amazonaws.com/ecs-spot-workshop/web:latest
-docker push 000474600478.dkr.ecr.us-east-1.amazonaws.com/ecs-spot-workshop/web:latest    
+docker push 000474600478.dkr.ecr.us-east-1.amazonaws.com/ecs-spot-workshop/web:latest
 
 x=$(docker images | awk '{print $3}')
 

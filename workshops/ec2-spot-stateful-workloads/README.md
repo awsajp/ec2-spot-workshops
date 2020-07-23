@@ -14,7 +14,7 @@ zip lambda_function.zip lambda_function.py cfnresponse.py
  ##### Lambda function to provision initial instances and also for restoring the state/EBS volumes
  ##### Cloud Watch event to handle node termination
  
-  ![Alt text](EC2 Spot for Stateful Workloads.png?raw=true "Diagram")
+  ![Alt text](diagram.png?raw=true "Diagram")
   
   The solution provides the following features
   ##### EC2 Fleet API with Spot best practices

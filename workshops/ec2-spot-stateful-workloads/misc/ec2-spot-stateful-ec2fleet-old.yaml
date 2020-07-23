@@ -1,0 +1,623 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+Description: EC2 Fleet Template
+Metadata:
+  Author:
+    Description: Jayaprakash Alawala <jalawala@amazon.com>
+  License:
+    Description: 'Copyright 2020 Amazon.com, Inc. and its affiliates. All Rights Reserved.
+
+      Licensed under the Amazon Software License (the "License"). You may not use this file
+      except in compliance with the License. A copy of the License is located at
+
+      http://aws.amazon.com/asl/
+
+      or in the "license" file accompanying this file. This file is distributed on an "AS IS"
+      BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+      License for the specific language governing permissions and limitations under the License.'
+
+
+
+Parameters:
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the EC2 instances
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: 'awsajp_keypair'
+    MinLength: 1
+
+  vpc:
+    Type: String
+    Description: "VPC used for testing"
+    Default: "vpc-0b2cfd7b526d5b41a"
+
+  PublicSubnet1:
+    Type: String
+    Description: "PublicSubnet1 used for testing"
+    Default: "subnet-0c07359b41da1e17c"
+
+  PublicSubnet2:
+    Type: String
+    Description: "PublicSubnet2 used for testing"
+    Default: "subnet-01e89d5cc1b12f515"
+
+  sourceCidr:
+    Default: 0.0.0.0/0
+    Description: Optional - CIDR/IP range for instance ssh/http access and load balancer http
+      access
+    Type: String
+
+  InstanceTypes:
+    Type: String
+    Description: "multiple spot instances to override(seperated by comma)"
+    Default: "m4.large,m5.large,c4.large,c5.large,r4.large,r5.large,t3.large,t3a.large"
+
+
+  OnDemandCapacity:
+    Type: Number
+    Description: "on-demand  capacity"
+    Default: 0
+
+  SpotCapacity:
+    Type: Number
+    Description: "Spot Capacity"
+    Default: 1
+
+  TotalCapacity:
+    Type: Number
+    Description: "Total Capacity"
+    Default: 1
+
+  ReadCapacityUnits:
+    Description: Provisioned read throughput
+    Type: Number
+    Default: '10'
+    MinValue: '10'
+    MaxValue: '10000'
+    ConstraintDescription: must be between 5 and 10000
+  WriteCapacityUnits:
+    Description: Provisioned write throughput
+    Type: Number
+    Default: '10'
+    MinValue: '10'
+    MaxValue: '10000'
+    ConstraintDescription: must be between 5 and 10000
+
+  RootEBSVolumeSize:
+    Type: Number
+    Description: "Root EBS Volume Size"
+    Default: 8
+
+  AdditionalEBSVolume1Size:
+    Type: Number
+    Description: "Additional EBS Volume1 Size"
+    Default: 8
+
+  AdditionalEBSVolume2Size:
+    Type: Number
+    Description: "Additional EBS Volume2 Size"
+    Default: 8
+
+  AMAZONLINUX2AMI:
+    Description: AMI ID
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
+
+
+Resources:
+
+  instanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${AWS::StackName}-InstanceRole'
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+        Version: 2012-10-17
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM
+      Path: /
+      Policies:
+        - PolicyName: EC2DescribeInstances
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: ec2:DescribeInstances
+                Resource: "*"
+
+  instanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    DependsOn:
+    - instanceRole
+    Properties:
+      InstanceProfileName:  !Sub '${AWS::StackName}-InstanceProfile'
+      Path: /
+      Roles:
+        - Ref: instanceRole
+
+  instanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      SecurityGroupIngress:
+        - CidrIp:
+            Ref: sourceCidr
+          FromPort: 22
+          IpProtocol: tcp
+          ToPort: 22
+        - CidrIp:
+            Ref: sourceCidr
+          FromPort: 80
+          IpProtocol: tcp
+          ToPort: 80
+      GroupDescription: Allow traffic from Internet
+      GroupName:  !Sub '${AWS::StackName}-InstanceSG'
+      VpcId: !Ref vpc
+
+  LaunchTemplate:
+    DependsOn:
+      - instanceProfile
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateData:
+        InstanceType: t3.large
+        KeyName : !Ref KeyName
+        BlockDeviceMappings:
+          - DeviceName: /dev/xvda
+            Ebs:
+              VolumeType: gp2
+              DeleteOnTermination: 'false'
+              VolumeSize: !Ref RootEBSVolumeSize
+          - DeviceName: /dev/xvdb
+            Ebs:
+              VolumeType: gp2
+              DeleteOnTermination: 'false'
+              VolumeSize: !Ref AdditionalEBSVolume1Size
+          - DeviceName: /dev/xvdc
+            Ebs:
+              VolumeType: gp2
+              DeleteOnTermination: 'false'
+              VolumeSize: !Ref AdditionalEBSVolume2Size
+        ImageId: !Ref AMAZONLINUX2AMI
+        IamInstanceProfile:
+          Arn:
+            Fn::GetAtt:
+            - instanceProfile
+            - Arn
+
+        TagSpecifications:
+          - ResourceType: instance
+            Tags:
+              - Key: Name
+                Value: "EC2FleetLT"
+        UserData:
+          Fn::Base64: !Sub |
+            #!/bin/bash
+            yum update -y
+
+            sudo yum -y install python3 python3-wheel python-pi
+
+            cat <<EOF > requirements.txt
+            Flask==0.10.1
+            Flask-Cors==1.10.2
+            requests
+            boto3
+            EOF
+
+            sudo pip3 install -r requirements.txt
+
+
+            cat <<EOF > app.py
+            from flask import Flask, render_template
+            from flask.ext.cors import CORS, cross_origin
+            import os
+            import requests
+            import json
+            import time
+            import sys
+            import boto3
+            import datetime
+
+            app = Flask(__name__)
+            cors = CORS(app)
+            app.config['CORS_HEADERS'] = 'Content-Type'
+
+            URL = "http://169.254.169.254/latest/dynamic/instance-identity/document"
+            InstanceData = requests.get(URL).json()
+
+            @app.route('/')
+            @cross_origin()
+            def index():
+
+              response = ""
+              response +="<head> <title>Ec2 Spot Stateful Workload</title> </head>"
+              response += "<h2>Here is the status of the all the EBS volumes on this EC2 instance </h2> <hr/>"
+
+              try:
+                URL = "http://169.254.169.254/latest/meta-data/spot/termination-time"
+                SpotInt = requests.get(URL)
+                if SpotInt.status_code == 200:
+                  response += "<h1>This Spot Instance Got Interruption and Termination Date is {} </h1> <hr/>".format(SpotInt.text)
+
+
+                v1 = open('/home/ec2-user/volume1/state.txt', 'r')
+                v2 = open('/home/ec2-user/volume2/state.txt', 'r')
+                v3 = open('/home/ec2-user/volume3/state.txt', 'r')
+
+                response += "<h3>Status of Volume1 </h3> <hr/>"
+                for x in v1:
+                  response += "<li>{}</li>".format(x)
+
+                #response += v1.read()
+                response += "<h3>Status of Volume2 </h3> <hr/>"
+                for x in v2:
+                  response += "<li>{}</li>".format(x)
+                #response += v2.read()
+                response += "<h3>Status of Volume3 </h3> <hr/>"
+                for x in v3:
+                  response += "<li>{}</li>".format(x)
+                #response += v3.read()
+                v1.close()
+                v2.close()
+                v3.close()
+
+              except Exception as inst:
+                response += "<li>Oops !!! Failed to access my instance  metadata with error = {}</li>".format(inst)
+
+              return response
+
+            def mountVolumes():
+
+              os.system("mkdir -p /home/ec2-user/volume1")
+              os.system("mkdir -p /home/ec2-user/volume2")
+              os.system("mkdir -p /home/ec2-user/volume3")
+
+              os.system("sudo mkfs -t xfs /dev/xvdb")
+              os.system("sudo mount /dev/xvdb /home/ec2-user/volume2")
+
+              os.system("sudo mkfs -t xfs /dev/xvdc")
+              os.system("sudo mount /dev/xvdc /home/ec2-user/volume3")
+
+              instanceId = InstanceData['instanceId']
+
+              ec2client = boto3.client('ec2', region_name=InstanceData['region'])
+              describeInstance = ec2client.describe_instances(InstanceIds=[instanceId])
+              instanceData=describeInstance['Reservations'][0]['Instances'][0]
+              if 'InstanceLifecycle' in instanceData.keys():
+                lifecycle = instanceData['InstanceLifecycle']
+              else:
+                lifecycle =  "Ondemand"
+
+
+              instance_type = InstanceData['instanceType']
+              privateIp = InstanceData['privateIp']
+              availability_zone = InstanceData['availabilityZone']
+              Region = InstanceData['region']
+
+              publicIpV4 = requests.get("http://169.254.169.254/latest/meta-data/public-ipv4")
+              publicIp = publicIpV4.text
+
+              AMIId = requests.get("http://169.254.169.254/latest/meta-data/ami-id")
+              AMI = AMIId.text
+
+              v1 = open('/home/ec2-user/volume1/state.txt', 'a')
+              v2 = open('/home/ec2-user/volume2/state.txt', 'a')
+              v3 = open('/home/ec2-user/volume3/state.txt', 'a')
+
+              current_time = datetime.datetime.now()
+              header = "current_time                 InstanceId             privateIp    publicIp        instance_type     AZ        \n"
+              value = str(current_time)+"  "+instanceId+"  "+privateIp   +"  "+ publicIp +"   "+instance_type+"  "+availability_zone+"\n"
+
+              v1.write(header)
+              v1.write(value)
+              v1.close()
+              v2.write(header)
+              v2.write(value)
+              v2.close()
+              v3.write(header)
+              v3.write(value)
+              v3.close()
+
+            if __name__ == '__main__':
+              print("Starting A Simple Web Service ...")
+              mountVolumes()
+              app.run(port=80,host='0.0.0.0')
+            EOF
+
+            sudo python3 app.py
+      LaunchTemplateName: !Sub '${AWS::StackName}-LT'
+
+  EC2Fleet:
+    Type: AWS::EC2::EC2Fleet
+    DependsOn: LaunchTemplate
+    Properties:
+      LaunchTemplateConfigs:
+         - LaunchTemplateSpecification:
+             LaunchTemplateId: !Ref LaunchTemplate
+             Version: !GetAtt LaunchTemplate.LatestVersionNumber
+           Overrides:
+             - SubnetId: !Ref PublicSubnet1
+               InstanceType: "m4.large"
+               WeightedCapacity: 1
+             - SubnetId: !Ref PublicSubnet1
+               InstanceType: "m5.large"
+               WeightedCapacity: 1
+             - SubnetId: !Ref PublicSubnet1
+               InstanceType: "c4.large"
+               WeightedCapacity: 1
+             - SubnetId: !Ref PublicSubnet1
+               InstanceType: "c5.large"
+               WeightedCapacity: 1
+             - SubnetId: !Ref PublicSubnet1
+               InstanceType: "r4.large"
+               WeightedCapacity: 1
+             - SubnetId: !Ref PublicSubnet1
+               InstanceType: "r5.large"
+               WeightedCapacity: 1
+             - SubnetId: !Ref PublicSubnet1
+               InstanceType: "t3a.large"
+               WeightedCapacity: 1
+             - SubnetId: !Ref PublicSubnet1
+               InstanceType: "t3.large"
+               WeightedCapacity: 1
+             - SubnetId: !Ref PublicSubnet2
+               InstanceType: "m4.large"
+               WeightedCapacity: 1
+             - SubnetId: !Ref PublicSubnet2
+               InstanceType: "m5.large"
+               WeightedCapacity: 1
+             - SubnetId: !Ref PublicSubnet2
+               InstanceType: "c4.large"
+               WeightedCapacity: 1
+             - SubnetId: !Ref PublicSubnet2
+               InstanceType: "c5.large"
+               WeightedCapacity: 1
+             - SubnetId: !Ref PublicSubnet2
+               InstanceType: "r4.large"
+               WeightedCapacity: 1
+             - SubnetId: !Ref PublicSubnet2
+               InstanceType: "r5.large"
+               WeightedCapacity: 1
+             - SubnetId: !Ref PublicSubnet2
+               InstanceType: "t3a.large"
+               WeightedCapacity: 1
+             - SubnetId: !Ref PublicSubnet2
+               InstanceType: "t3.large"
+               WeightedCapacity: 1
+      TargetCapacitySpecification:
+        DefaultTargetCapacityType: 'spot'
+        OnDemandTargetCapacity: !Ref OnDemandCapacity
+        SpotTargetCapacity: !Ref SpotCapacity
+        TotalTargetCapacity: !Ref TotalCapacity
+      SpotOptions:
+        AllocationStrategy: 'capacityOptimized'
+        InstanceInterruptionBehavior: 'terminate'
+      OnDemandOptions:
+        AllocationStrategy: 'prioritized'
+      TagSpecifications:
+        - ResourceType: fleet
+          Tags:
+            - Key: Name
+              Value: 'EC2Fleet-Stateful'
+      Type: instant
+
+  InstanceStateTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: InstanceId
+          AttributeType: S
+        - AttributeName: ST
+          AttributeType: S
+      BillingMode: PROVISIONED
+      KeySchema:
+        - AttributeName: InstanceId
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: !Ref 'ReadCapacityUnits'
+        WriteCapacityUnits: !Ref 'WriteCapacityUnits'
+      TableName:  !Sub '${AWS::StackName}-InstanceStateTable'
+      Tags:
+        - Key: Name
+          Value: 'InstanceStateTable'
+      GlobalSecondaryIndexes:
+        - IndexName: 'ST-Global-Index'
+          KeySchema:
+            - AttributeName: ST
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: !Ref 'ReadCapacityUnits'
+            WriteCapacityUnits: !Ref 'WriteCapacityUnits'
+
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: dynamodbAccessRole
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:*
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - logs:*
+                Resource: "*"
+
+  InitFunction:
+    Type: AWS::Lambda::Function
+    DependsOn:
+      - LambdaRole
+    Properties:
+      Description: 'This function initializes the DynamoDB table with Instance ID status'
+      FunctionName: !Sub '${AWS::StackName}-InitFunction'
+      Environment:
+        Variables:
+          DYNAMODB_INSTANCEID_TABLE_NAME: !Sub '${AWS::StackName}-InstanceStateTable'
+          DYNAMODB_GSI_ST: 'ST-Global-Index'
+          EC2_FLEET_ID: !Ref EC2Fleet
+          LAUNCH_TEMPLATE_ID: !Ref LaunchTemplate
+          ROOT_EBS_VOLUME_SIZE: !Ref RootEBSVolumeSize
+          ADDITIONAL_VOLUM1_SIZE: !Ref AdditionalEBSVolume1Size
+          ADDITIONAL_VOLUM2_SIZE: !Ref AdditionalEBSVolume2Size
+          PUBLIC_SUBNET1: !Ref PublicSubnet1
+          PUBLIC_SUBNET2: !Ref PublicSubnet2
+
+      Code:
+        ZipFile: !Sub |
+          import boto3
+          from boto3.dynamodb.conditions import Key
+          import os
+          import time
+          import json
+          import cfnresponse
+
+          def handler(event, context):
+              InstancesTableName=os.getenv('DYNAMODB_INSTANCEID_TABLE_NAME')
+              StatusIndexName=os.getenv('DYNAMODB_GSI_ST')
+              EC2FleetId=os.getenv('EC2_FLEET_ID')
+
+              print("Received Event: {}".format(event))
+              print("InstancesTableName={} StatusIndexName={} EC2FleetId={}".format(InstancesTableName,StatusIndexName, EC2FleetId))
+              responseData = {}
+              responseData['Data'] = '1'
+              cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData,"CustomResourcePhysicalID")
+              return {
+                  'statusCode': 200,
+                  'body': json.dumps("Complered processing of the termination of the EC2FleetId={}".format(EC2FleetId))
+              }
+              instanceId = event['detail']['instance-id']
+              instanceAction = event['detail']['instance-action']
+
+              print("Handling spot instance interruption notification for instance {id}".format(id=instanceId))
+
+              # Describe tags for the instance that will be interrupted
+              try:
+                  ec2client = boto3.client('ec2')
+                  describeInstance = ec2client.describe_instances(InstanceIds=[instanceId])
+                  describeTags = describeInstance['Reservations'][0]['Instances'][0]
+              except Exception as e:
+                  print("No action being taken. Unable to describe tags for instance id:", instanceId)
+                  print(e)
+                  raise
+
+              # Check if the instance belongs to ASG
+              asg=''
+              for tag in describeTags['Tags']:
+                  if tag['Key'] =='aws:autoscaling:groupName':
+                      asg=tag['Value']
+
+              if asg=='':
+                  print("No action taken. Instance {id} does not belong to an AutoScaling group.".format(id=instanceId))
+                  return
+              else:
+                  print("Instance {id} belongs to AutoScaling Group {asg_name}. Detaching instance...".format(id=instanceId,asg_name=asg))
+                  try:
+                      # detach instance from ASG
+                      asgclient = boto3.client('autoscaling')
+                      response = asgclient.detach_instances(InstanceIds=[instanceId],AutoScalingGroupName=asg,ShouldDecrementDesiredCapacity=False)
+                  except Exception as e:
+                      print("No action taken. Unable to detach instance {id} from AutoScaling Group {asg_name}".format(id=instanceId,asg_name=asg))
+                      print(e)
+                      raise
+
+              print(response['Activities'][0]['Cause'])
+              return
+      Handler: index.handler
+      Role:
+        Fn::GetAtt: [ LambdaRole , "Arn" ]
+      Runtime: python3.7
+      Timeout: 900
+
+  InitializeDynamoDB:
+    Type: Custom::InitFunction
+    DependsOn:
+      - InstanceStateTable
+      - EC2Fleet
+    Properties:
+      ServiceToken:
+        Fn::GetAtt: [ InitFunction , "Arn" ]
+      DynamoTableName: !Ref InstanceStateTable
+      EC2FleetId: !Ref EC2Fleet
+      Source: 'InitializeDynamoDB'
+
+  ClodudWatchEventRule:
+    DependsOn:
+      - InitFunction
+    Properties:
+      Description: Events rule for EC2 Spot Instance Interruption Notices
+      EventPattern:
+        detail-type:
+          - EC2 Spot Instance Interruption Warning
+        source:
+          - aws.ec2
+      State: ENABLED
+      Targets:
+        - Arn:
+            Fn::GetAtt:
+              - InitFunction
+              - Arn
+          Id:
+            Ref: InitFunction
+    Type: AWS::Events::Rule
+
+
+Outputs:
+  awsRegionId:
+    Description: The AWS Region ID your template was launched in
+    Value: !Ref AWS::Region
+
+
+  instanceProfile:
+    Description: Instance profile ARN
+    Value:
+      Fn::GetAtt:
+        - instanceProfile
+        - Arn
+
+  instanceSecurityGroup:
+    Description: Instance security group
+    Value: !Ref instanceSecurityGroup
+
+
+  vpc:
+    Description: The VPC
+    Value: !Ref vpc
+
+
+  LaunchTemplate:
+    Description: The Launch Template
+    Value: !Ref LaunchTemplate
+
+  EC2Fleet:
+    Description: EC2Fleet
+    Value: !Ref EC2Fleet
+
+  InitFunction:
+    Description: InitFunction
+    Value: !Ref InitFunction
+
+  InstanceStateTable:
+    Description: InstanceStateTable
+    Value: !Ref InstanceStateTable
+
+
+...

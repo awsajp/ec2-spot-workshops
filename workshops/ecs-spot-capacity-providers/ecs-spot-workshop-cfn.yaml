@@ -30,6 +30,7 @@ Parameters:
     Default: /aws/service/ecs/optimized-ami/amazon-linux-2/recommended/image_id
 
 Resources:
+
   vpc:
     Type: AWS::EC2::VPC
     Properties:
@@ -475,9 +476,14 @@ Outputs:
   publicSubnet1:
     Description: Public subnet 1
     Value: !Ref publicSubnet1
+
   publicSubnet2:
     Description: Public subnet 2
     Value: !Ref publicSubnet2
+
+  publicSubnet3:
+    Description: Public subnet 3
+    Value: !Ref publicSubnet3
 
   privateSubnet1:
     Description: Private subnet 1
@@ -486,6 +492,10 @@ Outputs:
   privateSubnet2:
     Description: Private subnet 2
     Value: !Ref privateSubnet2
+
+  privateSubnet3:
+    Description: Private subnet 3
+    Value: !Ref privateSubnet3
 
   vpc:
     Description: The VPC

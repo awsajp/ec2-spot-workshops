@@ -34,17 +34,17 @@ Parameters:
     Type: Number
     Description: Desired size of Node Group ASG.
     Default: 2
-    
+
   OnDemandBaseCapacity:
     Type: Number
     Description: "on-demand base capacity"
     Default: 2
-    
+
   OnDemandPercentageAboveBaseCapacity:
     Type: Number
     Description: "on-demand percentage above base capacity(0-100)"
     Default: 100
-    
+
   SpotInstancePools:
     Type: Number
     Description: "spot instance pools(1-20)"

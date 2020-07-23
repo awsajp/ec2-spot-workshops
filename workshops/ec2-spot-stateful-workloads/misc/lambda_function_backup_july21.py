@@ -22,7 +22,7 @@ StatusIndexName=os.getenv('DYNAMODB_GSI_ST')
 RootEBSVolumeSize=os.getenv('ROOT_EBS_VOLUME_SIZE')
 launchTemplateId=os.getenv('LAUNCH_TEMPLATE_ID')
 InstanceTypes=os.getenv('INSTANCE_TYPES_LIST')
-subnetIdsString=os.getenv('PUBLIC_SUBNET_IDs_LIST')
+subnetIdsString=os.getenv('SUBNET_IDs_LIST')
 
 
 
@@ -30,7 +30,6 @@ subnetIdsString=os.getenv('PUBLIC_SUBNET_IDs_LIST')
 
 ec2client = boto3.client('ec2', region_name='us-east-1')
 ec2resource = boto3.resource('ec2')
-elbv2client = boto3.client('elbv2')
 dbclient = boto3.client('dynamodb')
 dynamodbresource = boto3.resource('dynamodb')
 InstanceTable = dynamodbresource.Table(InstancesTableName)
@@ -99,16 +98,6 @@ def createAMIfromSnapshot(snapshotId):
 
 def createLaunchTemplateVersion(launchTemplateId, launchTemplateVersion, ImageId, snapshotId1, snapshotId2, IP):
 
-  NetworkInterfaces=[]
-
-  if IP is not None:
-    PrivateIpAddresses=[]
-    PrivateIpAddresses.append({'Primary': True,  'PrivateIpAddress': IP})
-    NetworkInterfaces.append( { 'DeviceIndex': 0,  'PrivateIpAddresses': PrivateIpAddresses  }  )
-    pprint("NetworkInterfaces={}".format(NetworkInterfaces))
-
-
-
   response = ec2client.create_launch_template_version(
     LaunchTemplateId=launchTemplateId,
     SourceVersion=launchTemplateVersion,
@@ -139,7 +128,17 @@ def createLaunchTemplateVersion(launchTemplateId, launchTemplateVersion, ImageId
           }
         },
       ],
-      'NetworkInterfaces': NetworkInterfaces,
+      'NetworkInterfaces': [
+        {
+          'DeviceIndex': 0,
+          'PrivateIpAddresses': [
+            {
+              'Primary': True,
+              'PrivateIpAddress': IP
+            },
+          ]
+        },
+      ],
       'ImageId': ImageId
     }
   )
@@ -254,11 +253,6 @@ def updateInstanceStatusInDynamoDB(EC2FleetId):
         }
       )
 
-      TG = os.getenv('TARGET_GROUP_ARN')
-      print("Registering the  InstanceId={}  to the TG={}".format(InstanceId, TG))
-      registerTargets = elbv2client.register_targets(TargetGroupArn=TG,Targets=[{'Id':InstanceId}])
-
-
 
 def handleNodeTermination(InstanceId):
 
@@ -297,13 +291,7 @@ def handleNodeTermination(InstanceId):
     waiter.wait(ImageIds=[AMIId])
 
     #launchTemplateId='lt-03ca5a44acf2af90a'
-    RetainPrivateIP = os.getenv('RETAINPRIVATEIP')
-    if RetainPrivateIP == "NO":
-      SubnetId=subnetIdsString
-      IP =  None
-
     launchTemplateVersion = '1'
-    print("Creating a new LaunchTemplate Version with launchTemplateId={}  IP={} RetainPrivateIP={} to be completed".format(launchTemplateId, IP, RetainPrivateIP))
     createLaunchTemplateVersion(launchTemplateId, launchTemplateVersion, AMIId, snapshotIdList[1], snapshotIdList[2], IP)
     launchTemplateVersion = '$Latest'
 
@@ -313,7 +301,9 @@ def handleNodeTermination(InstanceId):
     OnDemandTargetCapacity=0
     SpotTargetCapacity=1
     TotalTargetCapacity=1
-
+    RetainPrivateIP = os.getenv('RETAINPRIVATEIP')
+    if RetainPrivateIP == "NO":
+      SubnetId=subnetIdsString
 
     print("createEC2Fleet with launchTemplateId={} launchTemplateVersion={} SubnetId={}".format(launchTemplateId, launchTemplateVersion, SubnetId))
     EC2FleetId = createEC2Fleet(launchTemplateVersion,SubnetId,TotalTargetCapacity,OnDemandTargetCapacity,SpotTargetCapacity)
@@ -337,7 +327,7 @@ def handleNodeTermination(InstanceId):
         VolumeId=volumeId
       )
 
-    print("Deleting the InstanceId={} from dynamodb".format(InstanceId))
+    print("Terminating InstanceId={} state in the dynamodb".format(InstanceId))
     try:
       response = InstanceTable.delete_item(
         Key={
@@ -355,17 +345,12 @@ def lambda_handler(event, context):
 
   if 'RequestType' in event.keys():
     if event['RequestType'] == "Create":
-      vpcId=os.getenv('VPC_ID')
-      response = ec2client.describe_security_groups(    Filters=[ { 'Name': 'vpc-id',  'Values': [ vpcId, ] }, { 'Name': 'group-name',  'Values': [ 'default', ] }  ],)
-      securityGroupId= response['SecurityGroups'][0]['GroupId']
-      print("Adding ingress rule for prort 80 for securityGroupId={} vpcId={}".format(securityGroupId, vpcId))
-      data = ec2client.authorize_security_group_ingress(GroupId=securityGroupId,IpPermissions=[{'IpProtocol': 'tcp','FromPort': 80, 'ToPort': 80, 'IpRanges': [{'CidrIp': '0.0.0.0/0'}]},])
-
+      #EC2FleetId=os.getenv('EC2_FLEET_ID')
       OnDemandTargetCapacity=int(os.getenv('ONDEMANDTARGETCAPACITY'))
       SpotTargetCapacity=int(os.getenv('SPOTTARGETCAPACITY'))
       TotalTargetCapacity=int(os.getenv('TOTALTARGETCAPACITY'))
       launchTemplateVersion = '1'
-      SubnetId=subnetIdsString
+      SubnetId=os.getenv('SUBNET_IDs_LIST')
       EC2FleetId = createEC2Fleet(launchTemplateVersion,SubnetId,TotalTargetCapacity,OnDemandTargetCapacity,SpotTargetCapacity)
       updateInstanceStatusInDynamoDB(EC2FleetId)
     elif event['RequestType'] == "Delete":
@@ -390,7 +375,7 @@ def lambda_handler(event, context):
               ]
             )
           except Exception as e:
-            print(e['Error']['Message'])
+            print(e.response['Error']['Message'])
 
     else:
       print("CFN event RequestType={} is NOT handled currently".format(event['RequestType']))
@@ -398,7 +383,7 @@ def lambda_handler(event, context):
 
     responseData = {}
     responseData['Data'] = '1'
-    cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData,"CustomResourcePhysicalID")
+    #cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData,"CustomResourcePhysicalID")
     return {
       'statusCode': 200,
       'body': json.dumps("Completed processing of the event={}".format(event))

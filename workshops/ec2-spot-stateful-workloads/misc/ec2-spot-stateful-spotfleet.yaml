@@ -17,50 +17,6 @@ Mappings:
       CIDR: 10.0.5.0/24
     vpc:
       CIDR: 10.0.0.0/16
-
-  AmazonLinux2AMI:
-    us-east-2:
-      AMI: ami-0f7919c33c90f5b58
-    us-east-1:
-      AMI: ami-0323c3dd2da7fb37d
-    us-west-1:
-      AMI: ami-06fcc1f0bc2c8943f
-    us-west-2:
-      AMI: ami-0d6621c01e8c2de2c
-    af-south-1:
-      AMI: ami-N/A
-    ap-east-1:
-      AMI: ami-N/A
-    ap-south-1:
-      AMI: ami-0470e33cd681b2476
-    ap-northeast-3:
-      AMI: ami-no
-    ap-northeast-2:
-      AMI: ami-01288945bd24ed49a
-    ap-southeast-1:
-      AMI: ami-0ec225b5e01ccb706
-    ap-southeast-2:
-      AMI: ami-0970010f37c4f9c8d
-    ap-northeast-1:
-      AMI: ami-0f310fced6141e627
-    ca-central-1:
-      AMI: ami-054362537f5132ce2
-    eu-central-1:
-      AMI: ami-076431be05aaf8080
-    eu-west-1:
-      AMI: ami-06ce3edf0cff21f07
-    eu-west-2:
-      AMI: ami-01a6e31ac994bbc09
-    eu-south-1:
-      AMI: ami-N/A
-    eu-west-3:
-      AMI: ami-00077e3fed5089981
-    eu-north-1:
-      AMI: ami-0b7a46b4bd694e8a6
-    me-south-1:
-      AMI: ami-N/A
-    sa-east-1:
-      AMI: ami-003449ffb2605a74c
 Metadata:
   Author:
     Description: Jayaprakash Alawala <jalawala@amazon.com>
@@ -76,33 +32,6 @@ Metadata:
       BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
       License for the specific language governing permissions and limitations under the License.'
 
-
-Outputs:
-  awsRegionId:
-    Description: The AWS Region ID your template was launched in
-    Value: !Ref AWS::Region
-
-
-  instanceProfile:
-    Description: Instance profile ARN
-    Value:
-      Fn::GetAtt:
-      - instanceProfile
-      - Arn
-
-  instanceSecurityGroup:
-    Description: Instance security group
-    Value: !Ref instanceSecurityGroup
-
-
-  vpc:
-    Description: The VPC
-    Value: !Ref vpc
-
-
-  LaunchTemplate:
-    Description: The Launch Template
-    Value: !Ref LaunchTemplate
 
 
 Parameters:
@@ -122,50 +51,29 @@ Parameters:
     Description: "Ec2SpotStatefulPublicSubnet1 used for testing"
     Default: "subnet-0c07359b41da1e17c"
 
+  Ec2SpotStatefulPublicSubnet2:
+    Type: String
+    Description: "Ec2SpotStatefulPublicSubnet2 used for testing"
+    Default: "subnet-01e89d5cc1b12f515"
+
   sourceCidr:
     Default: 0.0.0.0/0
     Description: Optional - CIDR/IP range for instance ssh/http access and load balancer http
       access
     Type: String
-  NodeAutoScalingGroupDesiredSize:
-    Type: Number
-    Description: Desired size of Node Group ASG.
-    Default: 2
-  OnDemandBaseCapacity:
-    Type: Number
-    Description: "on-demand base capacity"
-    Default: 2
-  OnDemandPercentageAboveBaseCapacity:
-    Type: Number
-    Description: "on-demand percentage above base capacity(0-100)"
-    Default: 100
 
-  InstanceTypesOverride:
-    Type: String
-    Description: "multiple spot instances to override(seperated by comma)"
-    Default: "t3.large,m5.large"
+  AMAZONLINUX2AMI:
+    Description: AMI ID
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
 
-  NodeAutoScalingGroupMinSize:
-    Type: Number
-    Description: Minimum size of Node Group ASG.
-    Default: 0
-
-  NodeAutoScalingGroupDesiredSize:
-    Type: Number
-    Description: Desired size of Node Group ASG.
-    Default: 2
-
-  NodeAutoScalingGroupMaxSize:
-    Type: Number
-    Description: Maximum size of Node Group ASG.
-    Default: 10
 
 Resources:
 
   instanceRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: "Ec2SpotCassandra-InstanceRole"
+      RoleName: !Sub '${AWS::StackName}-InstanceRole'
       AssumeRolePolicyDocument:
         Statement:
           - Action:
@@ -192,7 +100,7 @@ Resources:
     DependsOn:
     - instanceRole
     Properties:
-      InstanceProfileName: "Ec2SpotCassandra-InstanceProfile"
+      InstanceProfileName:  !Sub '${AWS::StackName}-InstanceProfile'
       Path: /
       Roles:
         - Ref: instanceRole
@@ -212,7 +120,7 @@ Resources:
           IpProtocol: tcp
           ToPort: 80
       GroupDescription: Allow traffic from Internet
-      GroupName: "Ec2SpotCassandra-InstanceSG"
+      GroupName:  !Sub '${AWS::StackName}-InstanceSG'
       VpcId: !Ref vpc
 
   LaunchTemplate:
@@ -239,11 +147,7 @@ Resources:
               VolumeType: gp2
               DeleteOnTermination: 'false'
               VolumeSize: '8'
-        ImageId:
-          Fn::FindInMap:
-            - AmazonLinux2AMI
-            - Ref: AWS::Region
-            - AMI
+        ImageId: !Ref AMAZONLINUX2AMI
         IamInstanceProfile:
           Arn:
             Fn::GetAtt:
@@ -338,10 +242,10 @@ Resources:
               os.system("mkdir -p /home/ec2-user/volume3")
 
               os.system("sudo mkfs -t xfs /dev/xvdb")
-              os.system("sudo mount /dev/xvdb /volume2")
+              os.system("sudo mount /dev/xvdb /home/ec2-user/volume2")
 
               os.system("sudo mkfs -t xfs /dev/xvdc")
-              os.system("sudo mount /dev/xvdc /volume3")
+              os.system("sudo mount /dev/xvdc /home/ec2-user/volume3")
 
               instanceId = InstanceData['instanceId']
 
@@ -390,12 +294,12 @@ Resources:
             EOF
 
             sudo python3 app.py
-      LaunchTemplateName: "Ec2SpotCassandra"
+      LaunchTemplateName: !Sub '${AWS::StackName}-LT'
 
   Ec2SpotStatefulSpotFleetRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: "Ec2SpotStatefulSpotFleetRole"
+      RoleName:  !Sub '${AWS::StackName}-SpotFleetRole'
       AssumeRolePolicyDocument:
         Statement:
           - Action:
@@ -409,7 +313,7 @@ Resources:
         - arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetTaggingRole
       Path: /
 
-  Ec2SpotStatefulDLSpotFleet:
+  Ec2SpotStatefulSpotFleet:
     Type: AWS::EC2::SpotFleet
     DependsOn: LaunchTemplate
     Properties:
@@ -448,6 +352,68 @@ Resources:
               - SubnetId: !Ref Ec2SpotStatefulPublicSubnet1
                 InstanceType: "t3.large"
                 WeightedCapacity: 1
+              - SubnetId: !Ref Ec2SpotStatefulPublicSubnet2
+                InstanceType: "m4.large"
+                WeightedCapacity: 1
+              - SubnetId: !Ref Ec2SpotStatefulPublicSubnet2
+                InstanceType: "m5.large"
+                WeightedCapacity: 1
+              - SubnetId: !Ref Ec2SpotStatefulPublicSubnet2
+                InstanceType: "c4.large"
+                WeightedCapacity: 1
+              - SubnetId: !Ref Ec2SpotStatefulPublicSubnet2
+                InstanceType: "c5.large"
+                WeightedCapacity: 1
+              - SubnetId: !Ref Ec2SpotStatefulPublicSubnet2
+                InstanceType: "r4.large"
+                WeightedCapacity: 1
+              - SubnetId: !Ref Ec2SpotStatefulPublicSubnet2
+                InstanceType: "r5.large"
+                WeightedCapacity: 1
+              - SubnetId: !Ref Ec2SpotStatefulPublicSubnet2
+                InstanceType: "t3a.large"
+                WeightedCapacity: 1
+              - SubnetId: !Ref Ec2SpotStatefulPublicSubnet2
+                InstanceType: "t3.large"
+                WeightedCapacity: 1
         TargetCapacity: 1
         Type: request
+
+
+Outputs:
+  awsRegionId:
+    Description: The AWS Region ID your template was launched in
+    Value: !Ref AWS::Region
+
+
+  instanceProfile:
+    Description: Instance profile ARN
+    Value:
+      Fn::GetAtt:
+        - instanceProfile
+        - Arn
+
+  instanceSecurityGroup:
+    Description: Instance security group
+    Value: !Ref instanceSecurityGroup
+
+
+  vpc:
+    Description: The VPC
+    Value: !Ref vpc
+
+
+  LaunchTemplate:
+    Description: The Launch Template
+    Value: !Ref LaunchTemplate
+
+  Ec2SpotStatefulSpotFleet:
+    Description: Ec2SpotStatefulSpotFleet
+    Value: !Ref Ec2SpotStatefulSpotFleet
+
+  Ec2SpotStatefulSpotFleetRole:
+    Description: Ec2SpotStatefulSpotFleetRole
+    Value: !Ref Ec2SpotStatefulSpotFleet
+
+
 ...

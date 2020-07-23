@@ -1,0 +1,197 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+Description: EC2 Spot Game Day Template
+Mappings:
+  CidrMappings:
+    public-subnet-1:
+      CIDR: 10.0.0.0/24
+    public-subnet-2:
+      CIDR: 10.0.1.0/24
+    public-subnet-3:
+      CIDR: 10.0.2.0/24
+    private-subnet-1:
+      CIDR: 10.0.3.0/24
+    private-subnet-2:
+      CIDR: 10.0.4.0/24
+    private-subnet-3:
+      CIDR: 10.0.5.0/24
+    vpc:
+      CIDR: 10.0.0.0/16
+Metadata:
+  Author:
+    Description: Jayaprakash Alawala <jalawala@amazon.com>
+  License:
+    Description: 'Copyright 2020 Amazon.com, Inc. and its affiliates. All Rights Reserved.
+
+      Licensed under the Amazon Software License (the "License"). You may not use this file
+      except in compliance with the License. A copy of the License is located at
+
+      http://aws.amazon.com/asl/
+
+      or in the "license" file accompanying this file. This file is distributed on an "AS IS"
+      BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+      License for the specific language governing permissions and limitations under the License.'
+
+
+
+Parameters:
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the EC2 instances
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: 'awsajp_keypair'
+    MinLength: 1
+
+  vpc:
+    Type: String
+    Description: "VPC used for testing"
+    Default: "vpc-0b2cfd7b526d5b41a"
+
+  Ec2SpotStatefulPublicSubnet1:
+    Type: String
+    Description: "Ec2SpotStatefulPublicSubnet1 used for testing"
+    Default: "subnet-0c07359b41da1e17c"
+
+  Ec2SpotStatefulPublicSubnet2:
+    Type: String
+    Description: "Ec2SpotStatefulPublicSubnet2 used for testing"
+    Default: "subnet-01e89d5cc1b12f515"
+
+  sourceCidr:
+    Default: 0.0.0.0/0
+    Description: Optional - CIDR/IP range for instance ssh/http access and load balancer http
+      access
+    Type: String
+
+  ReadCapacityUnits:
+    Description: Provisioned read throughput
+    Type: Number
+    Default: '10'
+    MinValue: '10'
+    MaxValue: '10000'
+    ConstraintDescription: must be between 5 and 10000
+  WriteCapacityUnits:
+    Description: Provisioned write throughput
+    Type: Number
+    Default: '10'
+    MinValue: '10'
+    MaxValue: '10000'
+    ConstraintDescription: must be between 5 and 10000
+
+  AMAZONLINUX2AMI:
+    Description: AMI ID
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
+
+  OnDemandBaseCapacity:
+    Type: Number
+    Description: "on-demand base capacity"
+    Default: 2
+
+  OnDemandPercentageAboveBaseCapacity:
+    Type: Number
+    Description: "on-demand percentage above base capacity(0-100)"
+    Default: 100
+
+  SpotInstancePools:
+    Type: Number
+    Description: "spot instance pools(1-20)"
+    Default: 2
+
+
+
+Resources:
+
+  InstanceStateTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: InstanceId
+          AttributeType: S
+        - AttributeName: ST
+          AttributeType: S
+      BillingMode: PROVISIONED
+      KeySchema:
+        - AttributeName: InstanceId
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: !Ref 'ReadCapacityUnits'
+        WriteCapacityUnits: !Ref 'WriteCapacityUnits'
+      TableName:  !Sub '${AWS::StackName}-InstanceStateTable'
+      Tags:
+        - Key: Name
+          Value: 'InstanceStateTable'
+      GlobalSecondaryIndexes:
+        - IndexName: ST-Global-Index
+          KeySchema:
+            - AttributeName: ST
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: !Ref 'ReadCapacityUnits'
+            WriteCapacityUnits: !Ref 'WriteCapacityUnits'
+
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: dynamodbAccessRole
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:*
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - logs:*
+                Resource: "*"
+  InitFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        ZipFile: >
+          const AWS = require("aws-sdk");
+          const response = require("cfn-response");
+          const docClient = new AWS.DynamoDB.DocumentClient();
+          exports.handler = function(event, context) {
+              console.log(JSON.stringify(event,null,2));
+              var params = {
+                TableName: event.ResourceProperties.DynamoTableName,
+                Item:{
+                    "id": "abc123"
+                }
+            };
+          docClient.put(params, function(err, data) { if (err) {
+            response.send(event, context, "FAILED", {});
+          } else {
+            response.send(event, context, "SUCCESS", {});
+          }
+          });
+          };
+      Handler: index.handler
+      Role:
+        Fn::GetAtt: [ LambdaRole , "Arn" ]
+      Runtime: nodejs4.3
+      Timeout: 60
+  InitializeDynamoDB:
+    Type: Custom::InitFunction
+    DependsOn: InstanceStateTable
+    Properties:
+      ServiceToken:
+        Fn::GetAtt: [ InitFunction , "Arn" ]
+      DynamoTableName: !Ref InstanceStateTable
+      EC2FleetId: !Ref InstanceStateTable
+
+...

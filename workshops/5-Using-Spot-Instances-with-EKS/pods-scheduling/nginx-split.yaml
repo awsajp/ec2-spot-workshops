@@ -1,0 +1,47 @@
+---
+apiVersion: apps/v1 
+kind: Deployment 
+metadata: 
+  name: nginx-split 
+  labels: 
+    app: nginx-split 
+spec: 
+  replicas: 12
+  selector: 
+    matchLabels: 
+      app: nginx-split 
+  template: 
+    metadata: 
+      labels: 
+        app: nginx-split 
+    spec:
+      tolerations: 
+      - key: "spotInstance" 
+        operator: "Equal" 
+        value: "true" 
+        effect: "PreferNoSchedule" 
+      affinity: 
+        podAntiAffinity: 
+          preferredDuringSchedulingIgnoredDuringExecution: 
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app 
+                  operator: In 
+                  values: 
+                  - nginx-split
+              topologyKey: lifecycle
+      containers: 
+        - name: nginx-split 
+          image: nginx:1.14.2
+          resources: 
+            requests: 
+              memory: "512Mi" 
+              cpu: "1024m" 
+            limits: 
+              memory: "512Mi" 
+              cpu: "1024m" 
+          ports: 
+            - containerPort: 80
+

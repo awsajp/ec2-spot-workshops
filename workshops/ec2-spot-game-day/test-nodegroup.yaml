@@ -1,0 +1,249 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  EKS cluster (dedicated VPC: true, dedicated IAM: true)
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      -
+        Label:
+          default: "EKS Configuration"
+        Parameters:
+          - SubnetPublicUSEAST1A
+          - KeyName
+      -
+        Label:
+          default: "Auto Scaling Configuration"
+        Parameters:
+          - NodeAutoScalingGroupMinSize
+          - NodeAutoScalingGroupDesiredSize
+          - NodeAutoScalingGroupMaxSize
+          - OnDemandBaseCapacity
+          - OnDemandPercentageAboveBaseCapacity
+          - InstanceTypesOverride
+
+Parameters:
+
+  EKSAMI:
+    Description: EKS AMI ID
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/eks/optimized-ami/1.16/amazon-linux-2/recommended/image_id
+
+  EKSClusterName:
+    Type: String
+    Description: "EKS Cluster Name"
+    Default: "Ec2SpotEKS1"
+
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the EC2 instances
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: 'awsajp_keypair'
+    MinLength: 1
+
+  OnDemandBootstrapArguments:
+    Type: String
+    Default: "--kubelet-extra-args --node-labels=lifecycle=OnDemand,intent=control-apps"
+    Description: "Arguments to pass to the bootstrap script. See files/bootstrap.sh in https://github.com/awslabs/amazon-eks-ami"
+
+  Ec2SpotNodeLabels:
+    Type: String
+    Default: ' --node-labels="lifecycle=Ec2Spot,intent=apps" '
+    Description: "Arguments to pass to the bootstrap script. See files/bootstrap.sh in https://github.com/awslabs/amazon-eks-ami"
+
+  Ec2SpotNodeTaints:
+    Type: String
+    Default: ' --register-with-taints=\"spotInstance=true:PreferNoSchedule\" '
+    Description: "Arguments to pass to the bootstrap script. See files/bootstrap.sh in https://github.com/awslabs/amazon-eks-ami"
+
+
+  NodeAutoScalingGroupMinSize:
+    Type: Number
+    Description: Minimum size of Node Group ASG.
+    Default: 0
+
+  NodeAutoScalingGroupDesiredSize:
+    Type: Number
+    Description: Desired size of Node Group ASG.
+    Default: 1
+
+  NodeAutoScalingGroupMaxSize:
+    Type: Number
+    Description: Maximum size of Node Group ASG.
+    Default: 10
+
+  OnDemandBaseCapacity:
+    Type: Number
+    Description: "on-demand base capacity"
+    Default: 0
+
+  OnDemandPercentageAboveBaseCapacity:
+    Type: Number
+    Description: "on-demand percentage above base capacity(0-100)"
+    Default: 0
+
+  InstanceTypesOverride:
+    Type: String
+    Description: "multiple spot instances to override(seperated by comma)"
+    Default: "t3.large"
+
+  SubnetPublicUSEAST1A:
+    Type: String
+    Description: "multiple spot instances to override(seperated by comma)"
+    Default: "subnet-0c7cc862eec69dadb"
+
+
+Mappings:
+  CidrMappings:
+    public-subnet-1:
+      CIDR: 10.0.0.0/24
+    public-subnet-2:
+      CIDR: 10.0.1.0/24
+    public-subnet-3:
+      CIDR: 10.0.2.0/24
+    public-subnet-4:
+      CIDR: 10.0.3.0/24
+    public-subnet-5:
+      CIDR: 10.0.4.0/24
+    public-subnet-6:
+      CIDR: 10.0.5.0/24
+    private-subnet-1:
+      CIDR: 10.0.6.0/24
+    private-subnet-2:
+      CIDR: 10.0.7.0/24
+    private-subnet-3:
+      CIDR: 10.0.8.0/24
+    private-subnet-4:
+      CIDR: 10.0.9.0/24
+    private-subnet-5:
+      CIDR: 10.0.10.0/24
+    private-subnet-6:
+      CIDR: 10.0.11.0/24
+    vpc:
+      CIDR: 10.0.0.0/16
+
+
+  ServicePrincipalPartitionMap:
+    aws:
+      EC2: ec2.amazonaws.com
+      EKS: eks.amazonaws.com
+      EKSFargatePods: eks-fargate-pods.amazonaws.com
+    aws-cn:
+      EC2: ec2.amazonaws.com.cn
+      EKS: eks.amazonaws.com
+      EKSFargatePods: eks-fargate-pods.amazonaws.com
+    aws-us-gov:
+      EC2: ec2.amazonaws.com
+      EKS: eks.amazonaws.com
+      EKSFargatePods: eks-fargate-pods.amazonaws.com
+
+Resources:
+
+  NodeGroup:
+    DependsOn:
+      - NodeGroupLaunchTemplate
+    Type: 'AWS::AutoScaling::AutoScalingGroup'
+    Properties:
+      AutoScalingGroupName: !Sub '${AWS::StackName}-NodeGroup'
+      DesiredCapacity: !Ref NodeAutoScalingGroupDesiredSize
+      MixedInstancesPolicy:
+        InstancesDistribution:
+          OnDemandAllocationStrategy: prioritized
+          OnDemandBaseCapacity: !Ref OnDemandBaseCapacity
+          OnDemandPercentageAboveBaseCapacity: !Ref OnDemandPercentageAboveBaseCapacity
+          SpotAllocationStrategy: capacity-optimized
+        LaunchTemplate:
+          LaunchTemplateSpecification:
+            LaunchTemplateId: !Ref NodeGroupLaunchTemplate
+            Version: !GetAtt NodeGroupLaunchTemplate.LatestVersionNumber
+          Overrides:
+            - InstanceType: !Select [0, !Split [ ",", !Ref InstanceTypesOverride ] ]
+      MinSize: !Ref NodeAutoScalingGroupMinSize
+      MaxSize: !Ref NodeAutoScalingGroupMaxSize
+      Tags:
+        - Key: Name
+          PropagateAtLaunch: 'true'
+          Value: Ec2SpotEKS
+        - Key: kubernetes.io/cluster/Ec2SpotEKS
+          PropagateAtLaunch: 'true'
+          Value: owned
+        - Key: k8s.io/cluster-autoscaler/enabled
+          PropagateAtLaunch: 'true'
+          Value: 'true'
+        - Key: !Sub 'k8s.io/cluster-autoscaler/${EKSClusterName}'
+          PropagateAtLaunch: 'true'
+          Value: owned
+        - Key: alpha.eksctl.io/cluster-name
+          PropagateAtLaunch: 'true'
+          Value: !Sub '${EKSClusterName}'
+        - Key: alpha.eksctl.io/nodegroup-name
+          PropagateAtLaunch: 'true'
+          Value: !Sub '${EKSClusterName}-Ec2SpotNodegroup1'
+        - Key: alpha.eksctl.io/nodegroup-type
+          PropagateAtLaunch: 'true'
+          Value: unmanaged
+        - Key: aws:cloudformation:logical-id
+          PropagateAtLaunch: 'true'
+          Value: NodeGroup
+        - Key: eksctl.cluster.k8s.io/v1alpha1/cluster-name
+          PropagateAtLaunch: 'true'
+          Value: Ec2SpotEKS
+        - Key: eksctl.io/v1alpha2/nodegroup-name
+          PropagateAtLaunch: 'true'
+          Value: Ec2SpotEKS
+      VPCZoneIdentifier:
+        - !Ref SubnetPublicUSEAST1A
+    UpdatePolicy:
+      AutoScalingRollingUpdate:
+        MaxBatchSize: '1'
+        MinInstancesInService: '0'
+
+  NodeGroupLaunchTemplate:
+    Type: 'AWS::EC2::LaunchTemplate'
+    Properties:
+      LaunchTemplateData:
+        BlockDeviceMappings:
+          - DeviceName: /dev/xvda
+            Ebs:
+              Encrypted: false
+              VolumeSize: 80
+              VolumeType: gp2
+        IamInstanceProfile:
+          Arn: arn:aws:iam::000474600478:instance-profile/Ec2SpotEKS-NodeInstanceProfile-17CXI5S4Y9IDE
+        ImageId: !Ref EKSAMI
+        InstanceType: m5.large
+        KeyName : !Ref KeyName
+        NetworkInterfaces:
+          - DeviceIndex: 0
+            Groups:
+              - sg-03a6a51cf46144990
+              - sg-0081df8e88ceed023
+        UserData:
+          Fn::Base64: !Sub |
+            #!/bin/bashalpha.eksctl.io/cluster-name
+            set -o xtrace
+            export AWS_DEFAULT_REGION=${AWS::Region}
+            INSTANCE_ID=$(curl --silent http://169.254.169.254/latest/meta-data/instance-id)
+            INSTANCE_LIFECYCLE=$(aws ec2 describe-instances --instance-ids  $INSTANCE_ID  --query 'Reservations[0].Instances[0].InstanceLifecycle' --output text)
+            if [ "$INSTANCE_LIFECYCLE" == "spot" ]; then
+              #/etc/eks/bootstrap.sh Ec2SpotEKS --kubelet-extra-args ${Ec2SpotNodeLabels} ${Ec2SpotNodeTaints}
+               /etc/eks/bootstrap.sh ${EKSClusterName} --kubelet-extra-args '--node-labels="lifecycle=Ec2Spot,intent=apps"  --register-with-taints="spotInstance=true:PreferNoSchedule"'
+            else
+              /etc/eks/bootstrap.sh Ec2SpotEKS ${OnDemandBootstrapArguments}
+            fi
+      LaunchTemplateName: !Sub '${AWS::StackName}-LT'
+
+Outputs:
+
+  NodeGroupLaunchTemplate:
+    Value: !Ref NodeGroupLaunchTemplate
+
+  NodeGroup:
+    Value: !Ref NodeGroup
+
+  EKSClusterName:
+    Value: !Ref EKSClusterName
+
+
+
+
+

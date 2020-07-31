@@ -568,7 +568,7 @@ Resources:
         - Key: kubernetes.io/role/internal-elb
           Value: '1'
         - Key: Name
-          Value: '${EKSClusterName}-privateSubnet1'
+          Value: !Sub '${EKSClusterName}-privateSubnet1'
       VpcId: !Ref VPC
 
   SubnetPrivateUSEAST1B:
@@ -590,7 +590,7 @@ Resources:
         - Key: kubernetes.io/role/internal-elb
           Value: '1'
         - Key: Name
-          Value: '${EKSClusterName}-privateSubnet2'
+          Value: !Sub '${EKSClusterName}-privateSubnet2'
       VpcId: !Ref VPC
 
   SubnetPrivateUSEAST1C:
@@ -612,7 +612,7 @@ Resources:
         - Key: kubernetes.io/role/internal-elb
           Value: '1'
         - Key: Name
-          Value: '${EKSClusterName}-privateSubnet3'
+          Value: !Sub '${EKSClusterName}-privateSubnet3'
       VpcId: !Ref VPC
 
 
@@ -635,7 +635,7 @@ Resources:
         - Key: kubernetes.io/role/internal-elb
           Value: '1'
         - Key: Name
-          Value: '${EKSClusterName}-privateSubnet4'
+          Value: !Sub '${EKSClusterName}-privateSubnet4'
       VpcId: !Ref VPC
 
 
@@ -658,7 +658,7 @@ Resources:
         - Key: kubernetes.io/role/internal-elb
           Value: '1'
         - Key: Name
-          Value: '${EKSClusterName}-privateSubnet5'
+          Value: !Sub '${EKSClusterName}-privateSubnet5'
       VpcId: !Ref VPC
 
 
@@ -681,7 +681,7 @@ Resources:
         - Key: kubernetes.io/role/internal-elb
           Value: '1'
         - Key: Name
-          Value: '${EKSClusterName}-privateSubnet6'
+          Value: !Sub '${EKSClusterName}-privateSubnet6'
       VpcId: !Ref VPC
 
   SubnetPublicUSEAST1A:
@@ -704,7 +704,7 @@ Resources:
         - Key: kubernetes.io/role/elb
           Value: '1'
         - Key: Name
-          Value: '${EKSClusterName}-publicSubnet1'
+          Value: !Sub '${EKSClusterName}-publicSubnet1'
       VpcId: !Ref VPC
 
   SubnetPublicUSEAST1B:
@@ -727,7 +727,7 @@ Resources:
         - Key: kubernetes.io/role/elb
           Value: '1'
         - Key: Name
-          Value: '${EKSClusterName}-publicSubnet2'
+          Value: !Sub '${EKSClusterName}-publicSubnet2'
       VpcId: !Ref VPC
 
   SubnetPublicUSEAST1C:
@@ -750,7 +750,7 @@ Resources:
         - Key: kubernetes.io/role/elb
           Value: '1'
         - Key: Name
-          Value: '${EKSClusterName}-publicSubnet3'
+          Value: !Sub '${EKSClusterName}-publicSubnet3'
       VpcId: !Ref VPC
 
   SubnetPublicUSEAST1D:
@@ -773,7 +773,7 @@ Resources:
         - Key: kubernetes.io/role/elb
           Value: '1'
         - Key: Name
-          Value: '${EKSClusterName}-publicSubnet4'
+          Value: !Sub '${EKSClusterName}-publicSubnet4'
       VpcId: !Ref VPC
 
   SubnetPublicUSEAST1E:
@@ -796,7 +796,7 @@ Resources:
         - Key: kubernetes.io/role/elb
           Value: '1'
         - Key: Name
-          Value: '${EKSClusterName}-publicSubnet5'
+          Value: !Sub '${EKSClusterName}-publicSubnet5'
       VpcId: !Ref VPC
 
   SubnetPublicUSEAST1F:
@@ -819,7 +819,7 @@ Resources:
         - Key: kubernetes.io/role/elb
           Value: '1'
         - Key: Name
-          Value: '${EKSClusterName}-publicSubnet6'
+          Value: !Sub '${EKSClusterName}-publicSubnet6'
       VpcId: !Ref VPC
 
   VPC:
@@ -834,7 +834,7 @@ Resources:
       EnableDnsSupport: true
       Tags:
         - Key: Name
-          Value: '${EKSClusterName}-VPC'
+          Value: !Sub '${EKSClusterName}-VPC'
 
   VPCGatewayAttachment:
     DependsOn:

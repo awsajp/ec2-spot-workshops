@@ -1,0 +1,96 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+Description: 'This is CFN Template creates a EC2 Spot Fleet with Spot instances which run the DL Training Models'
+Mappings:
+  AWSRegionArch2AMI:
+    us-east-1:
+      DLAMIAMAZONLINUX2: ami-0b0b075706e19de29
+      DLAMIUBUNTU1604: ami-06306b7120b778175
+      DLBASEAMIUBUNTU1604: ami-0881ccbe7147fe70f
+      DLBASEAMIUBUNTU1804: ami-0e60fa461a16192c0
+
+Metadata:
+  Author:
+    Description: Jayaprakash Alawala <alawalajp@gmail.com>
+  License:
+    Description: 'Copyright [2020] [Jayaprakash Alawala]
+
+                  Licensed under the Apache License, Version 2.0 (the "License");
+                  you may not use this file except in compliance with the License.
+                  You may obtain a copy of the License at
+
+                    http://www.apache.org/licenses/LICENSE-2.0
+
+                  Unless required by applicable law or agreed to in writing, software
+                  distributed under the License is distributed on an "AS IS" BASIS,
+                  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+                  See the License for the specific language governing permissions and
+                  limitations under the License.'
+
+
+
+
+Parameters:
+  sourceCidr:
+    Default: 0.0.0.0/0
+    Description: Optional - CIDR/IP range for instance ssh/http access and load balancer http
+      access
+    Type: String
+
+  EKSCFNStackName:
+    Description: >-
+      Name of an active CloudFormation stack that contains the EKS Custer
+    Type: String
+    MinLength: 1
+    MaxLength: 255
+    AllowedPattern: '^[a-zA-Z][-a-zA-Z0-9]*$'
+    Default: Ec2SpotEKS2
+
+Resources:
+  EKSSpotFleetRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: "EKSSpotFleetRole"
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - spotfleet.amazonaws.com
+        Version: 2012-10-17
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetTaggingRole
+      Path: /
+
+  EKSSpotFleet:
+    Type: AWS::EC2::SpotFleet
+    Properties:
+      SpotFleetRequestConfigData:
+        AllocationStrategy: capacityOptimized
+        IamFleetRole:
+          Fn::GetAtt:
+            - EKSSpotFleetRole
+            - Arn
+        LaunchTemplateConfigs:
+          - LaunchTemplateSpecification:
+              LaunchTemplateId: !Ref !ImportValue
+                'Fn::Sub': '${EKSCFNStackName}-NodeGroupLaunchTemplate'
+              Version: '1'
+            Overrides:
+              - SubnetId: !ImportValue
+                  'Fn::Sub': '${EKSCFNStackName}-SubnetsPublic'
+        ReplaceUnhealthyInstances: true
+        TargetCapacity: 1
+        Type: maintain
+Outputs:
+  awsRegionId:
+    Description: The AWS Region ID your template was launched in
+    Value: !Ref AWS::Region
+
+  EKSSpotFleet:
+    Description: EKSSpotFleet
+    Value: !Ref EKSSpotFleet
+
+...

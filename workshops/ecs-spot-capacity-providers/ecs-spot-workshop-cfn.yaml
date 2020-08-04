@@ -450,6 +450,20 @@ Outputs:
   awsRegionId:
     Description: The AWS Region ID your template was launched in
     Value: !Ref AWS::Region
+    Export:
+      Name: !Sub "${AWS::StackName}-awsRegionId"
+
+
+
+
+  instanceRole:
+    Description: Instance Role
+    Value:
+      Fn::GetAtt:
+        - instanceRole
+        - Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-instanceRole"
 
   instanceProfile:
     Description: Instance profile ARN
@@ -457,6 +471,8 @@ Outputs:
       Fn::GetAtt:
         - instanceProfile
         - Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-instanceProfile"
 
   Cloud9instanceProfile:
     Description: Cloud9 Instance profile ARN
@@ -464,14 +480,20 @@ Outputs:
       Fn::GetAtt:
         - Cloud9instanceProfile
         - Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-Cloud9instanceProfile"
+
 
   instanceSecurityGroup:
     Description: Instance security group
     Value: !Ref instanceSecurityGroup
+    Export:
+      Name: !Sub "${AWS::StackName}-instanceSecurityGroup"
 
   loadBalancerSecurityGroup:
     Description: Load Balancer security group
     Value: !Ref loadBalancerSecurityGroup
+
 
   publicSubnet1:
     Description: Public subnet 1

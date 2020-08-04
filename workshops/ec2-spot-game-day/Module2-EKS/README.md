@@ -1,7 +1,20 @@
 ## EC2 Spot GameDay  Module2 - ec2-spot-gameday-module2-eks.yaml
 
-### Step1 :  Deploy the CFN styack ec2-spot-gameday-module2-eks.yaml in us-east-1
-
+### Step1 :  Deploy the CFN stack ec2-spot-gameday-module2-eks.yaml in us-east-1
+ The CFN stack creates the following resources
+ ##### VPC with 10 subnets (5 private subnets and 5 public subnets in us-east-1)
+ ##### EKS Cluster with all 10 subnets
+ ##### EC2 Launch Template with below labels and taints
+     ###### OnDemand Instances Labels: --node-labels=lifecycle=OnDemand,intent=control-apps
+     ###### Ec2Spot Instances Labels:  --node-labels=lifecycle=Ec2Spot,intent=apps
+     ###### Ec2Spot Instances Taints:  --node-labels=spotInstance=true:PreferNoSchedule     
+ ##### Node Groups for size large (2vCPU, 8GB) i.e. 1:4 ratio
+    ###### OnDemandNodeGroup1 with min=0, desired=1, max=10
+    ###### Ec2SpotNodeGroup1 with min=0, desired=1, max=10
+ ##### Node Groups for size xlarge (4vCPU, 16GB) i.e. 1:4 ratio
+    ###### OnDemandNodeGroup2 with min=0, desired=1, max=10
+    ###### Ec2SpotNodeGroup2  with min=0, desired=1, max=10
+    
 ### Step2 : Create a Cloud9 Environment
 install the following tools
 

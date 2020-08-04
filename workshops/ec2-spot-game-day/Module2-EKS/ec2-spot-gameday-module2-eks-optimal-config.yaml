@@ -76,7 +76,7 @@ Parameters:
   EKSClusterVersion:
     Type: String
     Description: "EKS Cluster Version"
-    Default: "1.16"
+    Default: "1.17"
 
 
   OnDemandBootstrapArguments:
@@ -297,7 +297,6 @@ Resources:
           - !Ref SubnetPrivateUSEAST1C
           - !Ref SubnetPrivateUSEAST1D
           - !Ref SubnetPrivateUSEAST1F
-
       RoleArn: !GetAtt ServiceRole.Arn
       Version: !Ref EKSClusterVersion
 
@@ -1490,6 +1489,9 @@ Resources:
       Path: /
 
   EKSSpotFleet:
+    DependsOn:
+      - NodeGroupLaunchTemplate
+      - EKSSpotFleetRole
     Type: AWS::EC2::SpotFleet
     Properties:
       SpotFleetRequestConfigData:

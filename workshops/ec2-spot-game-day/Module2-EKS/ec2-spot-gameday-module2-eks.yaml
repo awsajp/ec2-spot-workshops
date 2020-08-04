@@ -1406,6 +1406,9 @@ Resources:
       Path: /
 
   EKSSpotFleet:
+    DependsOn:
+      - NodeGroupLaunchTemplate
+      - EKSSpotFleetRole
     Type: AWS::EC2::SpotFleet
     Properties:
       SpotFleetRequestConfigData:

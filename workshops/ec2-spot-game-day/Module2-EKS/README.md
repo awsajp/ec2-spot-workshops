@@ -11,9 +11,14 @@
  ##### Node Groups for size large (2vCPU, 8GB) i.e. 1:4 ratio
     ###### OnDemandNodeGroup1 with min=0, desired=1, max=10
     ###### Ec2SpotNodeGroup1 with min=0, desired=1, max=10
+    ###### InstanceDiversification c3.large,c4.large,c5.large,c5a.large,c5d.large,c5n.large,m3.large,m4.large,m5.large,m5a.large,m5d.large,m5n.large,r3.large,r4.large,r5.large,r5a.large,r5n.large,t2.large,t3.large,t3a.large
+    ###### AZDiversification SubnetPrivateUSEAST1A,SubnetPrivateUSEAST1B,SubnetPrivateUSEAST1C,SubnetPrivateUSEAST1D,SubnetPrivateUSEAST1E
  ##### Node Groups for size xlarge (4vCPU, 16GB) i.e. 1:4 ratio
     ###### OnDemandNodeGroup2 with min=0, desired=1, max=10
     ###### Ec2SpotNodeGroup2  with min=0, desired=1, max=10
+    ###### InstanceDiversification c3.xlarge,c4.xlarge,c5.xlarge,c5a.xlarge,c5d.xlarge,c5n.xlarge,m3.xlarge,m4.xlarge,m5.xlarge,m5a.xlarge,m5d.xlarge,m5n.xlarge,r3.xlarge,r4.xlarge,r5.xlarge,r5a.xlarge,r5n.xlarge,t2.xlarge,t3.xlarge,t3a.xlarge
+    ###### AZDiversification SubnetPrivateUSEAST1A,SubnetPrivateUSEAST1B,SubnetPrivateUSEAST1C,SubnetPrivateUSEAST1D,SubnetPrivateUSEAST1E    
+##### Ec2 Spot Fleet with 1 instance to simulate the interruption
     
 ### Step2 : Create a Cloud9 Environment
 install the following tools

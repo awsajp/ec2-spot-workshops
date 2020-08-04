@@ -1,14 +1,6 @@
 ---
 AWSTemplateFormatVersion: 2010-09-09
 Description: 'This is CFN Template creates a EC2 Spot Fleet with Spot instances which run the DL Training Models'
-Mappings:
-  AWSRegionArch2AMI:
-    us-east-1:
-      DLAMIAMAZONLINUX2: ami-0b0b075706e19de29
-      DLAMIUBUNTU1604: ami-06306b7120b778175
-      DLBASEAMIUBUNTU1604: ami-0881ccbe7147fe70f
-      DLBASEAMIUBUNTU1804: ami-0e60fa461a16192c0
-
 Metadata:
   Author:
     Description: Jayaprakash Alawala <alawalajp@gmail.com>
@@ -26,10 +18,6 @@ Metadata:
                   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
                   See the License for the specific language governing permissions and
                   limitations under the License.'
-
-
-
-
 Parameters:
   sourceCidr:
     Default: 0.0.0.0/0
@@ -50,7 +38,7 @@ Resources:
   EKSSpotFleetRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: "EKSSpotFleetRole"
+      RoleName: !Sub "${AWS::StackName}-EKSSpotFleetRole"
       AssumeRolePolicyDocument:
         Statement:
           - Action:
@@ -75,12 +63,12 @@ Resources:
             - Arn
         LaunchTemplateConfigs:
           - LaunchTemplateSpecification:
-              LaunchTemplateId: !Ref !ImportValue
-                'Fn::Sub': '${EKSCFNStackName}-NodeGroupLaunchTemplate'
+              LaunchTemplateId: !ImportValue
+                'Fn::Sub': '${EKSCFNStackName}::NodeGroupLaunchTemplate'
               Version: '1'
             Overrides:
               - SubnetId: !ImportValue
-                  'Fn::Sub': '${EKSCFNStackName}-SubnetsPublic'
+                  'Fn::Sub': '${EKSCFNStackName}::SubnetsPublic'
         ReplaceUnhealthyInstances: true
         TargetCapacity: 1
         Type: maintain

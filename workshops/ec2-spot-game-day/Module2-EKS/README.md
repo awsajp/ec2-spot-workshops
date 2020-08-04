@@ -68,6 +68,7 @@ curl -o aws-auth-cm.yaml https://amazon-eks.s3.us-west-2.amazonaws.com/cloudform
 
 get the NodeInstanceRole ARN from IAM and update it in the aws-auth-cm.yaml
 
+
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -84,3 +85,106 @@ data:
         
      
  kubectl apply -f aws-auth-cm.yaml
+ 
+ ### Step5 : Install helm, metric server and kube-opos-view tool
+ 
+ curl -sSL https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+ 
+ helm version --short
+ 
+ 
+ helm repo add stable https://kubernetes-charts.storage.googleapis.com/
+ helm repo update
+ 
+ helm search repo stable
+ 
+ helm completion bash >> ~/.bash_completion
+ . /etc/profile.d/bash_completion.sh
+ . ~/.bash_completion
+ source <(helm completion bash)
+ 
+ 
+ kubectl create namespace metrics
+ helm install metrics-server \
+     stable/metrics-server \
+     --version 2.10.0 \
+     --namespace metrics
+
+kubectl get apiservice v1beta1.metrics.k8s.io -o yaml
+
+
+helm install kube-ops-view \
+stable/kube-ops-view \
+--set service.type=LoadBalancer \
+--set nodeSelector.intent=control-apps \
+--set rbac.create=True
+
+helm list
+
+kubectl get svc kube-ops-view | tail -n 1 | awk '{ print "Kube-ops-view URL = http://"$4 }'
+
+
+helm repo add eks https://aws.github.io/eks-charts
+helm install aws-node-termination-handler \
+             --namespace kube-system \
+             eks/aws-node-termination-handler
+
+
+kubectl get daemonsets --all-namespaces
+
+
+### Step5 : How to simulate spot interruption and test your apps against the interruptions
+
+##### Deploy the CFN stack ec2-spot-gameday-module2-eks-spotfleet.yaml. Enter the EKS Stack name in parameters section
+
+##### Check the if the spot node from the spot fleet joins the EKS cluster. Ex: ip-10-0-5-15.ec2.internal below
+
+![Alt text](docs/2.png?raw=true "Diagram")
+
+##### Check the if node termination handler is running on this spot node from the spot fleet
+
+![Alt text](docs/1.png?raw=true "Diagram")
+
+##### Label the spot node from the spot fleet, uniquley to deploy our application ONLY on this node
+
+jp:~/environment $ kubectl label nodes ip-10-0-5-15.ec2.internal   spotsa=jp
+
+
+node/ip-10-0-5-15.ec2.internal labeled
+
+##### Check if this spot node has the right labels and taints applied 
+![Alt text](docs/5.png?raw=true "Diagram")
+
+##### Ensure that the application uses node selector to use this label 
+![Alt text](docs/12.png?raw=true "Diagram")
+
+##### Deploy the sample app nginx.yaml 
+jp:~/environment $ kubectl apply -f nginx.yaml
+
+ 
+deployment.apps/nginx-no-split created
+
+##### Check the sample app is deployed only this spot node
+![Alt text](docs/6.png?raw=true "Diagram")
+
+
+##### Open a new terminal and check the nodes status
+![Alt text](docs/2.png?raw=true "Diagram")
+
+##### Get the node termination handler daemonset pod running on this spot node
+![Alt text](docs/1.png?raw=true "Diagram")
+
+##### Open a new terminal and keep watching the logs from node termination handler on this spot node
+![Alt text](docs/3.png?raw=true "Diagram")
+
+##### Change the target capacity from 1 to 0 on the spot fleet in AWS console
+![Alt text](docs/7.png?raw=true "Diagram")
+
+##### Check the node status changed from Ready to Ready,ScheduledDisabled
+![Alt text](docs/8.png?raw=true "Diagram")
+
+##### Check the node termination handler logs on spot node for spot interruptions 
+![Alt text](docs/10.png?raw=true "Diagram")
+
+##### See that pods is now in the pendig state as it is evicted due to spot interruptions 
+![Alt text](docs/11.png?raw=true "Diagram")

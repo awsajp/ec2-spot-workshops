@@ -1,4 +1,7 @@
-## EC2 Spot GameDay  Module2 - ec2-spot-gameday-module2-eks.yaml
+### Step0 :  Select the right CFN
+#### For EC2 Spot GameDay  Module2 use ec2-spot-gameday-module2-eks.yaml
+#### For Dev/Test use ec2-spot-gameday-module2-eks-optimal-config.yaml
+
 
 ### Step1 :  Deploy the CFN stack ec2-spot-gameday-module2-eks.yaml in us-east-1
  The CFN stack creates the following resources

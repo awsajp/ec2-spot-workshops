@@ -69,6 +69,7 @@ Parameters:
     MinValue: '10'
     MaxValue: '10000'
     ConstraintDescription: must be between 5 and 10000
+
   WriteCapacityUnits:
     Description: Provisioned write throughput
     Type: Number
@@ -157,23 +158,6 @@ Resources:
           Value: !Sub '${AWS::StackName}-publicSubnet2'
       VpcId: !Ref vpc
 
-  publicSubnet3:
-    Type: AWS::EC2::Subnet
-    DependsOn: attachGateway
-    Properties:
-      AvailabilityZone:
-        Fn::Select:
-          - 2
-          - Fn::GetAZs:
-              Ref: AWS::Region
-      CidrBlock: 10.0.2.0/24
-      MapPublicIpOnLaunch: true
-      Tags:
-        - Key: Name
-          Value: !Sub '${AWS::StackName}-publicSubnet3'
-      VpcId: !Ref vpc
-
-
   privateSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
@@ -202,21 +186,6 @@ Resources:
         - Key: Name
           Value: !Sub '${AWS::StackName}-privateSubnet2'
       VpcId: !Ref vpc
-
-  privateSubnet3:
-    Type: AWS::EC2::Subnet
-    Properties:
-      AvailabilityZone:
-        Fn::Select:
-          - 2
-          - Fn::GetAZs:
-              Ref: AWS::Region
-      CidrBlock: 10.0.5.0/24
-      Tags:
-        - Key: Name
-          Value: !Sub '${AWS::StackName}-privateSubnet3'
-      VpcId: !Ref vpc
-
 
   publicRouteTable:
     Type: AWS::EC2::RouteTable
@@ -258,16 +227,6 @@ Resources:
       RouteTableId: !Ref publicRouteTable
       SubnetId: !Ref publicSubnet2
 
-  publicSubnet3RouteTableAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    DependsOn:
-      - publicRouteTable
-      - publicSubnet3
-      - attachGateway
-    Properties:
-      RouteTableId: !Ref publicRouteTable
-      SubnetId: !Ref publicSubnet3
-
 
   privateSubnet1RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
@@ -287,14 +246,6 @@ Resources:
       RouteTableId: !Ref RouteTablePrivate
       SubnetId: !Ref privateSubnet2
 
-  privateSubnet3RouteTableAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    DependsOn:
-      - RouteTablePrivate
-      - privateSubnet3
-    Properties:
-      RouteTableId: !Ref RouteTablePrivate
-      SubnetId: !Ref privateSubnet3
 
 
   EIPNATGateway:
@@ -354,7 +305,6 @@ Resources:
       - loadBalancerSecurityGroup
       - publicSubnet1
       - publicSubnet2
-      - publicSubnet3
     Properties:
       Name: !Sub '${AWS::StackName}-ALB'
       Scheme: internet-facing
@@ -363,7 +313,6 @@ Resources:
       Subnets:
         - !Ref publicSubnet1
         - !Ref publicSubnet2
-        - !Ref publicSubnet3
 
   TargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
@@ -709,8 +658,8 @@ Resources:
           ADDITIONAL_VOLUM1_SIZE: !Ref AdditionalEBSVolume1Size
           ADDITIONAL_VOLUM2_SIZE: !Ref AdditionalEBSVolume2Size
           INSTANCE_TYPES_LIST: !Ref InstanceTypes
-          PUBLIC_SUBNET_IDs_LIST: !Join [",", [!Ref publicSubnet1, !Ref publicSubnet2, !Ref publicSubnet3]]
-          PRIVATE_SUBNET_IDs_LIST: !Join [",", [!Ref privateSubnet1, !Ref privateSubnet2, !Ref privateSubnet3]]
+          PUBLIC_SUBNET_IDs_LIST: !Join [",", [!Ref publicSubnet1, !Ref publicSubnet2]]
+          PRIVATE_SUBNET_IDs_LIST: !Join [",", [!Ref privateSubnet1, !Ref privateSubnet2]]
           ONDEMANDTARGETCAPACITY: !Ref OnDemandTargetCapacity
           SPOTTARGETCAPACITY: !Ref SpotTargetCapacity
           TOTALTARGETCAPACITY: !Ref TotalTargetCapacity
@@ -808,9 +757,6 @@ Outputs:
     Description: Public subnet 2
     Value: !Ref publicSubnet2
 
-  publicSubnet3:
-    Description: Public subnet 3
-    Value: !Ref publicSubnet3
 
   privateSubnet1:
     Description: Private subnet 1
@@ -820,9 +766,6 @@ Outputs:
     Description: Private subnet 2
     Value: !Ref privateSubnet2
 
-  privateSubnet3:
-    Description: Private subnet 3
-    Value: !Ref privateSubnet3
 
   VPCPublicSubnets:
     Description:  The list of public subnets in the VPC

@@ -1,40 +1,223 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: >-
-  EKS cluster (dedicated VPC: true, dedicated IAM: true)
+Description: "EKS cluster (dedicated VPC: true, dedicated IAM: true)"
 
+Metadata:
+  Author:
+    Description: Jayaprakash Alawala <jalawala@amazon.com>
+  License:
+    Description: 'Copyright 2020 Amazon.com, Inc. and its affiliates. All Rights Reserved.
+
+      Licensed under the Amazon Software License (the "License"). You may not use this file
+      except in compliance with the License. A copy of the License is located at
+
+      http://aws.amazon.com/asl/
+
+      or in the "license" file accompanying this file. This file is distributed on an "AS IS"
+      BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+      License for the specific language governing permissions and limitations under the License.'
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      -
+        Label:
+          default: "EKS Configuration"
+        Parameters:
+          - OnDemandBootstrapArguments
+          - Ec2SpotNodeLabels
+          - Ec2SpotNodeTaints
+          - EKSAMI
+          - EKSClusterName
+          - EKSClusterVersion
+      -
+        Label:
+          default: "Auto Scaling Configuration"
+        Parameters:
+          - OnDemandNodeGroup1MinSize
+          - OnDemandNodeGroup1DesiredSize
+          - OnDemandNodeGroup1MaxSize
+          - OnDemandNodeGroup1BaseCapacity
+          - OnDemandNodeGroup1PercentageAboveBaseCapacity
+          - OnDemandNodeGroup2MinSize
+          - OnDemandNodeGroup2DesiredSize
+          - OnDemandNodeGroup2MaxSize
+          - OnDemandNodeGroup2BaseCapacity
+          - OnDemandNodeGroup2PercentageAboveBaseCapacity
+          - Ec2SpotNodeGroup1MinSize
+          - Ec2SpotNodeGroup1DesiredSize
+          - Ec2SpotNodeGroup1MaxSize
+          - Ec2SpotNodeGroup1BaseCapacity
+          - Ec2SpotNodeGroup1PercentageAboveBaseCapacity
+          - Ec2SpotNodeGroup2MinSize
+          - Ec2SpotNodeGroup2DesiredSize
+          - Ec2SpotNodeGroup2MaxSize
+          - Ec2SpotNodeGroup2BaseCapacity
+          - Ec2SpotNodeGroup2PercentageAboveBaseCapacity
+          - NodeGroupType1InstanceTypesOverride
+          - NodeGroupType2InstanceTypesOverride
+          - SpotInstancePools
+      -
+        Label:
+          default: "Spot Fleet Configuration"
+        Parameters:
+          - SpotFleetTargetCapacity
 Parameters:
-  BootstrapArguments:
+
+  EKSAMI:
+    Description: "EKS AMI ID"
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/eks/optimized-ami/1.16/amazon-linux-2/recommended/image_id
+
+
+  EKSClusterName:
     Type: String
-    Default: "--kubelet-extra-args --node-labels=alpha.eksctl.io/cluster-name=Ec2SpotEKS,alpha.eksctl.io/nodegroup-name=Ec2SpotEKS,lifecycle=OnDemand,intent=control-apps"
+    Description: "EKS Cluster Name"
+    Default: "Ec2SpotEKS"
+
+  EKSClusterVersion:
+    Type: String
+    Description: "EKS Cluster Version"
+    Default: "1.16"
+
+
+  OnDemandBootstrapArguments:
+    Type: String
+    Default: "--kubelet-extra-args --node-labels=lifecycle=OnDemand,intent=control-apps"
+    Description: "List of labels for Ec2 OnDemand nodes"
+
+  Ec2SpotNodeLabels:
+    Type: String
+    Default: ' --node-labels="lifecycle=Ec2Spot,intent=apps" '
+    Description: "List of Taints for Ec2 Spot nodes"
+
+  Ec2SpotNodeTaints:
+    Type: String
+    Default: ' --register-with-taints=\"spotInstance=true:PreferNoSchedule\" '
     Description: "Arguments to pass to the bootstrap script. See files/bootstrap.sh in https://github.com/awslabs/amazon-eks-ami"
 
-  NodeAutoScalingGroupMinSize:
+  OnDemandNodeGroup1MinSize:
     Type: Number
-    Description: Minimum size of Node Group ASG.
+    Description: "Minimum size of Node Group ASG"
     Default: 0
 
-  NodeAutoScalingGroupDesiredSize:
+  OnDemandNodeGroup1DesiredSize:
     Type: Number
-    Description: Desired size of Node Group ASG.
-    Default: 2
+    Description: "Desired size of Node Group ASG"
+    Default: 1
 
-  NodeAutoScalingGroupMaxSize:
+  OnDemandNodeGroup1MaxSize:
     Type: Number
-    Description: Maximum size of Node Group ASG.
+    Description: "Maximum size of Node Group ASG"
     Default: 10
 
-  OnDemandBaseCapacity:
+  OnDemandNodeGroup1BaseCapacity:
     Type: Number
     Description: "on-demand base capacity"
-    Default: 2
-  OnDemandPercentageAboveBaseCapacity:
+    Default: 0
+
+  OnDemandNodeGroup1PercentageAboveBaseCapacity:
     Type: Number
     Description: "on-demand percentage above base capacity(0-100)"
     Default: 100
-  InstanceTypesOverride:
+
+  OnDemandNodeGroup2MinSize:
+    Type: Number
+    Description: "Minimum size of Node Group ASG"
+    Default: 0
+
+  OnDemandNodeGroup2DesiredSize:
+    Type: Number
+    Description: "Desired size of Node Group ASG"
+    Default: 1
+
+  OnDemandNodeGroup2MaxSize:
+    Type: Number
+    Description: "Maximum size of Node Group ASG"
+    Default: 10
+
+  OnDemandNodeGroup2BaseCapacity:
+    Type: Number
+    Description: "on-demand base capacity"
+    Default: 0
+
+  OnDemandNodeGroup2PercentageAboveBaseCapacity:
+    Type: Number
+    Description: "on-demand percentage above base capacity"
+    Default: 100
+
+
+  Ec2SpotNodeGroup1MinSize:
+    Type: Number
+    Description: "Minimum size of Node Group ASG"
+    Default: 0
+
+  Ec2SpotNodeGroup1DesiredSize:
+    Type: Number
+    Description: "Desired size of Node Group ASG"
+    Default: 1
+
+  Ec2SpotNodeGroup1MaxSize:
+    Type: Number
+    Description: "Maximum size of Node Group ASG"
+    Default: 10
+
+  Ec2SpotNodeGroup1BaseCapacity:
+    Type: Number
+    Description: "on-demand base capacity"
+    Default: 0
+
+  Ec2SpotNodeGroup1PercentageAboveBaseCapacity:
+    Type: Number
+    Description: "on-demand percentage above base capacity(0-100)"
+    Default: 0
+
+  Ec2SpotNodeGroup2MinSize:
+    Type: Number
+    Description: "Minimum size of Node Group ASG"
+    Default: 0
+
+  Ec2SpotNodeGroup2DesiredSize:
+    Type: Number
+    Description: "Desired size of Node Group ASG"
+    Default: 1
+
+  Ec2SpotNodeGroup2MaxSize:
+    Type: Number
+    Description: "Maximum size of Node Group ASG"
+    Default: 10
+
+  Ec2SpotNodeGroup2BaseCapacity:
+    Type: Number
+    Description: "on-demand base capacity"
+    Default: 0
+
+  Ec2SpotNodeGroup2PercentageAboveBaseCapacity:
+    Type: Number
+    Description: "on-demand percentage above base capacity(0-100)"
+    Default: 0
+
+  SpotInstancePools:
+    Type: Number
+    Description: "spot instance pools(1-20)"
+    Default: 1
+
+  NodeGroupLaunchTemplateBaseInstanceType:
+    Type: String
+    Description: "NodeGroup LaunchTemplate BaseInstanceType"
+    Default: "t3.large"
+
+  NodeGroupType1InstanceTypesOverride:
     Type: String
     Description: "multiple spot instances to override(seperated by comma)"
-    Default: "t3.large,m5.large"
+    Default: "t3.large"
+
+  NodeGroupType2InstanceTypesOverride:
+    Type: String
+    Description: "multiple spot instances to override(seperated by comma)"
+    Default: "t3.xlarge"
+
+  SpotFleetTargetCapacity:
+    Type: Number
+    Description: "SpotFleetTargetCapacity"
+    Default: 1
 
 
 Mappings:
@@ -88,10 +271,10 @@ Resources:
       - VPC
     Type: 'AWS::EC2::SecurityGroup'
     Properties:
-      GroupDescription: Communication between all nodes in the cluster
+      GroupDescription: "Communication between all nodes in the cluster"
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}/ClusterSharedNodeSecurityGroup'
+          Value: !Sub '${EKSClusterName}/ClusterSharedNodeSecurityGroup'
       VpcId: !Ref VPC
 
   ControlPlane:
@@ -99,7 +282,7 @@ Resources:
       - ServiceRole
     Type: 'AWS::EKS::Cluster'
     Properties:
-      Name: Ec2SpotEKS
+      Name: !Ref EKSClusterName
       ResourcesVpcConfig:
         SecurityGroupIds:
           - !Ref ControlPlaneSecurityGroup
@@ -116,17 +299,17 @@ Resources:
           - !Ref SubnetPrivateUSEAST1F
 
       RoleArn: !GetAtt ServiceRole.Arn
-      Version: '1.16'
+      Version: !Ref EKSClusterVersion
 
   ControlPlaneSecurityGroup:
     DependsOn:
       - VPC
     Type: 'AWS::EC2::SecurityGroup'
     Properties:
-      GroupDescription: Communication between the control plane and worker nodegroups
+      GroupDescription: "Communication between the control plane and worker nodegroups"
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}/ControlPlaneSecurityGroup'
+          Value: !Sub '${EKSClusterName}/ControlPlaneSecurityGroup'
       VpcId: !Ref VPC
 
   IngressDefaultClusterToNodeSG:
@@ -134,9 +317,7 @@ Resources:
       - ClusterSharedNodeSecurityGroup
     Type: 'AWS::EC2::SecurityGroupIngress'
     Properties:
-      Description: >-
-        Allow managed and unmanaged nodes to communicate with each other (all
-        ports)
+      Description: "Allow managed and unmanaged nodes to communicate with each other"
       FromPort: 0
       GroupId: !Ref ClusterSharedNodeSecurityGroup
       IpProtocol: '-1'
@@ -148,7 +329,7 @@ Resources:
       - ClusterSharedNodeSecurityGroup
     Type: 'AWS::EC2::SecurityGroupIngress'
     Properties:
-      Description: Allow nodes to communicate with each other (all ports)
+      Description: "Allow nodes to communicate with each other (all ports)"
       FromPort: 0
       GroupId: !Ref ClusterSharedNodeSecurityGroup
       IpProtocol: '-1'
@@ -160,7 +341,7 @@ Resources:
       - ClusterSharedNodeSecurityGroup
     Type: 'AWS::EC2::SecurityGroupIngress'
     Properties:
-      Description: Allow unmanaged nodes to communicate with control plane (all ports)
+      Description: "Allow unmanaged nodes to communicate with control plane (all ports)"
       FromPort: 0
       GroupId: !GetAtt ControlPlane.ClusterSecurityGroupId
       IpProtocol: '-1'
@@ -172,7 +353,7 @@ Resources:
     Properties:
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}/InternetGateway'
+          Value: !Sub '${EKSClusterName}/InternetGateway'
 
   NATGateway:
     DependsOn:
@@ -183,7 +364,7 @@ Resources:
       SubnetId: !Ref SubnetPublicUSEAST1A
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}/NATGateway'
+          Value: !Sub '${EKSClusterName}/NATGateway'
 
   NATIP:
     DependsOn:
@@ -199,6 +380,7 @@ Resources:
       DestinationCidrBlock: 0.0.0.0/0
       NatGatewayId: !Ref NATGateway
       RouteTableId: !Ref PrivateRouteTable
+
   PolicyCloudWatchMetrics:
     Type: 'AWS::IAM::Policy'
     Properties:
@@ -209,9 +391,10 @@ Resources:
             Effect: Allow
             Resource: '*'
         Version: 2012-10-17
-      PolicyName: !Sub '${AWS::StackName}-PolicyCloudWatchMetrics'
+      PolicyName: !Sub '${EKSClusterName}-PolicyCloudWatchMetrics'
       Roles:
         - !Ref ServiceRole
+
   PolicyNLB:
     Type: 'AWS::IAM::Policy'
     Properties:
@@ -224,7 +407,7 @@ Resources:
             Effect: Allow
             Resource: '*'
         Version: 2012-10-17
-      PolicyName: !Sub '${AWS::StackName}-PolicyNLB'
+      PolicyName: !Sub '${EKSClusterName}-PolicyNLB'
       Roles:
         - !Ref ServiceRole
 
@@ -235,7 +418,7 @@ Resources:
     Properties:
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}/PrivateRouteTable'
+          Value: !Sub '${EKSClusterName}/PrivateRouteTable'
       VpcId: !Ref VPC
 
   PublicRouteTable:
@@ -245,7 +428,7 @@ Resources:
     Properties:
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}/PublicRouteTable'
+          Value: !Sub '${EKSClusterName}/PublicRouteTable'
       VpcId: !Ref VPC
 
   PublicSubnetRoute:
@@ -362,7 +545,7 @@ Resources:
   ServiceRole:
     Type: 'AWS::IAM::Role'
     Properties:
-      RoleName: "Ec2SpotEKS-ServiceRole"
+      RoleName:  !Sub '${EKSClusterName}-ServiceRole'
       AssumeRolePolicyDocument:
         Statement:
           - Action:
@@ -401,7 +584,7 @@ Resources:
         - Key: kubernetes.io/role/internal-elb
           Value: '1'
         - Key: Name
-          Value: 'Ec2SpotEKS - private subnet 1'
+          Value: !Sub '${EKSClusterName}-privateSubnet1'
       VpcId: !Ref VPC
 
   SubnetPrivateUSEAST1B:
@@ -423,7 +606,7 @@ Resources:
         - Key: kubernetes.io/role/internal-elb
           Value: '1'
         - Key: Name
-          Value: 'Ec2SpotEKS - private subnet 2'
+          Value: !Sub '${EKSClusterName}-privateSubnet2'
       VpcId: !Ref VPC
 
   SubnetPrivateUSEAST1C:
@@ -445,7 +628,7 @@ Resources:
         - Key: kubernetes.io/role/internal-elb
           Value: '1'
         - Key: Name
-          Value: 'Ec2SpotEKS - private subnet 3'
+          Value: !Sub '${EKSClusterName}-privateSubnet3'
       VpcId: !Ref VPC
 
 
@@ -468,7 +651,7 @@ Resources:
         - Key: kubernetes.io/role/internal-elb
           Value: '1'
         - Key: Name
-          Value: 'Ec2SpotEKS - private subnet 4'
+          Value: !Sub '${EKSClusterName}-privateSubnet4'
       VpcId: !Ref VPC
 
 
@@ -491,7 +674,7 @@ Resources:
         - Key: kubernetes.io/role/internal-elb
           Value: '1'
         - Key: Name
-          Value: 'Ec2SpotEKS - private subnet 5'
+          Value: !Sub '${EKSClusterName}-privateSubnet5'
       VpcId: !Ref VPC
 
 
@@ -514,7 +697,7 @@ Resources:
         - Key: kubernetes.io/role/internal-elb
           Value: '1'
         - Key: Name
-          Value: 'Ec2SpotEKS - private subnet 6'
+          Value: !Sub '${EKSClusterName}-privateSubnet6'
       VpcId: !Ref VPC
 
   SubnetPublicUSEAST1A:
@@ -537,7 +720,7 @@ Resources:
         - Key: kubernetes.io/role/elb
           Value: '1'
         - Key: Name
-          Value: 'Ec2SpotEKS - public subnet 1'
+          Value: !Sub '${EKSClusterName}-publicSubnet1'
       VpcId: !Ref VPC
 
   SubnetPublicUSEAST1B:
@@ -560,7 +743,7 @@ Resources:
         - Key: kubernetes.io/role/elb
           Value: '1'
         - Key: Name
-          Value: 'Ec2SpotEKS - public subnet 2'
+          Value: !Sub '${EKSClusterName}-publicSubnet2'
       VpcId: !Ref VPC
 
   SubnetPublicUSEAST1C:
@@ -583,7 +766,7 @@ Resources:
         - Key: kubernetes.io/role/elb
           Value: '1'
         - Key: Name
-          Value: 'Ec2SpotEKS - public subnet 3'
+          Value: !Sub '${EKSClusterName}-publicSubnet3'
       VpcId: !Ref VPC
 
   SubnetPublicUSEAST1D:
@@ -606,7 +789,7 @@ Resources:
         - Key: kubernetes.io/role/elb
           Value: '1'
         - Key: Name
-          Value: 'Ec2SpotEKS - public subnet 4'
+          Value: !Sub '${EKSClusterName}-publicSubnet4'
       VpcId: !Ref VPC
 
   SubnetPublicUSEAST1E:
@@ -629,7 +812,7 @@ Resources:
         - Key: kubernetes.io/role/elb
           Value: '1'
         - Key: Name
-          Value: 'Ec2SpotEKS - public subnet 5'
+          Value: !Sub '${EKSClusterName}-publicSubnet5'
       VpcId: !Ref VPC
 
   SubnetPublicUSEAST1F:
@@ -652,7 +835,7 @@ Resources:
         - Key: kubernetes.io/role/elb
           Value: '1'
         - Key: Name
-          Value: 'Ec2SpotEKS - public subnet 6'
+          Value: !Sub '${EKSClusterName}-publicSubnet6'
       VpcId: !Ref VPC
 
   VPC:
@@ -667,8 +850,8 @@ Resources:
       EnableDnsSupport: true
       Tags:
         - Key: Name
-          Value: Ec2SpotEKS
-          
+          Value: !Sub '${EKSClusterName}-VPC'
+
   VPCGatewayAttachment:
     DependsOn:
       - VPC
@@ -686,9 +869,7 @@ Resources:
       - SG
     Type: 'AWS::EC2::SecurityGroupEgress'
     Properties:
-      Description: >-
-        Allow control plane to communicate with worker nodes in group
-        Ec2SpotEKS (kubelet and workload TCP ports)
+      Description: "Allow control plane to communicate with worker nodes in node group"
       DestinationSecurityGroupId: !Ref SG
       FromPort: 1025
       GroupId: !Ref ControlPlaneSecurityGroup
@@ -701,10 +882,7 @@ Resources:
       - SG
     Type: 'AWS::EC2::SecurityGroupEgress'
     Properties:
-      Description: >-
-        Allow control plane to communicate with worker nodes in group
-        Ec2SpotEKS (workloads using HTTPS port, commonly used with extension
-        API servers)
+      Description:  "Allow control plane to communicate with worker nodes in node group"
       DestinationSecurityGroupId: !Ref SG
       FromPort: 443
       GroupId: !Ref ControlPlaneSecurityGroup
@@ -717,45 +895,40 @@ Resources:
       - SG
     Type: 'AWS::EC2::SecurityGroupIngress'
     Properties:
-      Description: >-
-        Allow worker nodes in group Ec2SpotEKS to communicate with control
-        plane (kubelet and workload TCP ports)
+      Description: "Allow worker nodes in node group to communicate with control plane"
       FromPort: 1025
       GroupId: !Ref SG
       IpProtocol: tcp
       SourceSecurityGroupId: !Ref ControlPlaneSecurityGroup
       ToPort: 65535
+
   IngressInterClusterAPI:
     DependsOn:
       - ControlPlaneSecurityGroup
       - SG
     Type: 'AWS::EC2::SecurityGroupIngress'
     Properties:
-      Description: >-
-        Allow worker nodes in group Ec2SpotEKS to communicate with control
-        plane (workloads using HTTPS port, commonly used with extension API
-        servers)
+      Description: "Allow worker nodes in node group to communicate with control plane"
       FromPort: 443
       GroupId: !Ref SG
       IpProtocol: tcp
       SourceSecurityGroupId: !Ref ControlPlaneSecurityGroup
       ToPort: 443
+
   IngressInterClusterCP:
     DependsOn:
       - ControlPlaneSecurityGroup
       - SG
     Type: 'AWS::EC2::SecurityGroupIngress'
     Properties:
-      Description: >-
-        Allow control plane to receive API requests from worker nodes in group
-        Ec2SpotEKS
+      Description: "Allow control plane to receive API requests from worker nodes in node group"
       FromPort: 443
       GroupId: !Ref ControlPlaneSecurityGroup
       IpProtocol: tcp
       SourceSecurityGroupId: !Ref SG
       ToPort: 443
 
-  NodeGroup:
+  OnDemandNodeGroup1:
     DependsOn:
       - NodeGroupLaunchTemplate
       - ControlPlane
@@ -766,43 +939,40 @@ Resources:
       - SubnetPublicUSEAST1F
     Type: 'AWS::AutoScaling::AutoScalingGroup'
     Properties:
-      AutoScalingGroupName: "Ec2SpotEKS"
-      DesiredCapacity: !Ref NodeAutoScalingGroupDesiredSize
+      AutoScalingGroupName: !Sub '${EKSClusterName}-ODNodegroup1'
+      DesiredCapacity: !Ref OnDemandNodeGroup1DesiredSize
       MixedInstancesPolicy:
         InstancesDistribution:
           OnDemandAllocationStrategy: prioritized
-          OnDemandBaseCapacity: !Ref OnDemandBaseCapacity
-          OnDemandPercentageAboveBaseCapacity: !Ref OnDemandPercentageAboveBaseCapacity
-          SpotAllocationStrategy: capacity-optimized
+          OnDemandBaseCapacity: !Ref OnDemandNodeGroup1BaseCapacity
+          OnDemandPercentageAboveBaseCapacity: !Ref OnDemandNodeGroup1PercentageAboveBaseCapacity
         LaunchTemplate:
           LaunchTemplateSpecification:
             LaunchTemplateId: !Ref NodeGroupLaunchTemplate
-            # LaunchTemplateName: String
             Version: !GetAtt NodeGroupLaunchTemplate.LatestVersionNumber
           Overrides:
-            - InstanceType: !Select [0, !Split [ ",", !Ref InstanceTypesOverride ] ]
-            - InstanceType: !Select [1, !Split [ ",", !Ref InstanceTypesOverride ] ]
-      MinSize: !Ref NodeAutoScalingGroupMinSize
-      MaxSize: !Ref NodeAutoScalingGroupMaxSize
+            - InstanceType: !Select [0, !Split [ ",", !Ref NodeGroupType1InstanceTypesOverride ] ]
+      MinSize: !Ref OnDemandNodeGroup1MinSize
+      MaxSize: !Ref OnDemandNodeGroup1MaxSize
       Tags:
         - Key: Name
           PropagateAtLaunch: 'true'
-          Value: Ec2SpotEKS
-        - Key: kubernetes.io/cluster/Ec2SpotEKS
+          Value: !Sub '${EKSClusterName}-ODNodegroup1'
+        - Key: !Sub 'kubernetes.io/cluster/${EKSClusterName}'
           PropagateAtLaunch: 'true'
           Value: owned
         - Key: k8s.io/cluster-autoscaler/enabled
           PropagateAtLaunch: 'true'
           Value: 'true'
-        - Key: k8s.io/cluster-autoscaler/Ec2SpotEKS
+        - Key: !Sub 'k8s.io/cluster-autoscaler/${EKSClusterName}'
           PropagateAtLaunch: 'true'
           Value: owned
         - Key: alpha.eksctl.io/cluster-name
           PropagateAtLaunch: 'true'
-          Value: Ec2SpotEKS
+          Value: !Sub '${EKSClusterName}'
         - Key: alpha.eksctl.io/nodegroup-name
           PropagateAtLaunch: 'true'
-          Value: Ec2SpotEKS
+          Value: !Sub '${EKSClusterName}-ODNodegroup1'
         - Key: alpha.eksctl.io/nodegroup-type
           PropagateAtLaunch: 'true'
           Value: unmanaged
@@ -811,16 +981,208 @@ Resources:
           Value: NodeGroup
         - Key: eksctl.cluster.k8s.io/v1alpha1/cluster-name
           PropagateAtLaunch: 'true'
-          Value: Ec2SpotEKS
+          Value: !Sub '${EKSClusterName}'
         - Key: eksctl.io/v1alpha2/nodegroup-name
           PropagateAtLaunch: 'true'
-          Value: Ec2SpotEKS
+          Value: !Sub '${EKSClusterName}-ODNodegroup1'
       VPCZoneIdentifier:
         - !Ref SubnetPublicUSEAST1A
         - !Ref SubnetPublicUSEAST1B
         - !Ref SubnetPublicUSEAST1C
         - !Ref SubnetPublicUSEAST1D
         - !Ref SubnetPublicUSEAST1F
+    UpdatePolicy:
+      AutoScalingRollingUpdate:
+        MaxBatchSize: '1'
+        MinInstancesInService: '0'
+
+  OnDemandNodeGroup2:
+    DependsOn:
+      - NodeGroupLaunchTemplate
+      - ControlPlane
+      - SubnetPublicUSEAST1A
+      - SubnetPublicUSEAST1B
+      - SubnetPublicUSEAST1C
+      - SubnetPublicUSEAST1D
+      - SubnetPublicUSEAST1F
+    Type: 'AWS::AutoScaling::AutoScalingGroup'
+    Properties:
+      AutoScalingGroupName: !Sub '${EKSClusterName}-ODNodegroup2'
+      DesiredCapacity: !Ref OnDemandNodeGroup2DesiredSize
+      MixedInstancesPolicy:
+        InstancesDistribution:
+          OnDemandAllocationStrategy: prioritized
+          OnDemandBaseCapacity: !Ref OnDemandNodeGroup2BaseCapacity
+          OnDemandPercentageAboveBaseCapacity: !Ref OnDemandNodeGroup2PercentageAboveBaseCapacity
+        LaunchTemplate:
+          LaunchTemplateSpecification:
+            LaunchTemplateId: !Ref NodeGroupLaunchTemplate
+            Version: !GetAtt NodeGroupLaunchTemplate.LatestVersionNumber
+          Overrides:
+            - InstanceType: !Select [0, !Split [ ",", !Ref NodeGroupType2InstanceTypesOverride ] ]
+      MinSize: !Ref OnDemandNodeGroup2MinSize
+      MaxSize: !Ref OnDemandNodeGroup2MaxSize
+      Tags:
+        - Key: Name
+          PropagateAtLaunch: 'true'
+          Value: !Sub '${EKSClusterName}-ODNodegroup2'
+        - Key: !Sub 'kubernetes.io/cluster/${EKSClusterName}'
+          PropagateAtLaunch: 'true'
+          Value: owned
+        - Key: k8s.io/cluster-autoscaler/enabled
+          PropagateAtLaunch: 'true'
+          Value: 'true'
+        - Key: !Sub 'k8s.io/cluster-autoscaler/${EKSClusterName}'
+          PropagateAtLaunch: 'true'
+          Value: owned
+        - Key: alpha.eksctl.io/cluster-name
+          PropagateAtLaunch: 'true'
+          Value: !Sub '${EKSClusterName}'
+        - Key: alpha.eksctl.io/nodegroup-name
+          PropagateAtLaunch: 'true'
+          Value: !Sub '${EKSClusterName}-ODNodegroup2'
+        - Key: alpha.eksctl.io/nodegroup-type
+          PropagateAtLaunch: 'true'
+          Value: unmanaged
+        - Key: aws:cloudformation:logical-id
+          PropagateAtLaunch: 'true'
+          Value: NodeGroup
+        - Key: eksctl.cluster.k8s.io/v1alpha1/cluster-name
+          PropagateAtLaunch: 'true'
+          Value: !Sub '${EKSClusterName}'
+        - Key: eksctl.io/v1alpha2/nodegroup-name
+          PropagateAtLaunch: 'true'
+          Value: !Sub '${EKSClusterName}-ODNodegroup2'
+      VPCZoneIdentifier:
+        - !Ref SubnetPublicUSEAST1A
+        - !Ref SubnetPublicUSEAST1B
+        - !Ref SubnetPublicUSEAST1C
+        - !Ref SubnetPublicUSEAST1D
+        - !Ref SubnetPublicUSEAST1F
+    UpdatePolicy:
+      AutoScalingRollingUpdate:
+        MaxBatchSize: '1'
+        MinInstancesInService: '0'
+
+  Ec2SpotNodeGroup1:
+    DependsOn:
+      - NodeGroupLaunchTemplate
+      - ControlPlane
+      - SubnetPublicUSEAST1A
+    Type: 'AWS::AutoScaling::AutoScalingGroup'
+    Properties:
+      AutoScalingGroupName: !Sub '${EKSClusterName}-Ec2SpotNodegroup1'
+      DesiredCapacity: !Ref Ec2SpotNodeGroup1DesiredSize
+      MixedInstancesPolicy:
+        InstancesDistribution:
+          OnDemandAllocationStrategy: prioritized
+          OnDemandBaseCapacity: !Ref Ec2SpotNodeGroup1BaseCapacity
+          OnDemandPercentageAboveBaseCapacity: !Ref Ec2SpotNodeGroup1PercentageAboveBaseCapacity
+          SpotAllocationStrategy: lowest-price
+          SpotInstancePools: !Ref SpotInstancePools
+        LaunchTemplate:
+          LaunchTemplateSpecification:
+            LaunchTemplateId: !Ref NodeGroupLaunchTemplate
+            Version: !GetAtt NodeGroupLaunchTemplate.LatestVersionNumber
+          Overrides:
+            - InstanceType: !Select [0, !Split [ ",", !Ref NodeGroupType1InstanceTypesOverride ] ]
+      MinSize: !Ref Ec2SpotNodeGroup1MinSize
+      MaxSize: !Ref Ec2SpotNodeGroup1MaxSize
+      Tags:
+        - Key: Name
+          PropagateAtLaunch: 'true'
+          Value: !Sub '${EKSClusterName}-Ec2SpotNodegroup1'
+        - Key: !Sub 'kubernetes.io/cluster/${EKSClusterName}'
+          PropagateAtLaunch: 'true'
+          Value: owned
+        - Key: k8s.io/cluster-autoscaler/enabled
+          PropagateAtLaunch: 'true'
+          Value: 'true'
+        - Key: !Sub 'k8s.io/cluster-autoscaler/${EKSClusterName}'
+          PropagateAtLaunch: 'true'
+          Value: owned
+        - Key: alpha.eksctl.io/cluster-name
+          PropagateAtLaunch: 'true'
+          Value: !Ref EKSClusterName
+        - Key: alpha.eksctl.io/nodegroup-name
+          PropagateAtLaunch: 'true'
+          Value: !Sub '${EKSClusterName}-Ec2SpotNodegroup1'
+        - Key: alpha.eksctl.io/nodegroup-type
+          PropagateAtLaunch: 'true'
+          Value: unmanaged
+        - Key: aws:cloudformation:logical-id
+          PropagateAtLaunch: 'true'
+          Value: NodeGroup
+        - Key: eksctl.cluster.k8s.io/v1alpha1/cluster-name
+          PropagateAtLaunch: 'true'
+          Value: !Ref EKSClusterName
+        - Key: eksctl.io/v1alpha2/nodegroup-name
+          PropagateAtLaunch: 'true'
+          Value: !Sub '${EKSClusterName}-Ec2SpotNodegroup1'
+      VPCZoneIdentifier:
+        - !Ref SubnetPublicUSEAST1A
+    UpdatePolicy:
+      AutoScalingRollingUpdate:
+        MaxBatchSize: '1'
+        MinInstancesInService: '0'
+
+  Ec2SpotNodeGroup2:
+    DependsOn:
+      - NodeGroupLaunchTemplate
+      - ControlPlane
+      - SubnetPublicUSEAST1A
+    Type: 'AWS::AutoScaling::AutoScalingGroup'
+    Properties:
+      AutoScalingGroupName: !Sub '${EKSClusterName}-Ec2SpotNodegroup2'
+      DesiredCapacity: !Ref Ec2SpotNodeGroup2DesiredSize
+      MixedInstancesPolicy:
+        InstancesDistribution:
+          OnDemandAllocationStrategy: prioritized
+          OnDemandBaseCapacity: !Ref Ec2SpotNodeGroup2BaseCapacity
+          OnDemandPercentageAboveBaseCapacity: !Ref Ec2SpotNodeGroup2PercentageAboveBaseCapacity
+          SpotAllocationStrategy: lowest-price
+          SpotInstancePools: !Ref SpotInstancePools
+        LaunchTemplate:
+          LaunchTemplateSpecification:
+            LaunchTemplateId: !Ref NodeGroupLaunchTemplate
+            Version: !GetAtt NodeGroupLaunchTemplate.LatestVersionNumber
+          Overrides:
+            - InstanceType: !Select [0, !Split [ ",", !Ref NodeGroupType2InstanceTypesOverride ] ]
+      MinSize: !Ref Ec2SpotNodeGroup2MinSize
+      MaxSize: !Ref Ec2SpotNodeGroup2MaxSize
+      Tags:
+        - Key: Name
+          PropagateAtLaunch: 'true'
+          Value: !Sub '${EKSClusterName}-Ec2SpotNodegroup2'
+        - Key: !Sub 'kubernetes.io/cluster/${EKSClusterName}'
+          PropagateAtLaunch: 'true'
+          Value: owned
+        - Key: k8s.io/cluster-autoscaler/enabled
+          PropagateAtLaunch: 'true'
+          Value: 'true'
+        - Key: !Sub 'k8s.io/cluster-autoscaler/${EKSClusterName}'
+          PropagateAtLaunch: 'true'
+          Value: owned
+        - Key: alpha.eksctl.io/cluster-name
+          PropagateAtLaunch: 'true'
+          Value: !Ref EKSClusterName
+        - Key: alpha.eksctl.io/nodegroup-name
+          PropagateAtLaunch: 'true'
+          Value: !Sub '${EKSClusterName}-Ec2SpotNodegroup2'
+        - Key: alpha.eksctl.io/nodegroup-type
+          PropagateAtLaunch: 'true'
+          Value: unmanaged
+        - Key: aws:cloudformation:logical-id
+          PropagateAtLaunch: 'true'
+          Value: NodeGroup
+        - Key: eksctl.cluster.k8s.io/v1alpha1/cluster-name
+          PropagateAtLaunch: 'true'
+          Value: !Ref EKSClusterName
+        - Key: eksctl.io/v1alpha2/nodegroup-name
+          PropagateAtLaunch: 'true'
+          Value: !Sub '${EKSClusterName}-Ec2SpotNodegroup2'
+      VPCZoneIdentifier:
+        - !Ref SubnetPublicUSEAST1A
     UpdatePolicy:
       AutoScalingRollingUpdate:
         MaxBatchSize: '1'
@@ -843,24 +1205,37 @@ Resources:
               VolumeType: gp2
         IamInstanceProfile:
           Arn: !GetAtt NodeInstanceProfile.Arn
-        ImageId: ami-0ee0652ac0722f0e3
-        InstanceType: m5.large
+        ImageId: !Ref EKSAMI
+        InstanceType: !Ref NodeGroupLaunchTemplateBaseInstanceType
         NetworkInterfaces:
           - DeviceIndex: 0
             Groups:
               - !Ref ClusterSharedNodeSecurityGroup
               - !Ref SG
+        TagSpecifications:
+          - ResourceType: instance
+            Tags:
+              - Key: !Sub 'kubernetes.io/cluster/${EKSClusterName}'
+                Value: "owned"
+              - Key: alpha.eksctl.io/cluster-name
+                Value: !Ref EKSClusterName
+              - Key: Name
+                Value: !Sub "${AWS::StackName}"
         UserData:
           Fn::Base64: !Sub |
             #!/bin/bash
             set -o xtrace
-            /etc/eks/bootstrap.sh Ec2SpotEKS ${BootstrapArguments}
-            /opt/aws/bin/cfn-signal --exit-code $? \
-                     --stack  ${AWS::StackName} \
-                     --resource NodeGroup  \
-                     --region ${AWS::Region}
-      LaunchTemplateName: 'Ec2SpotEKS'
+            export AWS_DEFAULT_REGION=${AWS::Region}
+            INSTANCE_ID=$(curl --silent http://169.254.169.254/latest/meta-data/instance-id)
+            INSTANCE_LIFECYCLE=$(aws ec2 describe-instances --instance-ids  $INSTANCE_ID  --query 'Reservations[0].Instances[0].InstanceLifecycle' --output text)
+            if [ "$INSTANCE_LIFECYCLE" == "spot" ]; then
+              #/etc/eks/bootstrap.sh ${EKSClusterName} --kubelet-extra-args ${Ec2SpotNodeLabels} ${Ec2SpotNodeTaints}
+               /etc/eks/bootstrap.sh ${EKSClusterName} --kubelet-extra-args '--node-labels="lifecycle=Ec2Spot,intent=apps"  --register-with-taints="spotInstance=true:PreferNoSchedule"'
+            else
+              /etc/eks/bootstrap.sh ${EKSClusterName} ${OnDemandBootstrapArguments}
+            fi
 
+      LaunchTemplateName: !Sub '${EKSClusterName}-LT'
 
   NodeInstanceProfile:
     DependsOn:
@@ -874,7 +1249,7 @@ Resources:
   NodeInstanceRole:
     Type: 'AWS::IAM::Role'
     Properties:
-      RoleName: "Ec2SpotEKS-NodeInstanceRole"
+      RoleName: !Sub '${EKSClusterName}-NodeInstanceRole'
       AssumeRolePolicyDocument:
         Statement:
           - Action:
@@ -976,7 +1351,7 @@ Resources:
             Effect: Allow
             Resource: '*'
         Version: 2012-10-17
-      PolicyName: !Sub '${AWS::StackName}-PolicyALBIngress'
+      PolicyName: !Sub '${EKSClusterName}-PolicyALBIngress'
       Roles:
         - !Ref NodeInstanceRole
 
@@ -996,7 +1371,7 @@ Resources:
             Effect: Allow
             Resource: '*'
         Version: 2012-10-17
-      PolicyName: !Sub '${AWS::StackName}-PolicyAutoScaling'
+      PolicyName: !Sub '${EKSClusterName}-PolicyAutoScaling'
       Roles:
         - !Ref NodeInstanceRole
   SG:
@@ -1005,50 +1380,107 @@ Resources:
       - ControlPlane
     Type: 'AWS::EC2::SecurityGroup'
     Properties:
-      GroupDescription: >-
-        Communication between the control plane and worker nodes in group
-        Ec2SpotEKS
+      GroupDescription: "Communication between the control plane and worker nodes in node group"
       Tags:
-        - Key: kubernetes.io/cluster/Ec2SpotEKS
+        - Key: kubernetes.io/cluster/${EKSClusterName}
           Value: owned
         - Key: Name
-          Value: !Sub '${AWS::StackName}/SG'
+          Value: !Sub '${EKSClusterName}/SG'
       VpcId: !Ref VPC
 
+  EKSSpotFleetRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${AWS::StackName}-EKSSpotFleetRole"
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - spotfleet.amazonaws.com
+        Version: 2012-10-17
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetTaggingRole
+      Path: /
+
+  EKSSpotFleet:
+    DependsOn:
+      - NodeGroupLaunchTemplate
+      - EKSSpotFleetRole
+    Type: AWS::EC2::SpotFleet
+    Properties:
+      SpotFleetRequestConfigData:
+        AllocationStrategy: capacityOptimized
+        IamFleetRole:
+          Fn::GetAtt:
+            - EKSSpotFleetRole
+            - Arn
+        LaunchTemplateConfigs:
+          - LaunchTemplateSpecification:
+              LaunchTemplateId: !Ref NodeGroupLaunchTemplate
+              Version: !GetAtt NodeGroupLaunchTemplate.LatestVersionNumber
+            Overrides:
+              - SubnetId: !Ref SubnetPublicUSEAST1A
+              - SubnetId: !Ref SubnetPublicUSEAST1B
+              - SubnetId: !Ref SubnetPublicUSEAST1C
+              - SubnetId: !Ref SubnetPublicUSEAST1D
+              - SubnetId: !Ref SubnetPublicUSEAST1E
+        ReplaceUnhealthyInstances: true
+        TargetCapacity: !Ref SpotFleetTargetCapacity
+        Type: maintain
+
 Outputs:
-  ARN:
+
+
+  EKSClusterARN:
     Export:
-      Name: !Sub '${AWS::StackName}::ARN'
+      Name: !Sub '${EKSClusterName}::ARN'
     Value: !GetAtt ControlPlane.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-EKSClusterARN"
+
   CertificateAuthorityData:
     Value: !GetAtt ControlPlane.CertificateAuthorityData
-  ClusterSecurityGroupId:
     Export:
-      Name: !Sub '${AWS::StackName}::ClusterSecurityGroupId'
+      Name: !Sub "${AWS::StackName}-CertificateAuthorityData"
+
+
+  ClusterSecurityGroupId:
     Value: !GetAtt ControlPlane.ClusterSecurityGroupId
+    Export:
+      Name: !Sub '${EKSClusterName}::ClusterSecurityGroupId'
+
+
   ClusterStackName:
-    Value: !Ref 'AWS::StackName'
+    Value: !Ref EKSClusterName
+    Export:
+      Name: !Sub '${EKSClusterName}::ClusterStackName'
+
   Endpoint:
     Export:
-      Name: !Sub '${AWS::StackName}::Endpoint'
+      Name: !Sub '${EKSClusterName}::Endpoint'
     Value: !GetAtt ControlPlane.Endpoint
-  FeatureNATMode:
-    Value: Single
+
   SecurityGroup:
     Export:
-      Name: !Sub '${AWS::StackName}::SecurityGroup'
+      Name: !Sub '${EKSClusterName}::SecurityGroup'
     Value: !Ref ControlPlaneSecurityGroup
+
   ServiceRoleARN:
     Export:
-      Name: !Sub '${AWS::StackName}::ServiceRoleARN'
+      Name: !Sub '${EKSClusterName}::ServiceRoleARN'
     Value: !GetAtt ServiceRole.Arn
+
   SharedNodeSecurityGroup:
     Export:
-      Name: !Sub '${AWS::StackName}::SharedNodeSecurityGroup'
+      Name: !Sub '${EKSClusterName}::SharedNodeSecurityGroup'
     Value: !Ref ClusterSharedNodeSecurityGroup
+
   SubnetsPrivate:
     Export:
-      Name: !Sub '${AWS::StackName}::SubnetsPrivate'
+      Name: !Sub '${EKSClusterName}::SubnetsPrivate'
     Value: !Join
       - ','
       - - !Ref SubnetPrivateUSEAST1A
@@ -1059,7 +1491,7 @@ Outputs:
 
   SubnetsPublic:
     Export:
-      Name: !Sub '${AWS::StackName}::SubnetsPublic'
+      Name: !Sub '${EKSClusterName}::SubnetsPublic'
     Value: !Join
       - ','
       - - !Ref SubnetPublicUSEAST1A
@@ -1069,14 +1501,46 @@ Outputs:
         - !Ref SubnetPublicUSEAST1F
   VPC:
     Export:
-      Name: !Sub '${AWS::StackName}::VPC'
+      Name: !Sub '${EKSClusterName}::VPC'
     Value: !Ref VPC
 
   NodeInstanceRole:
     Export:
-      Name: !Sub '${AWS::StackName}::NodeInstanceRole'
+      Name: !Sub '${EKSClusterName}::NodeInstanceRole'
     Value: !Ref NodeInstanceRole
 
+  NodeGroupLaunchTemplate:
+    Export:
+      Name: !Sub '${EKSClusterName}::NodeGroupLaunchTemplate'
+    Value: !Ref NodeGroupLaunchTemplate
 
+  OnDemandNodeGroup1:
+    Export:
+      Name: !Sub '${EKSClusterName}::OnDemandNodeGroup1'
+    Value: !Ref OnDemandNodeGroup1
 
+  OnDemandNodeGroup2:
+    Export:
+      Name: !Sub '${EKSClusterName}::OnDemandNodeGroup2'
+    Value: !Ref OnDemandNodeGroup2
+
+  Ec2SpotNodeGroup1:
+    Export:
+      Name: !Sub '${EKSClusterName}::Ec2SpotNodeGroup1'
+    Value: !Ref Ec2SpotNodeGroup1
+
+  Ec2SpotNodeGroup2:
+    Export:
+      Name: !Sub '${EKSClusterName}::Ec2SpotNodeGroup2'
+    Value: !Ref Ec2SpotNodeGroup2
+
+  NodeGroupType1InstanceTypesOverride:
+    Export:
+      Name: !Sub '${EKSClusterName}::NodeGroupType1InstanceTypesOverride'
+    Value: !Ref NodeGroupType1InstanceTypesOverride
+
+  NodeGroupType2InstanceTypesOverride:
+    Export:
+      Name: !Sub '${EKSClusterName}::NodeGroupType2InstanceTypesOverride'
+    Value: !Ref NodeGroupType2InstanceTypesOverride
 

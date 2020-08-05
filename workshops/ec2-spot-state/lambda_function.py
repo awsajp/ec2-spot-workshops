@@ -23,12 +23,9 @@ RootEBSVolumeSize=os.getenv('ROOT_EBS_VOLUME_SIZE')
 launchTemplateId=os.getenv('LAUNCH_TEMPLATE_ID')
 InstanceTypes=os.getenv('INSTANCE_TYPES_LIST')
 subnetIdsString=os.getenv('PUBLIC_SUBNET_IDs_LIST')
+awsRegion=os.getenv('AWS_REGION')
 
-
-
-
-
-ec2client = boto3.client('ec2', region_name='us-east-1')
+ec2client = boto3.client('ec2', region_name=awsRegion)
 ec2resource = boto3.resource('ec2')
 elbv2client = boto3.client('elbv2')
 dbclient = boto3.client('dynamodb')

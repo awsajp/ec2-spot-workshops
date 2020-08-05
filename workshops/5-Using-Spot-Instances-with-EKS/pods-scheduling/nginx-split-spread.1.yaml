@@ -2,26 +2,33 @@
 apiVersion: apps/v1 
 kind: Deployment 
 metadata: 
-  name: nginx-no-split 
+  name: nginx-split-spread 
   labels: 
-    app: nginx-no-split 
+    app: nginx-split-spread 
 spec: 
-  replicas: 2
+  replicas: 12
   selector: 
     matchLabels: 
-      app: nginx-no-split 
+      app: nginx-split-spread 
   template: 
     metadata: 
       labels: 
-        app: nginx-no-split 
+        app: nginx-split-spread 
     spec:
       tolerations: 
       - key: "spotInstance" 
         operator: "Equal" 
         value: "true" 
         effect: "PreferNoSchedule" 
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: lifecycle
+        whenUnsatisfiable: ScheduleAnyway 
+        labelSelector:
+          matchLabels:
+            app: nginx-split-spread
       containers: 
-        - name: nginx-no-split 
+        - name: nginx-split-spread 
           image: nginx:1.14.2
           resources: 
             requests: 

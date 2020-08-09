@@ -102,7 +102,7 @@ def waitforTranscribeJobs(job_name):
     if state in ['COMPLETED', 'FAILED']:
       break    
     print("Not ready yet...")    
-    time.sleep(5)
+    time.sleep(10)
   
   if state == 'COMPLETED':
     response = urllib.request.urlopen(status['TranscriptionJob']['Transcript']['TranscriptFileUri'])

@@ -8,6 +8,7 @@ import datetime
 import base64
 import urllib.request
 from pprint import pprint
+from botocore.exceptions import ClientError
 
 ec2client = boto3.client('ec2', region_name='us-east-1')
 ec2resource = boto3.resource('ec2')
@@ -122,9 +123,83 @@ def waitforTranscribeJobs(job_name):
       ':val2': transcript,
     }
   )
+  
+  Sender = "AWS Interview Analytics System <jalawala@amazon.com>"
+  
+  # Replace recipient@example.com with a "To" address. If your account 
+  # is still in the sandbox, this address must be verified.
+  Recipient = ['jalawala@amazon.com', 'alokana@amazon.com']
+  sendEmail(Sender, Recipient, job_name, state, transcript)
 
     
   #pprint(status)
+  
+def sendEmail(Sender, Recipient, job_name, State, Transcript):
+  # Replace sender@example.com with your "From" address.
+  # This address must be verified with Amazon SES.
+
+  
+  # Specify a configuration set. If you do not want to use a configuration
+  # set, comment the following variable, and the 
+  # ConfigurationSetName=CONFIGURATION_SET argument below.
+  #CONFIGURATION_SET = "ConfigSet"
+  
+  # If necessary, replace us-west-2 with the AWS Region you're using for Amazon SES.
+  AWS_REGION = "us-east-1"
+  
+  # The subject line for the email.
+  SUBJECT = "Transcibe Job ({}) Status: {}".format(job_name, State)
+  
+  # The email body for recipients with non-HTML email clients.
+  BODY_TEXT = "AWS Interview Transcription Job \r\n" + str(Transcript)
+              
+              
+  # The HTML body of the email.
+  BODY_HTML = "<html><head></head> <body>  <h1>AWS Interview Transcription Job Output</h1> <p>{}</p></body></html>".format(str(Transcript))
+
+  # The character encoding for the email.
+  CHARSET = "UTF-8"
+  
+  # Create a new SES resource and specify a region.
+  client = boto3.client('ses',region_name=AWS_REGION)
+  
+  # Try to send the email.
+  try:
+      #Provide the contents of the email.
+      response = client.send_email(
+          Destination={
+              'ToAddresses': Recipient,
+          },
+          Message={
+              'Body': {
+                  'Html': {
+                      'Charset': CHARSET,
+                      'Data': BODY_HTML,
+                  },
+                  'Text': {
+                      'Charset': CHARSET,
+                      'Data': BODY_TEXT,
+                  },
+              },
+              'Subject': {
+                  'Charset': CHARSET,
+                  'Data': SUBJECT,
+              },
+          },
+          Source=Sender,
+          # If you are not using a configuration set, comment or delete the
+          # following line
+          #ConfigurationSetName=CONFIGURATION_SET,
+      )
+  # Display an error if something goes wrong.	
+  except ClientError as e:
+      print(e.response['Error']['Message'])
+  else:
+      print("Email sent! Message ID:"),
+      print(response['MessageId'])
+      
+      
+    
 
 def createDynamoTable(dynamodbtablename):
 
@@ -192,10 +267,12 @@ if __name__ == '__main__':
   s3bucketname = "s3bucketaudio"
   #scheduleTranscribeJobs(s3bucketname, file)
   #startTranscribeJobs(s3bucketname)
-  job_name='job4'
-  job_uri = 'https://s3bucketaudio.s3.amazonaws.com/IntroducingAWSCloudMapandAWSAppMesh.mp3'
+  #job_name='job4'
+  #job_uri = 'https://s3bucketaudio.s3.amazonaws.com/IntroducingAWSCloudMapandAWSAppMesh.mp3'
   
-  startTranscribeJobs(s3bucketname)
+  #startTranscribeJobs(s3bucketname)
+  job_name ='GettingstartedwithservicemeshAWSAppMesh.mp4'
+  waitforTranscribeJobs(job_name)
   #scheduleTranscribeJobs(job_name, job_uri)
   #waitforTranscribeJobs(job_name)
 

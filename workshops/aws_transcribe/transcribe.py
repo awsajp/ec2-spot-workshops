@@ -9,6 +9,10 @@ import base64
 import urllib.request
 from pprint import pprint
 from botocore.exceptions import ClientError
+from email.mime.text import MIMEText
+from email.mime.application import MIMEApplication
+from email.mime.multipart import MIMEMultipart
+
 
 ec2client = boto3.client('ec2', region_name='us-east-1')
 ec2resource = boto3.resource('ec2')
@@ -18,6 +22,8 @@ transcribe = boto3.client('transcribe')
 s3client = boto3.client('s3')
 dynamodbtablename='TranscribeJobs'
 table = dynamodbresource.Table(dynamodbtablename)
+AWSREGION = "us-east-1"
+sesClient = boto3.client('ses',region_name=AWSREGION)
 
 
 def checkTranscribeJobs(job_name):
@@ -123,17 +129,60 @@ def waitforTranscribeJobs(job_name):
       ':val2': transcript,
     }
   )
+  TranscriptAttachmentFile = job_name +'.txt'
+  TranscriptFile='/tmp/'+ TranscriptAttachmentFile
+  #ranscriptFile=job_name +'.txt'
+  file = open(TranscriptFile, 'a')
+  file.write(transcript)
+  file.close()
   
   Sender = "AWS Interview Analytics System <jalawala@amazon.com>"
   
   # Replace recipient@example.com with a "To" address. If your account 
   # is still in the sandbox, this address must be verified.
-  Recipient = ['jalawala@amazon.com', 'alokana@amazon.com']
-  sendEmail(Sender, Recipient, job_name, state, transcript)
+  Recipient = ['jalawala@amazon.com']
+  #sendEmail(Sender, Recipient, job_name, state, transcript)
+  sendEmailAsAttachment(Sender, Recipient, job_name, state, TranscriptFile, TranscriptAttachmentFile)
 
     
   #pprint(status)
+
+
+def sendEmailAsAttachment(Sender, Recipient, job_name, State, TranscriptFile, TranscriptAttachmentFile):
+  # Replace sender@example.com with your "From" address.
+  # This address must be verified with Amazon SES.
+
+  print("sendEmailAsAttachment Sender={} Recipient={} job_name={} State={} TranscriptFile={}".format(Sender, Recipient, job_name, State, TranscriptFile))
+  SUBJECT = "Transcibe Job ({}) Status: {}".format(job_name, State)
   
+  # The email body for recipients with non-HTML email clients.
+  BODY_TEXT = "AWS Interview Transcription Job Output Attached"
+
+  message = MIMEMultipart()
+  message['Subject'] = SUBJECT
+  message['From'] = Sender
+  message['To'] = ', '.join(Recipient)# message body
+  part = MIMEText(BODY_TEXT, 'html')
+  message.attach(part)# attachment
+  attachment_string=None
+  if attachment_string:   # if bytestring available
+      part = MIMEApplication(str.encode('attachment_string'))
+  else:    # if file provided
+      part = MIMEApplication(open(TranscriptFile, 'r').read())
+  part.add_header('Content-Disposition', 'attachment', filename=TranscriptAttachmentFile)
+  message.attach(part)
+  
+  response = sesClient.send_raw_email(
+      Source=message['From'],
+      Destinations=Recipient,
+      RawMessage={
+          'Data': message.as_string()
+      }
+  )
+
+
+      
+        
 def sendEmail(Sender, Recipient, job_name, State, Transcript):
   # Replace sender@example.com with your "From" address.
   # This address must be verified with Amazon SES.

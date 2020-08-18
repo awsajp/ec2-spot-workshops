@@ -15,7 +15,9 @@ import urllib.request
 import cfnresponse
 from botocore.exceptions import ClientError
 #from bson import json_util
-
+from email.mime.text import MIMEText
+from email.mime.application import MIMEApplication
+from email.mime.multipart import MIMEMultipart
 
 #TranscribeJobsStateTable=os.getenv('DYNAMODB_INSTANCEID_TABLE_NAME')
 #StatusIndexName=os.getenv('DYNAMODB_GSI_ST')
@@ -30,9 +32,13 @@ dbclient = boto3.client('dynamodb')
 dynamodbresource = boto3.resource('dynamodb')
 table = dynamodbresource.Table(TranscribeJobsStateTable)
 transcribe = boto3.client('transcribe')
+s3client = boto3.client('s3')
+AWSREGION = "us-east-1"
+sesClient = boto3.client('ses',region_name=AWSREGION)
+#TranscriptFile='TranscriptFile.txt'
 
 
-def scheduleTranscribeJobs(job_name, job_uri):
+def scheduleTranscribeJobs(job_name, job_uri, LanguageCode):
 
   print("scheduleTranscribeJobs job_name={} job_uri={}".format(job_name, job_uri))
   
@@ -40,7 +46,6 @@ def scheduleTranscribeJobs(job_name, job_uri):
     
     job_nam_split = job_name.split('.')
     MediaFormat = job_nam_split[-1]
-    LanguageCode = 'en-US'
     response = transcribe.start_transcription_job( 
            TranscriptionJobName=job_name,    
            Media={'MediaFileUri': job_uri},    
@@ -62,7 +67,7 @@ def scheduleTranscribeJobs(job_name, job_uri):
   except Exception as e:
     print("exception_message={}".format(str(e)))
   
-def waitforTranscribeJobs(job_name):
+def waitforTranscribeJobs(job_name, objectName):
 
   print("waitforTranscribeJobs job_name={}".format(job_name))
   state = "NA"
@@ -93,12 +98,54 @@ def waitforTranscribeJobs(job_name):
       ':val2': transcript,
     }
   )
+  
+  TranscriptAttachmentFile = objectName +'.txt'
+  TranscriptFile='/tmp/'+ job_name+'.txt'
+  
+  file = open(TranscriptFile, 'a')
+  file.write(transcript)
+  file.close()
+  
   Sender = "AWS Interview Analytics System <jalawala@amazon.com>"
   
   # Replace recipient@example.com with a "To" address. If your account 
   # is still in the sandbox, this address must be verified.
   Recipient = ['jalawala@amazon.com']
-  sendEmail(Sender, Recipient, job_name, state, transcript)  
+  #sendEmail(Sender, Recipient, job_name, state, transcript)
+  sendEmailAsAttachment(Sender, Recipient, job_name, state, TranscriptFile, TranscriptAttachmentFile)
+
+def sendEmailAsAttachment(Sender, Recipient, job_name, State, TranscriptFile, TranscriptAttachmentFile):
+  # Replace sender@example.com with your "From" address.
+  # This address must be verified with Amazon SES.
+
+  print("sendEmailAsAttachment Sender={} Recipient={} job_name={} State={} TranscriptFile={}".format(Sender, Recipient, job_name, State, TranscriptFile))
+  SUBJECT = "Transcibe Job ({}) Status: {}".format(job_name, State)
+  
+  # The email body for recipients with non-HTML email clients.
+  BODY_TEXT = "AWS Interview Transcription Job Output Attached"
+
+  message = MIMEMultipart()
+  message['Subject'] = SUBJECT
+  message['From'] = Sender
+  message['To'] = ', '.join(Recipient)# message body
+  part = MIMEText(BODY_TEXT, 'html')
+  message.attach(part)# attachment
+  attachment_string=None
+  if attachment_string:   # if bytestring available
+      part = MIMEApplication(str.encode('attachment_string'))
+  else:    # if file provided
+      part = MIMEApplication(open(TranscriptFile, 'r').read())
+  part.add_header('Content-Disposition', 'attachment', filename=TranscriptAttachmentFile)
+  message.attach(part)
+  
+  response = sesClient.send_raw_email(
+      Source=message['From'],
+      Destinations=Recipient,
+      RawMessage={
+          'Data': message.as_string()
+      }
+  )
+
 
 
 def sendEmail(Sender, Recipient, job_name, State, Transcript):
@@ -173,14 +220,30 @@ def handleS3ObjectUploadEvent(event):
   time.sleep(10)
   #if event['Records'][0]['eventName'] == 'ObjectCreated:Put':
   objectName = event['Records'][0]['s3']['object']['key']
+  #TranscriptFile = objectName
   objectSize = event['Records'][0]['s3']['object']['size']
   s3bucketname = event['Records'][0]['s3']['bucket']['name']
   job_uri='https://' + s3bucketname + '.s3.amazonaws.com/' + objectName
   job_name = objectName.replace('+', '')
+  fileName = objectName.replace('+', ' ')
+  
   print("Adding job_name={} details to the dynamodb".format(job_name))
   job_nam_split = job_name.split('.')
   MediaFormat = job_nam_split[-1]
   LanguageCode = 'en-US'
+  
+  try:
+    KeyObject = objectName.replace('+', ' ') 
+    
+    print("Getting Object tags for  s3bucketname={} KeyObject={}".format(s3bucketname,KeyObject))
+    response = s3client.get_object_tagging(    Bucket=s3bucketname,  Key=KeyObject  )
+    if response['TagSet'] != []:
+  
+      if response['TagSet'][0]['Key'] == 'LanguageCode':
+        LanguageCode = response['TagSet'][0]['Value']
+    
+  except Exception as e:
+    print("exception_message={}".format(str(e)))    
     
   resp = table.put_item(
     Item={
@@ -193,8 +256,8 @@ def handleS3ObjectUploadEvent(event):
       'transcript': "NA"
     }
   )  
-  scheduleTranscribeJobs(job_name, job_uri)
-  waitforTranscribeJobs(job_name)
+  scheduleTranscribeJobs(job_name, job_uri, LanguageCode)
+  waitforTranscribeJobs(job_name, fileName)
       
 
 def lambda_handler(event, context):

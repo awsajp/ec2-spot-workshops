@@ -28,7 +28,7 @@ Parameters:
   S3BucketName:
     Type: String
     Description: "Name of the S3 Bucket Where the lambda function xip file exists"
-    Default: "ec2spotstatefulworkload"
+    Default: "ec2spotstatefulworkload2"
 
   S3Key:
     Type: String
@@ -666,7 +666,7 @@ Resources:
           RETAINPRIVATEIP: !Ref RetainPrivateIP
           TARGET_GROUP_ARN: !Ref TargetGroup
           VPC_ID: !Ref vpc
-          AWS_REGION: !Ref AWS::Region
+          AWSREGION: !Ref AWS::Region
       Code:
         S3Bucket: !Ref S3BucketName
         S3Key: !Ref S3Key

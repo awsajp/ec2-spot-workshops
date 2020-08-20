@@ -22,7 +22,7 @@ spec:
           effect: "PreferNoSchedule"
       containers:
         - name: batch-app
-          image: 000474600478.dkr.ecr.us-east-1.amazonaws.com/ec2-spot-gameday-batch-app
+          image: 000474600478.dkr.ecr.us-east-1.amazonaws.com/ec2-spot-gameday-batch-app:latest
           resources:
             requests:
               memory: "512Mi"

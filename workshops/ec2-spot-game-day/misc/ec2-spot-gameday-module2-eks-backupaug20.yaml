@@ -54,7 +54,6 @@ Metadata:
           - NodeGroupType1InstanceTypesOverride
           - NodeGroupType2InstanceTypesOverride
           - SpotInstancePools
-          - NodeGroupLaunchTemplateBaseInstanceType
       -
         Label:
           default: "Spot Fleet Configuration"
@@ -76,7 +75,7 @@ Parameters:
   EKSClusterVersion:
     Type: String
     Description: "EKS Cluster Version"
-    Default: "1.17"
+    Default: "1.16"
 
 
   OnDemandBootstrapArguments:
@@ -208,17 +207,18 @@ Parameters:
   NodeGroupType1InstanceTypesOverride:
     Type: String
     Description: "multiple spot instances to override(seperated by comma)"
-    Default: "c3.large,c4.large,c5.large,c5a.large,c5d.large,c5n.large,m3.large,m4.large,m5.large,m5a.large,m5d.large,m5n.large,r3.large,r4.large,r5.large,r5a.large,r5n.large,t2.large,t3.large,t3a.large"
+    Default: "t3.large"
 
   NodeGroupType2InstanceTypesOverride:
     Type: String
     Description: "multiple spot instances to override(seperated by comma)"
-    Default: "c3.xlarge,c4.xlarge,c5.xlarge,c5a.xlarge,c5d.xlarge,c5n.xlarge,m3.xlarge,m4.xlarge,m5.xlarge,m5a.xlarge,m5d.xlarge,m5n.xlarge,r3.xlarge,r4.xlarge,r5.xlarge,r5a.xlarge,r5n.xlarge,t2.xlarge,t3.xlarge,t3a.xlarge"
+    Default: "t3.xlarge"
 
   SpotFleetTargetCapacity:
     Type: Number
     Description: "SpotFleetTargetCapacity"
     Default: 1
+
 
 Mappings:
   CidrMappings:
@@ -297,6 +297,7 @@ Resources:
           - !Ref SubnetPrivateUSEAST1C
           - !Ref SubnetPrivateUSEAST1D
           - !Ref SubnetPrivateUSEAST1F
+
       RoleArn: !GetAtt ServiceRole.Arn
       Version: !Ref EKSClusterVersion
 
@@ -951,26 +952,6 @@ Resources:
             Version: !GetAtt NodeGroupLaunchTemplate.LatestVersionNumber
           Overrides:
             - InstanceType: !Select [0, !Split [ ",", !Ref NodeGroupType1InstanceTypesOverride ] ]
-            - InstanceType: !Select [1, !Split [ ",", !Ref NodeGroupType1InstanceTypesOverride ] ]
-            - InstanceType: !Select [2, !Split [ ",", !Ref NodeGroupType1InstanceTypesOverride ] ]
-            - InstanceType: !Select [3, !Split [ ",", !Ref NodeGroupType1InstanceTypesOverride ] ]
-            - InstanceType: !Select [4, !Split [ ",", !Ref NodeGroupType1InstanceTypesOverride ] ]
-            - InstanceType: !Select [5, !Split [ ",", !Ref NodeGroupType1InstanceTypesOverride ] ]
-            - InstanceType: !Select [6, !Split [ ",", !Ref NodeGroupType1InstanceTypesOverride ] ]
-            - InstanceType: !Select [7, !Split [ ",", !Ref NodeGroupType1InstanceTypesOverride ] ]
-            - InstanceType: !Select [8, !Split [ ",", !Ref NodeGroupType1InstanceTypesOverride ] ]
-            - InstanceType: !Select [9, !Split [ ",", !Ref NodeGroupType1InstanceTypesOverride ] ]
-            - InstanceType: !Select [10, !Split [ ",", !Ref NodeGroupType1InstanceTypesOverride ] ]
-            - InstanceType: !Select [11, !Split [ ",", !Ref NodeGroupType1InstanceTypesOverride ] ]
-            - InstanceType: !Select [12, !Split [ ",", !Ref NodeGroupType1InstanceTypesOverride ] ]
-            - InstanceType: !Select [13, !Split [ ",", !Ref NodeGroupType1InstanceTypesOverride ] ]
-            - InstanceType: !Select [14, !Split [ ",", !Ref NodeGroupType1InstanceTypesOverride ] ]
-            - InstanceType: !Select [15, !Split [ ",", !Ref NodeGroupType1InstanceTypesOverride ] ]
-            - InstanceType: !Select [16, !Split [ ",", !Ref NodeGroupType1InstanceTypesOverride ] ]
-            - InstanceType: !Select [17, !Split [ ",", !Ref NodeGroupType1InstanceTypesOverride ] ]
-            - InstanceType: !Select [18, !Split [ ",", !Ref NodeGroupType1InstanceTypesOverride ] ]
-            - InstanceType: !Select [19, !Split [ ",", !Ref NodeGroupType1InstanceTypesOverride ] ]
-
       MinSize: !Ref OnDemandNodeGroup1MinSize
       MaxSize: !Ref OnDemandNodeGroup1MaxSize
       Tags:
@@ -1039,25 +1020,6 @@ Resources:
             Version: !GetAtt NodeGroupLaunchTemplate.LatestVersionNumber
           Overrides:
             - InstanceType: !Select [0, !Split [ ",", !Ref NodeGroupType2InstanceTypesOverride ] ]
-            - InstanceType: !Select [1, !Split [ ",", !Ref NodeGroupType2InstanceTypesOverride ] ]
-            - InstanceType: !Select [2, !Split [ ",", !Ref NodeGroupType2InstanceTypesOverride ] ]
-            - InstanceType: !Select [3, !Split [ ",", !Ref NodeGroupType2InstanceTypesOverride ] ]
-            - InstanceType: !Select [4, !Split [ ",", !Ref NodeGroupType2InstanceTypesOverride ] ]
-            - InstanceType: !Select [5, !Split [ ",", !Ref NodeGroupType2InstanceTypesOverride ] ]
-            - InstanceType: !Select [6, !Split [ ",", !Ref NodeGroupType2InstanceTypesOverride ] ]
-            - InstanceType: !Select [7, !Split [ ",", !Ref NodeGroupType2InstanceTypesOverride ] ]
-            - InstanceType: !Select [8, !Split [ ",", !Ref NodeGroupType2InstanceTypesOverride ] ]
-            - InstanceType: !Select [9, !Split [ ",", !Ref NodeGroupType2InstanceTypesOverride ] ]
-            - InstanceType: !Select [10, !Split [ ",", !Ref NodeGroupType2InstanceTypesOverride ] ]
-            - InstanceType: !Select [11, !Split [ ",", !Ref NodeGroupType2InstanceTypesOverride ] ]
-            - InstanceType: !Select [12, !Split [ ",", !Ref NodeGroupType2InstanceTypesOverride ] ]
-            - InstanceType: !Select [13, !Split [ ",", !Ref NodeGroupType2InstanceTypesOverride ] ]
-            - InstanceType: !Select [14, !Split [ ",", !Ref NodeGroupType2InstanceTypesOverride ] ]
-            - InstanceType: !Select [15, !Split [ ",", !Ref NodeGroupType2InstanceTypesOverride ] ]
-            - InstanceType: !Select [16, !Split [ ",", !Ref NodeGroupType2InstanceTypesOverride ] ]
-            - InstanceType: !Select [17, !Split [ ",", !Ref NodeGroupType2InstanceTypesOverride ] ]
-            - InstanceType: !Select [18, !Split [ ",", !Ref NodeGroupType2InstanceTypesOverride ] ]
-            - InstanceType: !Select [19, !Split [ ",", !Ref NodeGroupType2InstanceTypesOverride ] ]
       MinSize: !Ref OnDemandNodeGroup2MinSize
       MaxSize: !Ref OnDemandNodeGroup2MaxSize
       Tags:
@@ -1116,33 +1078,14 @@ Resources:
           OnDemandAllocationStrategy: prioritized
           OnDemandBaseCapacity: !Ref Ec2SpotNodeGroup1BaseCapacity
           OnDemandPercentageAboveBaseCapacity: !Ref Ec2SpotNodeGroup1PercentageAboveBaseCapacity
-          SpotAllocationStrategy: capacity-optimized
+          SpotAllocationStrategy: lowest-price
+          SpotInstancePools: !Ref SpotInstancePools
         LaunchTemplate:
           LaunchTemplateSpecification:
             LaunchTemplateId: !Ref NodeGroupLaunchTemplate
             Version: !GetAtt NodeGroupLaunchTemplate.LatestVersionNumber
           Overrides:
             - InstanceType: !Select [0, !Split [ ",", !Ref NodeGroupType1InstanceTypesOverride ] ]
-            - InstanceType: !Select [1, !Split [ ",", !Ref NodeGroupType1InstanceTypesOverride ] ]
-            - InstanceType: !Select [2, !Split [ ",", !Ref NodeGroupType1InstanceTypesOverride ] ]
-            - InstanceType: !Select [3, !Split [ ",", !Ref NodeGroupType1InstanceTypesOverride ] ]
-            - InstanceType: !Select [4, !Split [ ",", !Ref NodeGroupType1InstanceTypesOverride ] ]
-            - InstanceType: !Select [5, !Split [ ",", !Ref NodeGroupType1InstanceTypesOverride ] ]
-            - InstanceType: !Select [6, !Split [ ",", !Ref NodeGroupType1InstanceTypesOverride ] ]
-            - InstanceType: !Select [7, !Split [ ",", !Ref NodeGroupType1InstanceTypesOverride ] ]
-            - InstanceType: !Select [8, !Split [ ",", !Ref NodeGroupType1InstanceTypesOverride ] ]
-            - InstanceType: !Select [9, !Split [ ",", !Ref NodeGroupType1InstanceTypesOverride ] ]
-            - InstanceType: !Select [10, !Split [ ",", !Ref NodeGroupType1InstanceTypesOverride ] ]
-            - InstanceType: !Select [11, !Split [ ",", !Ref NodeGroupType1InstanceTypesOverride ] ]
-            - InstanceType: !Select [12, !Split [ ",", !Ref NodeGroupType1InstanceTypesOverride ] ]
-            - InstanceType: !Select [13, !Split [ ",", !Ref NodeGroupType1InstanceTypesOverride ] ]
-            - InstanceType: !Select [14, !Split [ ",", !Ref NodeGroupType1InstanceTypesOverride ] ]
-            - InstanceType: !Select [15, !Split [ ",", !Ref NodeGroupType1InstanceTypesOverride ] ]
-            - InstanceType: !Select [16, !Split [ ",", !Ref NodeGroupType1InstanceTypesOverride ] ]
-            - InstanceType: !Select [17, !Split [ ",", !Ref NodeGroupType1InstanceTypesOverride ] ]
-            - InstanceType: !Select [18, !Split [ ",", !Ref NodeGroupType1InstanceTypesOverride ] ]
-            - InstanceType: !Select [19, !Split [ ",", !Ref NodeGroupType1InstanceTypesOverride ] ]
-
       MinSize: !Ref Ec2SpotNodeGroup1MinSize
       MaxSize: !Ref Ec2SpotNodeGroup1MaxSize
       Tags:
@@ -1178,10 +1121,6 @@ Resources:
           Value: !Sub '${EKSClusterName}-Ec2SpotNodegroup1'
       VPCZoneIdentifier:
         - !Ref SubnetPublicUSEAST1A
-        - !Ref SubnetPublicUSEAST1B
-        - !Ref SubnetPublicUSEAST1C
-        - !Ref SubnetPublicUSEAST1D
-        - !Ref SubnetPublicUSEAST1E
     UpdatePolicy:
       AutoScalingRollingUpdate:
         MaxBatchSize: '1'
@@ -1201,32 +1140,14 @@ Resources:
           OnDemandAllocationStrategy: prioritized
           OnDemandBaseCapacity: !Ref Ec2SpotNodeGroup2BaseCapacity
           OnDemandPercentageAboveBaseCapacity: !Ref Ec2SpotNodeGroup2PercentageAboveBaseCapacity
-          SpotAllocationStrategy: capacity-optimized
+          SpotAllocationStrategy: lowest-price
+          SpotInstancePools: !Ref SpotInstancePools
         LaunchTemplate:
           LaunchTemplateSpecification:
             LaunchTemplateId: !Ref NodeGroupLaunchTemplate
             Version: !GetAtt NodeGroupLaunchTemplate.LatestVersionNumber
           Overrides:
             - InstanceType: !Select [0, !Split [ ",", !Ref NodeGroupType2InstanceTypesOverride ] ]
-            - InstanceType: !Select [1, !Split [ ",", !Ref NodeGroupType2InstanceTypesOverride ] ]
-            - InstanceType: !Select [2, !Split [ ",", !Ref NodeGroupType2InstanceTypesOverride ] ]
-            - InstanceType: !Select [3, !Split [ ",", !Ref NodeGroupType2InstanceTypesOverride ] ]
-            - InstanceType: !Select [4, !Split [ ",", !Ref NodeGroupType2InstanceTypesOverride ] ]
-            - InstanceType: !Select [5, !Split [ ",", !Ref NodeGroupType2InstanceTypesOverride ] ]
-            - InstanceType: !Select [6, !Split [ ",", !Ref NodeGroupType2InstanceTypesOverride ] ]
-            - InstanceType: !Select [7, !Split [ ",", !Ref NodeGroupType2InstanceTypesOverride ] ]
-            - InstanceType: !Select [8, !Split [ ",", !Ref NodeGroupType2InstanceTypesOverride ] ]
-            - InstanceType: !Select [9, !Split [ ",", !Ref NodeGroupType2InstanceTypesOverride ] ]
-            - InstanceType: !Select [10, !Split [ ",", !Ref NodeGroupType2InstanceTypesOverride ] ]
-            - InstanceType: !Select [11, !Split [ ",", !Ref NodeGroupType2InstanceTypesOverride ] ]
-            - InstanceType: !Select [12, !Split [ ",", !Ref NodeGroupType2InstanceTypesOverride ] ]
-            - InstanceType: !Select [13, !Split [ ",", !Ref NodeGroupType2InstanceTypesOverride ] ]
-            - InstanceType: !Select [14, !Split [ ",", !Ref NodeGroupType2InstanceTypesOverride ] ]
-            - InstanceType: !Select [15, !Split [ ",", !Ref NodeGroupType2InstanceTypesOverride ] ]
-            - InstanceType: !Select [16, !Split [ ",", !Ref NodeGroupType2InstanceTypesOverride ] ]
-            - InstanceType: !Select [17, !Split [ ",", !Ref NodeGroupType2InstanceTypesOverride ] ]
-            - InstanceType: !Select [18, !Split [ ",", !Ref NodeGroupType2InstanceTypesOverride ] ]
-            - InstanceType: !Select [19, !Split [ ",", !Ref NodeGroupType2InstanceTypesOverride ] ]
       MinSize: !Ref Ec2SpotNodeGroup2MinSize
       MaxSize: !Ref Ec2SpotNodeGroup2MaxSize
       Tags:
@@ -1262,10 +1183,6 @@ Resources:
           Value: !Sub '${EKSClusterName}-Ec2SpotNodegroup2'
       VPCZoneIdentifier:
         - !Ref SubnetPublicUSEAST1A
-        - !Ref SubnetPublicUSEAST1B
-        - !Ref SubnetPublicUSEAST1C
-        - !Ref SubnetPublicUSEAST1D
-        - !Ref SubnetPublicUSEAST1E
     UpdatePolicy:
       AutoScalingRollingUpdate:
         MaxBatchSize: '1'
@@ -1514,48 +1431,50 @@ Resources:
         TargetCapacity: !Ref SpotFleetTargetCapacity
         Type: maintain
 
-
 Outputs:
+
 
   EKSClusterARN:
     Export:
-      Name: !Sub '${EKSClusterName}-ARN'
+      Name: !Sub '${EKSClusterName}::ARN'
     Value: !GetAtt ControlPlane.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-EKSClusterARN"
 
   ClusterSecurityGroupId:
     Value: !GetAtt ControlPlane.ClusterSecurityGroupId
     Export:
-      Name: !Sub '${EKSClusterName}-ClusterSecurityGroupId'
+      Name: !Sub '${EKSClusterName}::ClusterSecurityGroupId'
 
 
   ClusterStackName:
     Value: !Ref EKSClusterName
     Export:
-      Name: !Sub '${EKSClusterName}-ClusterStackName'
+      Name: !Sub '${EKSClusterName}::ClusterStackName'
 
   Endpoint:
     Export:
-      Name: !Sub '${EKSClusterName}-Endpoint'
+      Name: !Sub '${EKSClusterName}::Endpoint'
     Value: !GetAtt ControlPlane.Endpoint
 
   SecurityGroup:
     Export:
-      Name: !Sub '${EKSClusterName}-SecurityGroup'
+      Name: !Sub '${EKSClusterName}::SecurityGroup'
     Value: !Ref ControlPlaneSecurityGroup
 
   ServiceRoleARN:
     Export:
-      Name: !Sub '${EKSClusterName}-ServiceRoleARN'
+      Name: !Sub '${EKSClusterName}::ServiceRoleARN'
     Value: !GetAtt ServiceRole.Arn
 
   SharedNodeSecurityGroup:
     Export:
-      Name: !Sub '${EKSClusterName}-SharedNodeSecurityGroup'
+      Name: !Sub '${EKSClusterName}::SharedNodeSecurityGroup'
     Value: !Ref ClusterSharedNodeSecurityGroup
 
   SubnetsPrivate:
     Export:
-      Name: !Sub '${EKSClusterName}-SubnetsPrivate'
+      Name: !Sub '${EKSClusterName}::SubnetsPrivate'
     Value: !Join
       - ','
       - - !Ref SubnetPrivateUSEAST1A
@@ -1566,7 +1485,7 @@ Outputs:
 
   SubnetsPublic:
     Export:
-      Name: !Sub '${EKSClusterName}-SubnetsPublic'
+      Name: !Sub '${EKSClusterName}::SubnetsPublic'
     Value: !Join
       - ','
       - - !Ref SubnetPublicUSEAST1A
@@ -1576,46 +1495,46 @@ Outputs:
         - !Ref SubnetPublicUSEAST1F
   VPC:
     Export:
-      Name: !Sub '${EKSClusterName}-VPC'
+      Name: !Sub '${EKSClusterName}::VPC'
     Value: !Ref VPC
 
   NodeInstanceRole:
     Export:
-      Name: !Sub '${EKSClusterName}-NodeInstanceRole'
+      Name: !Sub '${EKSClusterName}::NodeInstanceRole'
     Value: !Ref NodeInstanceRole
 
   NodeGroupLaunchTemplate:
     Export:
-      Name: !Sub '${EKSClusterName}-NodeGroupLaunchTemplate'
+      Name: !Sub '${EKSClusterName}::NodeGroupLaunchTemplate'
     Value: !Ref NodeGroupLaunchTemplate
 
   OnDemandNodeGroup1:
     Export:
-      Name: !Sub '${EKSClusterName}-OnDemandNodeGroup1'
+      Name: !Sub '${EKSClusterName}::OnDemandNodeGroup1'
     Value: !Ref OnDemandNodeGroup1
 
   OnDemandNodeGroup2:
     Export:
-      Name: !Sub '${EKSClusterName}-OnDemandNodeGroup2'
+      Name: !Sub '${EKSClusterName}::OnDemandNodeGroup2'
     Value: !Ref OnDemandNodeGroup2
 
   Ec2SpotNodeGroup1:
     Export:
-      Name: !Sub '${EKSClusterName}-Ec2SpotNodeGroup1'
+      Name: !Sub '${EKSClusterName}::Ec2SpotNodeGroup1'
     Value: !Ref Ec2SpotNodeGroup1
 
   Ec2SpotNodeGroup2:
     Export:
-      Name: !Sub '${EKSClusterName}-Ec2SpotNodeGroup2'
+      Name: !Sub '${EKSClusterName}::Ec2SpotNodeGroup2'
     Value: !Ref Ec2SpotNodeGroup2
 
   NodeGroupType1InstanceTypesOverride:
     Export:
-      Name: !Sub '${EKSClusterName}-NodeGroupType1InstanceTypesOverride'
+      Name: !Sub '${EKSClusterName}::NodeGroupType1InstanceTypesOverride'
     Value: !Ref NodeGroupType1InstanceTypesOverride
 
   NodeGroupType2InstanceTypesOverride:
     Export:
-      Name: !Sub '${EKSClusterName}-NodeGroupType2InstanceTypesOverride'
+      Name: !Sub '${EKSClusterName}::NodeGroupType2InstanceTypesOverride'
     Value: !Ref NodeGroupType2InstanceTypesOverride
 

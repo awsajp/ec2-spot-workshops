@@ -1,0 +1,275 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+Description: EC2 Fleet Template
+Metadata:
+  Author:
+    Description: Jayaprakash Alawala <jalawala@amazon.com>
+  License:
+    Description: 'Copyright 2020 Amazon.com, Inc. and its affiliates. All Rights Reserved.
+
+      Licensed under the Amazon Software License (the "License"). You may not use this file
+      except in compliance with the License. A copy of the License is located at
+
+      http://aws.amazon.com/asl/
+
+      or in the "license" file accompanying this file. This file is distributed on an "AS IS"
+      BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+      License for the specific language governing permissions and limitations under the License.'
+
+
+
+Parameters:
+
+  RetainPrivateIP:
+    Type: String
+    Description: "Enter YES or NO to enable or disable the RetainPrivateIP feature"
+    Default: "YES"
+
+  UnicornGymS3BucketCode:
+    Type: String
+    Description: "Name of the S3 Bucket Where the lambda function xip file exists"
+    Default: "s3bucketunicorngym"
+
+  UnicornGymS3BucketFiles:
+    Type: String
+    Description: "Name of the S3 Bucket Where the lambda function xip file exists"
+    Default: "unicorngymsrecordings"
+
+
+  S3Key:
+    Type: String
+    Description: "The Object Name in the S3 Bucket Where the lambda function xip file exists"
+    Default: "lambda_function.zip"
+
+  sourceCidr:
+    Default: 0.0.0.0/0
+    Description: Optional - CIDR/IP range for instance ssh/http access and load balancer http
+      access
+    Type: String
+
+  InstanceTypes:
+    Type: String
+    Description: "multiple spot instances to override(seperated by comma)"
+    Default: "m4.large,m5.large,c4.large,c5.large,r4.large,r5.large,t3.large,t3a.large"
+
+
+  OnDemandTargetCapacity:
+    Type: Number
+    Description: "on-demand  capacity"
+    Default: 2
+
+  SpotTargetCapacity:
+    Type: Number
+    Description: "Spot Capacity"
+    Default: 2
+
+  TotalTargetCapacity:
+    Type: Number
+    Description: "Total Capacity"
+    Default: 4
+
+  ReadCapacityUnits:
+    Description: Provisioned read throughput
+    Type: Number
+    Default: '10'
+    MinValue: '10'
+    MaxValue: '10000'
+    ConstraintDescription: must be between 5 and 10000
+  WriteCapacityUnits:
+    Description: Provisioned write throughput
+    Type: Number
+    Default: '10'
+    MinValue: '10'
+    MaxValue: '10000'
+    ConstraintDescription: must be between 5 and 10000
+
+  RootEBSVolumeSize:
+    Type: Number
+    Description: "Root EBS Volume Size"
+    Default: 8
+
+  AdditionalEBSVolume1Size:
+    Type: Number
+    Description: "Additional EBS Volume1 Size"
+    Default: 8
+
+  AdditionalEBSVolume2Size:
+    Type: Number
+    Description: "Additional EBS Volume2 Size"
+    Default: 8
+
+  AMAZONLINUX2AMI:
+    Description: AMI ID
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
+
+
+Resources:
+
+  TranscribeJobsStateTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: JobName
+          AttributeType: S
+        - AttributeName: ST
+          AttributeType: S
+      BillingMode: PROVISIONED
+      KeySchema:
+        - AttributeName: JobName
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: !Ref 'ReadCapacityUnits'
+        WriteCapacityUnits: !Ref 'WriteCapacityUnits'
+      TableName:  !Sub '${AWS::StackName}-TranscribeJobsStateTable'
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-TranscribeJobsStateTable'
+      GlobalSecondaryIndexes:
+        - IndexName: 'ST-Global-Index'
+          KeySchema:
+            - AttributeName: ST
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: !Ref 'ReadCapacityUnits'
+            WriteCapacityUnits: !Ref 'WriteCapacityUnits'
+
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: !Sub '${AWS::StackName}-dynamodbAccessRole'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:*
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - logs:*
+                Resource: "*"
+        - PolicyName: !Sub '${AWS::StackName}-ec2fleetAccessRole'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ec2:*
+                Resource: "*"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEC2FullAccess
+        - arn:aws:iam::aws:policy/AWSLambdaExecute
+        - arn:aws:iam::aws:policy/AdministratorAccess
+  CWTTranscribeJobEventRule:
+    DependsOn:
+      - InitFunction
+    Properties:
+      Description: Events rule for CWTTranscribeJobEventRule
+      Name: !Sub '${AWS::StackName}-CWTTranscribeJobEventRule'
+      EventPattern:
+        detail:
+          TranscriptionJobStatus:
+            - COMPLETED
+            - FAILED
+        detail-type:
+          - Transcribe Job State Change
+        source:
+          - aws.transcribe
+      State: ENABLED
+      Targets:
+        - Arn:
+            Fn::GetAtt:
+              - InitFunction
+              - Arn
+          Id:
+            Ref: InitFunction
+    Type: AWS::Events::Rule
+
+  lambdaFunctionPermissionForTranscibe:
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+          - InitFunction
+          - Arn
+      Principal: events.amazonaws.com
+      SourceAccount: !Ref 'AWS::AccountId'
+      SourceArn:
+        Fn::GetAtt:
+          - CWTTranscribeJobEventRule
+          - Arn
+    Type: AWS::Lambda::Permission
+
+  InitFunction:
+    Type: AWS::Lambda::Function
+    DependsOn:
+      - LambdaRole
+    Properties:
+      Description: 'This function initializes the DynamoDB table with Instance ID status'
+      FunctionName: !Sub '${AWS::StackName}-InitFunction'
+      Environment:
+        Variables:
+          DYNAMODB_INSTANCEID_TABLE_NAME: !Sub '${AWS::StackName}-TranscribeJobsStateTable'
+          DYNAMODB_GSI_ST: 'ST-Global-Index'
+          AWSREGION: !Ref AWS::Region
+      Code:
+        S3Bucket: !Ref UnicornGymS3BucketCode
+        S3Key: !Ref S3Key
+      Handler: lambda_function.lambda_handler
+      Role:
+        Fn::GetAtt: [ LambdaRole , "Arn" ]
+      Runtime: python3.7
+      Timeout: 900
+
+  S3BucketRecordings:
+    Type: AWS::S3::Bucket
+    DependsOn: lambdaFunctionPermissionForS3
+    Properties:
+      BucketName: !Ref UnicornGymS3BucketFiles
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Event: s3:ObjectCreated:*
+            Function: !GetAtt [ InitFunction, Arn]
+
+  lambdaFunctionPermissionForS3:
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+          - InitFunction
+          - Arn
+      Principal: s3.amazonaws.com
+      SourceAccount: !Ref 'AWS::AccountId'
+      SourceArn:
+        Fn::Sub: arn:aws:s3:::${UnicornGymS3BucketFiles}
+    Type: AWS::Lambda::Permission
+
+Outputs:
+  awsRegionId:
+    Description: The AWS Region ID your template was launched in
+    Value: !Ref AWS::Region
+
+  S3BucketRecordingsURL:
+    Value: !Join ['', ['https://', !GetAtt [S3BucketRecordings, DomainName]]]
+    Description: Name of S3 bucket
+
+  InitFunction:
+    Description: InitFunction
+    Value: !Ref InitFunction
+
+
+...

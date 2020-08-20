@@ -22,7 +22,7 @@ spec:
           effect: "PreferNoSchedule"
       containers:
         - name: batch-app
-          image: 000474600478.dkr.ecr.us-east-1.amazonaws.com/test-batch-eks1
+          image: 000474600478.dkr.ecr.us-east-1.amazonaws.com/ec2-spot-eks-batch:latest
           resources:
             requests:
               memory: "512Mi"
@@ -34,8 +34,8 @@ spec:
             - name: AWSRegion
               value: us-east-1              
             - name: s3InputBucket
-              value: eksbatch22-mys3inputbucket 
+              value: ecs-refarch-batch-mys3inputbucket-ar9bqf6pt4xq  
             - name: s3OutputBucket
-              value: eksbatch22-mys3outputbucket-dtd99ellrd6 
+              value: ecs-refarch-batch-mys3outputbucket-1bqq9vhjce8kv 
             - name: SQSBatchQueue
-              value: eksbatch22-SQSBatchQueue                
+              value: SQSBatchQueue                

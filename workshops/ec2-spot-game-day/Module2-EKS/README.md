@@ -188,8 +188,12 @@ Deploy the Application
     
 Upload the jpg file into the input S3 Bucket
 
-  `Use manual / automation upload
-      
+   `$ Use manual / automation upload`
+  
+Upload the jpg file into the input S3 Bucket
+
+  `$ Check the output S3 bucket`
+        
 ### Step7 : How to simulate spot interruption and test your apps against the interruptions
 
 ##### Deploy the CFN stack ec2-spot-gameday-module2-eks-spotfleet.yaml. Enter the EKS Stack name in parameters section

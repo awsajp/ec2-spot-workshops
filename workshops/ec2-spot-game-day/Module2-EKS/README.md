@@ -141,7 +141,60 @@ helm install aws-node-termination-handler \
 kubectl get daemonsets --all-namespaces
 
 
-### Step5 : How to simulate spot interruption and test your apps against the interruptions
+### Step6 : How to deploy batch application in K8S cluster
+
+Follow these steps to run the template.
+
+###Step 1: Clone the Github repository and build the Docker image
+To run the entire example, first clone the source repository, using the following command:
+
+  `$ git clone https://github.com/jalawala/ec2-spot-workshops.git
+
+Build and push the Docker image to a Docker registry (such as Docker Hub):
+
+  `$ cd workshops/ec2-spot-game-day/Module2-EKS/batch-app`
+
+Build the Docker image:
+
+  `$ docker build -t ec2-spot-gameday/batch-app .`
+
+Get the ECR URL Docker image:
+
+  `$ export ECR_REPO_URI=$(aws ecr describe-repositories --repository-names ec2-spot-gameday/batch-app | jq -r '.repositories[0].repositoryUri')`
+
+Make sure to log in with your Docker Hub account credentials:
+
+  `$ aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ECR_REPO_URI`
+
+Tag the image:
+
+  `$ docker tag ec2-spot-gameday/batch-app:latest $ECR_REPO_URI`
+
+Push the image:
+
+  `$ docker push $ECR_REPO_URI`
+  
+Copy the template file
+
+  `$ cp templates/batch-app.yaml .`
+  
+Update the variables (%DOCKER_IMAGE%, %S3INPUTBUCKET%,  %S3OUTPUTBUCKET%, %SQSQUEUE%) in the batch-app.yaml file with CFN o/p values:
+
+  `TBD : use some sed command to replace this values or do it manually`
+
+Deploy the Application
+
+  `$ kubectl apply -f batch-app.yaml`
+    
+Upload the jpg file into the input S3 Bucket
+
+   `$ Use manual / automation upload`
+  
+Upload the jpg file into the input S3 Bucket
+
+  `$ Check the output S3 bucket`
+        
+### Step7 : How to simulate spot interruption and test your apps against the interruptions
 
 ##### Deploy the CFN stack ec2-spot-gameday-module2-eks-spotfleet.yaml. Enter the EKS Stack name in parameters section
 

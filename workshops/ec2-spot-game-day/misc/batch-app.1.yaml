@@ -1,0 +1,41 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: batch-app
+  labels:
+    app: batch-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: batch-app
+  template:
+    metadata:
+      labels:
+        app: batch-app
+    spec:
+      tolerations:
+        - key: "spotInstance"
+          operator: "Equal"
+          value: "true"
+          effect: "PreferNoSchedule"
+      containers:
+        - name: batch-app
+          image: 000474600478.dkr.ecr.us-east-1.amazonaws.com/ec2-spot-gameday/batch-app
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "128m"
+            limits:
+              memory: "512Mi"
+              cpu: "256m"
+          env:
+            - name: AWSRegion
+              value: us-east-1              
+            - name: s3InputBucket
+              value: eksbatch22-mys3inputbucket 
+            - name: s3OutputBucket
+              value: eksbatch22-mys3outputbucket-dtd99ellrd6 
+            - name: SQSBatchQueue
+              value: eksbatch22-SQSBatchQueue                

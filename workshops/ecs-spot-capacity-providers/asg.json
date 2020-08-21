@@ -1,0 +1,59 @@
+{
+  "AutoScalingGroupName": "asg-test-scale-in",
+  "MixedInstancesPolicy": {
+    "LaunchTemplate": {
+      "LaunchTemplateSpecification": {
+        "LaunchTemplateName": "EcsSpotWorkshop",
+        "Version": "1"
+      },
+      "Overrides": [
+        {
+          "InstanceType": "m5.large"
+        },
+        {
+          "InstanceType": "m5a.large"
+        },
+        {
+          "InstanceType": "m5ad.large"
+        },
+        {
+          "InstanceType": "m5d.large"
+        },
+        {
+          "InstanceType": "m5dn.large"
+        },
+        {
+          "InstanceType": "m5n.large"
+        },
+        {
+          "InstanceType": "t3.large"
+        },
+        {
+          "InstanceType": "t3a.large"
+        },
+        {
+          "InstanceType": "m4.large"
+        },
+        {
+          "InstanceType": "t2.large"
+        }       
+      ]
+    },
+    "InstancesDistribution": {
+      "OnDemandAllocationStrategy": "prioritized",
+      "OnDemandBaseCapacity": 0,
+      "OnDemandPercentageAboveBaseCapacity": 0,
+      "SpotAllocationStrategy": "capacity-optimized"
+    }
+  },
+  "MinSize": 0,
+  "MaxSize": 50,
+  "DesiredCapacity": 0,
+  "DefaultCooldown": 300,
+  "HealthCheckGracePeriod": 300, 
+  "HealthCheckType": "EC2",
+  "VPCZoneIdentifier": "subnet-0c07359b41da1e17c,subnet-01e89d5cc1b12f515",
+      "TerminationPolicies": [ 
+        "DEFAULT" 
+  ]
+}

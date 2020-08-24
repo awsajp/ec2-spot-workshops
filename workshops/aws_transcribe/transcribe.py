@@ -42,6 +42,40 @@ def checkTranscribeJobs(job_name):
     #print(text)  
     
 
+def deleteTranscribeJobs(JobNameContains, MaxResults):
+
+        
+  print("below are list of transciption jobs")
+  response = transcribe.list_transcription_jobs(
+      JobNameContains=JobNameContains, 
+      MaxResults=MaxResults
+  )
+  #pprint(response)
+  JobSummaries=response['TranscriptionJobSummaries']
+  print("Number of Jobs returned is {}".format((len(JobSummaries))))
+  
+  for job in JobSummaries:
+    job_name = job['TranscriptionJobName']
+    #pprint(job_name)
+    print("Deleting the TranscriptionJobName {}".format(job_name))
+    response = transcribe.delete_transcription_job(
+        TranscriptionJobName=job_name
+    )  
+      
+  
+def deleteObjectsinS3Bucket(s3bucketname, PrefixName):
+  #response = s3client.list_objects(
+  #    Bucket=s3bucketname
+  #)
+  #pprint(response)  
+  
+  s3 = boto3.resource('s3')
+  bucket = s3.Bucket(s3bucketname)
+  for obj in bucket.objects.filter(Prefix=PrefixName):
+      #s3.Object(bucket.name,obj.key).delete()  
+      pprint("Deleting the Object={}".format((obj.key)))
+      #s3.Object(bucket.name,obj.key).delete()
+
 def startTranscribeJobs(s3bucketname):
   response = s3client.list_objects(
       Bucket=s3bucketname
@@ -320,8 +354,8 @@ if __name__ == '__main__':
   #job_uri = 'https://s3bucketaudio.s3.amazonaws.com/IntroducingAWSCloudMapandAWSAppMesh.mp3'
   
   #startTranscribeJobs(s3bucketname)
-  job_name ='GettingstartedwithservicemeshAWSAppMesh.mp4'
-  waitforTranscribeJobs(job_name)
+  #job_name ='GettingstartedwithservicemeshAWSAppMesh.mp4'
+  #waitforTranscribeJobs(job_name)
   #scheduleTranscribeJobs(job_name, job_uri)
   #waitforTranscribeJobs(job_name)
 
@@ -330,6 +364,17 @@ if __name__ == '__main__':
   #checkTranscribeJobs(job_name)
   #transcribeS3bucket(s3bucketname)
   
+  JobNameContains='mp4'
+  MaxResults=5
+  #deleteTranscribeJobs(JobNameContains, MaxResults)
+  s3bucketname='unicorngym-unicorngymsrecordings'
+  PrefixName=''
+  deleteObjectsinS3Bucket(s3bucketname, PrefixName)
+  
+  s3Srcbucketname='unicorngym-unicorngymsrecordings'
+  PrefixName=''
+  s3Dstbucketname='unicorngym-unicorngymsrecordings'
+  deleteObjectsinS3Bucket(s3bucketname, PrefixName)  
   
 
 

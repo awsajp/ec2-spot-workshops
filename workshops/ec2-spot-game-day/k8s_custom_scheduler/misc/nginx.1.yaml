@@ -21,7 +21,7 @@ spec:
           value: "true"
           effect: "PreferNoSchedule"
       nodeSelector:
-        spotsa: jp
+        lifecycle: OnDemand
       schedulerName: Ec2SpotK8sScheduler  
       containers:
         - name: nginx-no-split

@@ -154,6 +154,7 @@ def createLaunchTemplate():
 
         #pprint("type={}".format(type(NumberOfEBSVolumes)))
 
+        pprint("createLaunchTemplate Creating the launchTemplate")
         InputFile = "user-data.txt"
         OutputFile = "/tmp/OutputFile.txt"
 
@@ -186,7 +187,7 @@ def createLaunchTemplate():
                 }
             })
 
-        pprint("BlockDeviceMappings={} launchTemplateName={}".format(BlockDeviceMappings, launchTemplateName))
+        #pprint("BlockDeviceMappings={} launchTemplateName={}".format(BlockDeviceMappings, launchTemplateName))
 
         response = ec2client.create_launch_template(
             LaunchTemplateName=launchTemplateName,
@@ -222,6 +223,7 @@ def createLaunchTemplate():
         #print("response={}".format((str(response))))
 
         launchTemplateId = response['LaunchTemplate']['LaunchTemplateId']
+        pprint("createLaunchTemplate completed successfully. launchTemplateId={}".format(launchTemplateId))
         state = "LT_CREATE_SUCCESS"
         return state, launchTemplateId
 
@@ -292,7 +294,7 @@ def createLaunchTemplateVersion(launchTemplateId, launchTemplateVersion, ImageId
 def createEC2Fleet(launchTemplateId, launchTemplateVersion,SubnetId,TotalTargetCapacity,OnDemandTargetCapacity,SpotTargetCapacity):
 
     try:
-
+        pprint("createEC2Fleet starting launchTemplateId={} launchTemplateVersion={} SubnetId={} TotalTargetCapacity={} OnDemandTargetCapacity={} SpotTargetCapacity={}".format(launchTemplateId, launchTemplateVersion, SubnetId, TotalTargetCapacity, OnDemandTargetCapacity, SpotTargetCapacity))
         Overrides=[]
         InstanceTypesList= InstanceTypes.split(',')
         subnetIdsList = SubnetId.split(',')
@@ -432,7 +434,7 @@ def updateInstanceDataInDynamoDB(Lifecycle, InstancesDescription):
         state = "UPDATE_DB_FAILURE"
         return state, str(e)
     except Exception as e:
-        pprint("updateInstanceDataInDynamoDB failed with error={}".format(str(e))
+        pprint("updateInstanceDataInDynamoDB failed with error={}".format(str(e)))
         state = "UPDATE_DB_FAILURE"
         return state, str(e)
 
@@ -742,7 +744,7 @@ def CleanupClusterResources():
         if UseExistingCluster == "NO":
             pprint("Disabling the CWTEventRule={}".format(CWTEventRule))
             response = cwtclient.disable_rule( Name=CWTEventRule   )
-            time.sleep(10)
+            time.sleep(5)
 
         for InstanceData in InstancesDescription:
 
@@ -754,15 +756,16 @@ def CleanupClusterResources():
                 pprint("Terminating the EC2 InstanceId={}".format(InstanceId))
                 response = ec2client.terminate_instances( InstanceIds=[ InstanceId ], )
 
-        response = InstanceTable.get_item(Key={'InstanceId': 'launchTemplateData'})
-        if 'Item' in response.keys():
-            launchTemplateId = response['Item']['LaunchTemplateId']
-            response = ec2client.delete_launch_template( LaunchTemplateId=launchTemplateId )
-            print("Deleting the launchTemplateData from dynamodb")
-            response = InstanceTable.delete_item( Key={ "InstanceId': 'launchTemplateData' } )
+        response = ec2client.describe_launch_templates(LaunchTemplateNames=[launchTemplateName])
+        if response['LaunchTemplates'] != []:
+            pprint("Deleting the launchTemplateName={}".format(launchTemplateName))
+            response = ec2client.delete_launch_template( LaunchTemplateName=launchTemplateName )
 
-            except Exception as e:
-        pprint("CleanupClusterResources failed with message={}".format(str(e))
+        print("Deleting the launchTemplateData from dynamodb")
+        response = InstanceTable.delete_item( Key={ 'InstanceId': 'launchTemplateData' } )
+
+    except Exception as e:
+        pprint("CleanupClusterResources failed with message={}".format(str(e)))
         state = "CLEANUP_HANLDER_FAILURE"
         return state, str(e)
 
@@ -781,10 +784,12 @@ def lambda_handler(event, context):
                 if 'Item' in response.keys():
                     launchTemplateId = response['Item']['LaunchTemplateId']
                     launchTemplateVersion = response['Item']['LaunchTemplateVersion']
+                    pprint("launchTemplateData found in dynamodb. launchTemplateId={} launchTemplateVersion={}".format(launchTemplateId, launchTemplateVersion))
                 else:
-                    if ExistingLaunchTemplateId != "INVALID":
+                    pprint("ExistingLaunchTemplateId={} ExistingLaunchTemplateVersion={}".format(ExistingLaunchTemplateId, ExistingLaunchTemplateVersion))
+                    if ExistingLaunchTemplateId is not None:
                         launchTemplateId = ExistingLaunchTemplateId
-                        if ExistingLaunchTemplateVersion != "INVALID":
+                        if ExistingLaunchTemplateVersion is not None:
                             launchTemplateVersion = ExistingLaunchTemplateVersion
                         else:
                             launchTemplateVersion = '1'
@@ -797,7 +802,7 @@ def lambda_handler(event, context):
                             pprint("Error occured while processing the event={} with error={}".format(event, launchTemplateId))
 
 
-                    pprint("Adding launchTemplateId=%d launchTemplateName={} launchTemplateVersion={}".format(launchTemplateName, LaunchTemplateId, launchTemplateVersion))
+                    pprint("Adding launchTemplateId=%d launchTemplateName={} launchTemplateVersion={}".format(launchTemplateName, launchTemplateId, launchTemplateVersion))
                     response = InstanceTable.put_item(
                         Item={
                             'InstanceId': 'launchTemplateData',
@@ -863,27 +868,28 @@ def lambda_handler(event, context):
                         pprint("Error occured while processing the event={} with message={}".format(event, message))
 
             except Exception as e:
-                pprint("Error occured while processing the event={}".format(event)
-
-                elif event['RequestType'] == "Delete":
+                pprint("Error occured while processing the event={} error={}. So Cleaning up Resources..".format(event, str(e)))
                 CleanupClusterResources()
-                elif event['RequestType'] == "Snapshot":
-                InstanceId = event['InstanceId']
-                createSnapshots(InstanceId)
-                elif event['RequestType'] == "Update":
-                InstanceId = event['InstanceId']
-                updateInstanceIdInDynamoDB(InstanceId)
-                else:
-                print("CFN event RequestType={} is NOT handled currently".format(event['RequestType']))
+
+        elif event['RequestType'] == "Delete":
+            CleanupClusterResources()
+        elif event['RequestType'] == "Snapshot":
+            InstanceId = event['InstanceId']
+            createSnapshots(InstanceId)
+        elif event['RequestType'] == "Update":
+            InstanceId = event['InstanceId']
+            updateInstanceIdInDynamoDB(InstanceId)
+        else:
+            print("CFN event RequestType={} is NOT handled currently".format(event['RequestType']))
 
 
-                #responseData = {}
-                #responseData['Data'] = '1'
-                #cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData,"CustomResourcePhysicalID")
-                else:
-                InstanceId = event['detail']['instance-id']
-                print("Received EC2 Instance State-change Notification InstanceId={}...".format(InstanceId))
-                handleNodeTermination(InstanceId)
+        #responseData = {}
+        #responseData['Data'] = '1'
+        #cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData,"CustomResourcePhysicalID")
+    else:
+        InstanceId = event['detail']['instance-id']
+        print("Received EC2 Instance State-change Notification InstanceId={}...".format(InstanceId))
+        handleNodeTermination(InstanceId)
 
     return {
         'statusCode': 200,

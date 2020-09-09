@@ -16,56 +16,18 @@ Metadata:
       BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
       License for the specific language governing permissions and limitations under the License.'
 
-  AWS::CloudFormation::Interface:
-    ParameterGroups:
-      -
-        Label:
-          default: "S3 Bucket Configuration for the Lambda Code"
-        Parameters:
-          - S3BucketName
-          - S3Key
-      -
-        Label:
-          default: "Stateful Workload Configuration"
-        Parameters:
-          - UseExistingCluster
-          - ClusterInstanceTag
-          - ExistingVPCId
-          - ExistingSubnetIdsList
-          - ExistingLaunchTemplateId
-          - ExistingLaunchTemplateVersion
-          - ExistingInstanceProfile
-          - NumberOfEBSVolumes
-          - EBSVolumeDeviceNames
-          - EBSVolumeDeviceSizes
-          - EBSVolumeMountPaths
-          - RootEBSAMIId
-          - BaseInstanceType
-          - KeyPairName
-          - RetainPrivateIP
-          - sourceCidr
-          - InstanceTypes
-          - TotalTargetCapacity
-          - OnDemandTargetCapacity
-          - SpotTargetCapacity
-      -
-        Label:
-          default: "S3 Bucket Configuration"
-        Parameters:
-          - S3BucketName
-          - S3Key
-      -
-        Label:
-          default: "DynamoDB Configuration"
-        Parameters:
-          - ReadCapacityUnits
-          - WriteCapacityUnits
+
 
 Parameters:
 
+  RetainPrivateIP:
+    Type: String
+    Description: "Enter YES or NO to enable or disable the RetainPrivateIP feature"
+    Default: "YES"
+
   S3BucketName:
     Type: String
-    Description: "Name of the S3 Bucket Where the lambda function zip file exists"
+    Description: "Name of the S3 Bucket Where the lambda function xip file exists"
     Default: "ec2spotstatefulworkload2"
 
   S3Key:
@@ -73,111 +35,32 @@ Parameters:
     Description: "The Object Name in the S3 Bucket Where the lambda function xip file exists"
     Default: "lambda_function.zip"
 
-  UseExistingCluster:
-    Description: "Select YES if you want to existing workload/cluster for this stateful solution"
-    Default: NO
-    Type: String
-    AllowedValues:
-      - YES
-      - NO
-
-  ClusterInstanceTag:
-    Description: "Specify the Tag <KEY>=<VALUE> to be used for th EC2 instances in the stateful solution"
-    Default: "ClusterName=CassandraCluster2"
-    Type: String
-
-  ExistingVPCId:
-    Description: "must specify VPC Id if UseExistingVPC is YES"
-    Default: "INVALID"
-    Type: AWS::EC2::VPC::Id
-
-  ExistingSubnetIdsList:
-    Description: "must select the list of subnets Ids if UseExistingVPC is YES"
-    Default: "INVALID"
-    Type: List<AWS::EC2::Subnet::Id>
-
-  NumberOfEBSVolumes:
-    Type: Number
-    Description: "Specify number of EBS volumes attached to the instance including the Root EBS Volume"
-    Default: 3
-
-  EBSVolumeDeviceNames:
-    Description: "Specify the device names for all the EBS volumes"
-    Default: "/dev/xvda,/dev/xvdb,/dev/xvdc"
-    Type: String
-
-  EBSVolumeDeviceSizes:
-    Description: "Specify the sizes (in GB) for all the EBS volumes"
-    Default: "30,50,200"
-    Type: String
-
-  EBSVolumeMountPaths:
-    Description: "Specify the mount points for all the EBS volumes"
-    Default: "/,/cassandra,/var/lib/cassandra"
-    Type: String
-
-  RootEBSAMIId:
-    Description: "Specify AMI for the Root EBS volume if UseExistingCluster is NO"
-    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
-    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
-
-  RetainPrivateIP:
-    Type: String
-    Description: "Enter YES if the private ip of the instances needs to be retained"
-    Default: "YES"
-    AllowedValues:
-      - YES
-      - NO
-
   sourceCidr:
     Default: 0.0.0.0/0
-    Description: "Optional - CIDR/IP range for instance ssh/http access and load balancer http access"
+    Description: Optional - CIDR/IP range for instance ssh/http access and load balancer http
+      access
     Type: String
-
-  BaseInstanceType:
-    Type: String
-    Description: "multiple spot instances to override(seperated by comma)"
-    Default: "m4.large"
-
-  ExistingLaunchTemplateId:
-    Type: String
-    Description: "multiple spot instances to override(seperated by comma)"
-    Default: "INVALID"
-
-  ExistingLaunchTemplateVersion:
-    Type: String
-    Description: "multiple spot instances to override(seperated by comma)"
-    Default: "INVALID"
-
-  ExistingInstanceProfile:
-    Type: String
-    Description: "multiple spot instances to override(seperated by comma)"
-    Default: "INVALID"
 
   InstanceTypes:
     Type: String
     Description: "multiple spot instances to override(seperated by comma)"
     Default: "m4.large,m5.large,c4.large,c5.large,r4.large,r5.large,t3.large,t3a.large"
 
-  KeyPairName:
-    Type: AWS::EC2::KeyPair::KeyName
-    Description: "awsajp_keypair"
-    Default: "awsajp_keypair"
-
-  TotalTargetCapacity:
-    Type: Number
-    Description: "Total Capacity"
-    Default: 2
 
   OnDemandTargetCapacity:
     Type: Number
     Description: "on-demand  capacity"
-    Default: 1
+    Default: 2
 
   SpotTargetCapacity:
     Type: Number
     Description: "Spot Capacity"
-    Default: 1
+    Default: 2
+
+  TotalTargetCapacity:
+    Type: Number
+    Description: "Total Capacity"
+    Default: 4
 
   ReadCapacityUnits:
     Description: Provisioned read throughput
@@ -195,14 +78,31 @@ Parameters:
     MaxValue: '10000'
     ConstraintDescription: must be between 5 and 10000
 
-Conditions:
-  CreateClusterResources: !Equals [!Ref UseExistingCluster, "NO"]
+  RootEBSVolumeSize:
+    Type: Number
+    Description: "Root EBS Volume Size"
+    Default: 8
+
+  AdditionalEBSVolume1Size:
+    Type: Number
+    Description: "Additional EBS Volume1 Size"
+    Default: 8
+
+  AdditionalEBSVolume2Size:
+    Type: Number
+    Description: "Additional EBS Volume2 Size"
+    Default: 8
+
+  AMAZONLINUX2AMI:
+    Description: AMI ID
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
+
 
 Resources:
 
   vpc:
     Type: AWS::EC2::VPC
-    Condition: CreateClusterResources
     Properties:
       CidrBlock: 10.0.0.0/16
       EnableDnsHostnames: true
@@ -213,13 +113,11 @@ Resources:
 
   internetGateway:
     Type: AWS::EC2::InternetGateway
-    Condition: CreateClusterResources
     DependsOn:
       - vpc
 
   attachGateway:
     Type: AWS::EC2::VPCGatewayAttachment
-    Condition: CreateClusterResources
     DependsOn:
       - vpc
       - internetGateway
@@ -230,7 +128,6 @@ Resources:
 
   publicSubnet1:
     Type: AWS::EC2::Subnet
-    Condition: CreateClusterResources
     DependsOn: attachGateway
     Properties:
       AvailabilityZone:
@@ -247,7 +144,6 @@ Resources:
 
   publicSubnet2:
     Type: AWS::EC2::Subnet
-    Condition: CreateClusterResources
     DependsOn: attachGateway
     Properties:
       AvailabilityZone:
@@ -264,7 +160,6 @@ Resources:
 
   privateSubnet1:
     Type: AWS::EC2::Subnet
-    Condition: CreateClusterResources
     Properties:
       AvailabilityZone:
         Fn::Select:
@@ -280,7 +175,6 @@ Resources:
 
   privateSubnet2:
     Type: AWS::EC2::Subnet
-    Condition: CreateClusterResources
     Properties:
       AvailabilityZone:
         Fn::Select:
@@ -295,7 +189,6 @@ Resources:
 
   publicRouteTable:
     Type: AWS::EC2::RouteTable
-    Condition: CreateClusterResources
     DependsOn:
       - vpc
       - attachGateway
@@ -307,7 +200,6 @@ Resources:
 
   RouteTablePrivate:
     Type: AWS::EC2::RouteTable
-    Condition: CreateClusterResources
     DependsOn: vpc
     Properties:
       VpcId: !Ref vpc
@@ -317,7 +209,6 @@ Resources:
 
   publicSubnet1RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
-    Condition: CreateClusterResources
     DependsOn:
       - publicRouteTable
       - publicSubnet1
@@ -328,7 +219,6 @@ Resources:
 
   publicSubnet2RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
-    Condition: CreateClusterResources
     DependsOn:
       - publicRouteTable
       - publicSubnet2
@@ -340,7 +230,6 @@ Resources:
 
   privateSubnet1RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
-    Condition: CreateClusterResources
     DependsOn:
       - RouteTablePrivate
       - privateSubnet1
@@ -350,7 +239,6 @@ Resources:
 
   privateSubnet2RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
-    Condition: CreateClusterResources
     DependsOn:
       - RouteTablePrivate
       - privateSubnet2
@@ -358,9 +246,10 @@ Resources:
       RouteTableId: !Ref RouteTablePrivate
       SubnetId: !Ref privateSubnet2
 
+
+
   EIPNATGateway:
     Type: AWS::EC2::EIP
-    Condition: CreateClusterResources
     DependsOn:
       - attachGateway
       - vpc
@@ -369,7 +258,6 @@ Resources:
 
   NATGateway:
     Type: AWS::EC2::NatGateway
-    Condition: CreateClusterResources
     DependsOn:
       - publicSubnet1
     Properties:
@@ -378,7 +266,6 @@ Resources:
 
   publicRoute:
     Type: AWS::EC2::Route
-    Condition: CreateClusterResources
     DependsOn:
       - publicRouteTable
       - internetGateway
@@ -390,7 +277,6 @@ Resources:
 
   privateRoute:
     Type: AWS::EC2::Route
-    Condition: CreateClusterResources
     DependsOn:
       - RouteTablePrivate
       - NATGateway
@@ -401,7 +287,6 @@ Resources:
 
   loadBalancerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
-    Condition: CreateClusterResources
     DependsOn:
       - vpc
     Properties:
@@ -416,7 +301,6 @@ Resources:
 
   ALB:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
-    Condition: CreateClusterResources
     DependsOn:
       - loadBalancerSecurityGroup
       - publicSubnet1
@@ -451,7 +335,6 @@ Resources:
 
   ALBListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
-    Condition: CreateClusterResources
     DependsOn:
       - ALB
       - TargetGroup
@@ -463,9 +346,9 @@ Resources:
       Port: 80
       Protocol: HTTP
 
+
   instanceRole:
     Type: AWS::IAM::Role
-    Condition: CreateClusterResources
     Properties:
       RoleName: !Sub '${AWS::StackName}-InstanceRole'
       AssumeRolePolicyDocument:
@@ -491,7 +374,6 @@ Resources:
 
   instanceProfile:
     Type: AWS::IAM::InstanceProfile
-    Condition: CreateClusterResources
     DependsOn:
     - instanceRole
     Properties:
@@ -502,7 +384,6 @@ Resources:
 
   instanceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
-    Condition: CreateClusterResources
     Properties:
       SecurityGroupIngress:
         - CidrIp:
@@ -518,6 +399,179 @@ Resources:
       GroupDescription: Allow traffic from Internet
       GroupName:  !Sub '${AWS::StackName}-InstanceSG'
       VpcId: !Ref vpc
+
+  LaunchTemplate:
+    DependsOn:
+      - instanceProfile
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateData:
+        InstanceType: t3.large
+        BlockDeviceMappings:
+          - DeviceName: /dev/xvda
+            Ebs:
+              VolumeType: gp2
+              DeleteOnTermination: 'false'
+              VolumeSize: !Ref RootEBSVolumeSize
+          - DeviceName: /dev/xvdb
+            Ebs:
+              VolumeType: gp2
+              DeleteOnTermination: 'false'
+              VolumeSize: !Ref AdditionalEBSVolume1Size
+          - DeviceName: /dev/xvdc
+            Ebs:
+              VolumeType: gp2
+              DeleteOnTermination: 'false'
+              VolumeSize: !Ref AdditionalEBSVolume2Size
+        ImageId: !Ref AMAZONLINUX2AMI
+        IamInstanceProfile:
+          Arn:
+            Fn::GetAtt:
+            - instanceProfile
+            - Arn
+
+        TagSpecifications:
+          - ResourceType: instance
+            Tags:
+              - Key: Name
+                Value: "EC2FleetLT"
+
+        UserData:
+          Fn::Base64: !Sub |
+            #!/bin/bash
+            yum update -y
+
+            sudo yum -y install python3 python3-wheel python-pi
+
+            cat <<EOF > requirements.txt
+            Flask==0.10.1
+            Flask-Cors==1.10.2
+            requests
+            boto3
+            EOF
+
+            sudo pip3 install -r requirements.txt
+
+
+            cat <<EOF > app.py
+            from flask import Flask, render_template
+            from flask.ext.cors import CORS, cross_origin
+            import os
+            import requests
+            import json
+            import time
+            import sys
+            import boto3
+            import datetime
+
+            app = Flask(__name__)
+            cors = CORS(app)
+            app.config['CORS_HEADERS'] = 'Content-Type'
+
+            URL = "http://169.254.169.254/latest/dynamic/instance-identity/document"
+            InstanceData = requests.get(URL).json()
+
+            @app.route('/')
+            @cross_origin()
+            def index():
+
+              response = ""
+              response +="<head> <title>Ec2 Spot Stateful Workload</title> </head>"
+              response += "<h2>Here is the status of the all the EBS volumes on this EC2 instance </h2> <hr/>"
+
+              try:
+                URL = "http://169.254.169.254/latest/meta-data/spot/termination-time"
+                SpotInt = requests.get(URL)
+                if SpotInt.status_code == 200:
+                  response += "<h1>This Spot Instance Got Interruption and Termination Date is {} </h1> <hr/>".format(SpotInt.text)
+
+
+                v1 = open('/home/ec2-user/volume1/state.txt', 'r')
+                v2 = open('/home/ec2-user/volume2/state.txt', 'r')
+                v3 = open('/home/ec2-user/volume3/state.txt', 'r')
+
+                response += "<h3>Status of Volume1 </h3> <hr/>"
+                for x in v1:
+                  response += "<li>{}</li>".format(x)
+
+                #response += v1.read()
+                response += "<h3>Status of Volume2 </h3> <hr/>"
+                for x in v2:
+                  response += "<li>{}</li>".format(x)
+                #response += v2.read()
+                response += "<h3>Status of Volume3 </h3> <hr/>"
+                for x in v3:
+                  response += "<li>{}</li>".format(x)
+                #response += v3.read()
+                v1.close()
+                v2.close()
+                v3.close()
+
+              except Exception as inst:
+                response += "<li>Oops !!! Failed to access my instance  metadata with error = {}</li>".format(inst)
+
+              return response
+
+            def mountVolumes():
+
+              os.system("mkdir -p /home/ec2-user/volume1")
+              os.system("mkdir -p /home/ec2-user/volume2")
+              os.system("mkdir -p /home/ec2-user/volume3")
+
+              os.system("sudo mkfs -t xfs /dev/xvdb")
+              os.system("sudo mount /dev/xvdb /home/ec2-user/volume2")
+
+              os.system("sudo mkfs -t xfs /dev/xvdc")
+              os.system("sudo mount /dev/xvdc /home/ec2-user/volume3")
+
+              instanceId = InstanceData['instanceId']
+
+              ec2client = boto3.client('ec2', region_name=InstanceData['region'])
+              describeInstance = ec2client.describe_instances(InstanceIds=[instanceId])
+              instanceData=describeInstance['Reservations'][0]['Instances'][0]
+              if 'InstanceLifecycle' in instanceData.keys():
+                lifecycle = instanceData['InstanceLifecycle']
+              else:
+                lifecycle =  "Ondemand"
+
+
+              instance_type = InstanceData['instanceType']
+              privateIp = InstanceData['privateIp']
+              availability_zone = InstanceData['availabilityZone']
+              Region = InstanceData['region']
+
+              publicIpV4 = requests.get("http://169.254.169.254/latest/meta-data/public-ipv4")
+              publicIp = publicIpV4.text
+
+              AMIId = requests.get("http://169.254.169.254/latest/meta-data/ami-id")
+              AMI = AMIId.text
+
+              v1 = open('/home/ec2-user/volume1/state.txt', 'a')
+              v2 = open('/home/ec2-user/volume2/state.txt', 'a')
+              v3 = open('/home/ec2-user/volume3/state.txt', 'a')
+
+              current_time = datetime.datetime.now()
+              header = "current_time                 InstanceId             privateIp    publicIp        instance_type     AZ        \n"
+              value = str(current_time)+"  "+instanceId+"  "+privateIp   +"  "+ publicIp +"   "+instance_type+"  "+availability_zone+"\n"
+
+              v1.write(header)
+              v1.write(value)
+              v1.close()
+              v2.write(header)
+              v2.write(value)
+              v2.close()
+              v3.write(header)
+              v3.write(value)
+              v3.close()
+
+            if __name__ == '__main__':
+              print("Starting A Simple Web Service ...")
+              mountVolumes()
+              app.run(port=80,host='0.0.0.0')
+            EOF
+
+            sudo python3 app.py
+      LaunchTemplateName: !Sub '${AWS::StackName}-LT'
 
   InstanceStateTable:
     Type: AWS::DynamoDB::Table
@@ -587,6 +641,7 @@ Resources:
         - arn:aws:iam::aws:policy/AmazonEC2FullAccess
         - arn:aws:iam::aws:policy/AWSLambdaExecute
         - arn:aws:iam::aws:policy/AdministratorAccess
+
   InitFunction:
     Type: AWS::Lambda::Function
     DependsOn:
@@ -596,31 +651,31 @@ Resources:
       FunctionName: !Sub '${AWS::StackName}-InitFunction'
       Environment:
         Variables:
-          USE_EXISTING_CLUSTER: !Ref UseExistingCluster
-          EXISTING_CLUSTER_INSTANCE_TAG: !Ref ClusterInstanceTag
-          VPC_ID: !If [CreateClusterResources, !Ref vpc, !Ref ExistingVPCId]
-          SUBNET_IDs_LIST: !If [CreateClusterResources, !Join [",", [!Ref publicSubnet1, !Ref publicSubnet2]], !Ref ExistingSubnetIdsList]
-          EXISTING_LAUNCHTEMPLATE_ID: !Ref ExistingLaunchTemplateId
-          EXISTING_LAUNCHTEMPLATE_VERSION: !Ref ExistingLaunchTemplateVersion
-          EXISTING_INSTANCE_PROFILE:  !If [CreateClusterResources, !Ref instanceProfile, !Ref ExistingInstanceProfile]
-          NUMBER_OF_EBS_VOLUMES: !Ref NumberOfEBSVolumes
-          EBS_VOLUME_DEVICE_NAMES: !Ref EBSVolumeDeviceNames
-          EBS_VOLUME_DEVICE_SIZES: !Ref EBSVolumeDeviceSizes
-          EBS_VOLUME_MOUNT_PATHS: !Ref EBSVolumeMountPaths
-          ROOT_EBS_AMI_ID: !Ref RootEBSAMIId
-          INSTANCE_TYPES_LIST: !Ref InstanceTypes
-          BASE_INSTANCE_TYPE: !Ref BaseInstanceType
-          KEY_PAIR_NAME: !Ref KeyPairName
-          RETAINPRIVATEIP: !Ref RetainPrivateIP
           DYNAMODB_INSTANCEID_TABLE_NAME: !Sub '${AWS::StackName}-InstanceStateTable'
           DYNAMODB_GSI_ST: 'ST-Global-Index'
+          LAUNCH_TEMPLATE_ID: !Ref LaunchTemplate
           CFN_STACK_NAME: ${AWS::StackName}
-          PRIVATE_SUBNET_IDs_LIST: !If [CreateClusterResources, !Join [",", [!Ref privateSubnet1, !Ref privateSubnet2]], "INVALID"]
-          ONDEMANDTARGETCAPACITY:  !Ref OnDemandTargetCapacity
+          ROOT_EBS_VOLUME_SIZE: !Ref RootEBSVolumeSize
+          ADDITIONAL_VOLUM1_SIZE: !Ref AdditionalEBSVolume1Size
+          ADDITIONAL_VOLUM2_SIZE: !Ref AdditionalEBSVolume2Size
+          NUMBER_OF_EBS_VOLUMES: 3
+          EBS_VOLUME_DEVICE_NAMES: '/dev/xvda,/dev/xvdb,/dev/xvdc'
+          EBS_VOLUME_DEVICE_SIZES: '30,50,200'
+          EBS_VOLUME_MOUNT_PATHS: '/,/cassandra,/var/lib/cassandra'
+          ROOT_EBS_AMI_ID: !Ref AMAZONLINUX2AMI
+          INSTANCE_TYPES_LIST: !Ref InstanceTypes
+          BASE_INSTANCE_TYPE: 'm4.large'
+          KEY_PAIR_NAME: 'awsajp_keypair'
+          PUBLIC_SUBNET_IDs_LIST: !Join [",", [!Ref publicSubnet1, !Ref publicSubnet2]]
+          PRIVATE_SUBNET_IDs_LIST: !Join [",", [!Ref privateSubnet1, !Ref privateSubnet2]]
+          ONDEMANDTARGETCAPACITY: !Ref OnDemandTargetCapacity
           SPOTTARGETCAPACITY: !Ref SpotTargetCapacity
           TOTALTARGETCAPACITY: !Ref TotalTargetCapacity
-          TARGET_GROUP_ARN:  !If [CreateClusterResources, !Ref TargetGroup, "INVALID"]
+          RETAINPRIVATEIP: !Ref RetainPrivateIP
+          TARGET_GROUP_ARN: !Ref TargetGroup
+          VPC_ID: !Ref vpc
           AWSREGION: !Ref AWS::Region
+          USE_EXISTING_CLUSTER: 'YES'
       Code:
         S3Bucket: !Ref S3BucketName
         S3Key: !Ref S3Key
@@ -655,7 +710,7 @@ Resources:
         source:
           - aws.ec2
       State: ENABLED
-      Targets:
+      Targets+
         - Arn:
             Fn::GetAtt:
               - InitFunction
@@ -683,6 +738,7 @@ Outputs:
     Description: The AWS Region ID your template was launched in
     Value: !Ref AWS::Region
 
+
   instanceProfile:
     Description: Instance profile ARN
     Value:
@@ -693,66 +749,52 @@ Outputs:
   instanceSecurityGroup:
     Description: Instance security group
     Value: !Ref instanceSecurityGroup
-    Condition: CreateClusterResources
 
   loadBalancerSecurityGroup:
     Description: Load Balancer security group
     Value: !Ref loadBalancerSecurityGroup
-    Condition: CreateClusterResources
 
   vpc:
     Description: The VPC
-    Value: !If [CreateClusterResources, !Ref vpc, !Ref ExistingVPCId]
+    Value: !Ref vpc
 
   publicSubnet1:
     Description: Public subnet 1
     Value: !Ref publicSubnet1
-    Condition: CreateClusterResources
 
   publicSubnet2:
     Description: Public subnet 2
     Value: !Ref publicSubnet2
-    Condition: CreateClusterResources
 
 
   privateSubnet1:
     Description: Private subnet 1
     Value: !Ref privateSubnet1
-    Condition: CreateClusterResources
 
   privateSubnet2:
     Description: Private subnet 2
     Value: !Ref privateSubnet2
-    Condition: CreateClusterResources
+
 
   VPCPublicSubnets:
     Description:  The list of public subnets in the VPC
-    Value: !If [CreateClusterResources, !Join [",", [!Ref publicSubnet1, !Ref publicSubnet2]], !Ref ExistingSubnetIdsList]
+    Value: !Join [",", [!Ref publicSubnet1, !Ref publicSubnet2]]
 
   VPCPrivateSubnets:
     Description:  The list of private subnets in the VPC
     Value: !Join [",", [!Ref privateSubnet1, !Ref privateSubnet2]]
-    Condition: CreateClusterResources
 
   ALBDNSName:
     Description: The Application Load Balancer
     Value: !GetAtt ALB.DNSName
-    Condition: CreateClusterResources
 
   TargetGroup:
     Description: The Target Group
     Value: !Ref TargetGroup
-    Condition: CreateClusterResources
 
-  LaunchTemplateId:
-    Description: The Launch Template Id
-    Value: !Ref ExistingLaunchTemplateId
-    Condition: CreateClusterResources
-
-  LaunchTemplateVersion:
-    Description: The Launch Template Version
-    Value: !Ref ExistingLaunchTemplateVersion
-    Condition: CreateClusterResources
+  LaunchTemplate:
+    Description: The Launch Template
+    Value: !Ref LaunchTemplate
 
   InitFunction:
     Description: InitFunction

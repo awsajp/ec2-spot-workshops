@@ -47,8 +47,8 @@ def index():
 
 
     v1 = open('/home/ec2-user/volume1/state.txt', 'r')
-    v2 = open('EBS_VOLUM2_MOUNT_PATH/state.txt', 'r')
-    v3 = open('EBS_VOLUM3_MOUNT_PATH/state.txt', 'r')
+    v2 = open('/home/ec2-user/volume2/state.txt', 'r')
+    v3 = open('/home/ec2-user/volume3/state.txt', 'r')
 
     response += "<h3>Status of Volume1 </h3> <hr/>"
     for x in v1:
@@ -75,16 +75,14 @@ def index():
 def mountVolumes():
 
   os.system("mkdir -p /home/ec2-user/volume1")
-  os.system("mkdir -p EBS_VOLUM2_MOUNT_PATH")
-  os.system("mkdir -p EBS_VOLUM3_MOUNT_PATH")
+  os.system("mkdir -p /home/ec2-user/volume2")
+  os.system("mkdir -p /home/ec2-user/volume3")
 
   os.system("sudo mkfs -t xfs /dev/xvdb")
-  os.system("sudo mount /dev/xvdb EBS_VOLUM2_MOUNT_PATH")
+  os.system("sudo mount /dev/xvdb /home/ec2-user/volume2")
 
   os.system("sudo mkfs -t xfs /dev/xvdc")
-  os.system("sudo mount /dev/xvdc EBS_VOLUM3_MOUNT_PATH")
-  time.sleep(5)
-  os.system("NODE_SERVICE_START_COMMAND")
+  os.system("sudo mount /dev/xvdc /home/ec2-user/volume3")
 
   instanceId = InstanceData['instanceId']
 
@@ -109,12 +107,12 @@ def mountVolumes():
   AMI = AMIId.text
 
   v1 = open('/home/ec2-user/volume1/state.txt', 'a')
-  v2 = open('EBS_VOLUM2_MOUNT_PATH/state.txt', 'a')
-  v3 = open('EBS_VOLUM3_MOUNT_PATH/state.txt', 'a')
+  v2 = open('/home/ec2-user/volume2/state.txt', 'a')
+  v3 = open('/home/ec2-user/volume3/state.txt', 'a')
 
   current_time = datetime.datetime.now()
-  header = "current_time                 InstanceId             privateIp    publicIp        instance_type     AZ        \n"
-  value = str(current_time)+"  "+instanceId+"  "+privateIp   +"  "+ publicIp +"   "+instance_type+"  "+"availability zone"+"\n"
+  header = "current_time     InstanceId privateIp    publicIp        instance_type     AZ        \n"
+  value = str(current_time)+"  "+instanceId+"  "+privateIp   +"  "+ publicIp +"   "+instance_type+"  "+availability_zone+"\n"
 
   v1.write(header)
   v1.write(value)

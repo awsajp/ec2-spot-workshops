@@ -783,9 +783,9 @@ def lambda_handler(event, context):
           pprint("launchTemplateData found in dynamodb. launchTemplateId={} launchTemplateVersion={}".format(launchTemplateId, launchTemplateVersion))
         else:
           pprint("ExistingLaunchTemplateId={} ExistingLaunchTemplateVersion={}".format(ExistingLaunchTemplateId, ExistingLaunchTemplateVersion))
-          if ExistingLaunchTemplateId is not None:
+          if ExistingLaunchTemplateId != "NA":
             launchTemplateId = ExistingLaunchTemplateId
-            if ExistingLaunchTemplateVersion is not None:
+            if ExistingLaunchTemplateVersion != "NA":
               launchTemplateVersion = ExistingLaunchTemplateVersion
             else:
               launchTemplateVersion = '1'

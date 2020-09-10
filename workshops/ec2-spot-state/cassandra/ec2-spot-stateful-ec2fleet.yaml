@@ -629,6 +629,7 @@ Resources:
           TARGET_GROUP_ARN:  !If [CreateClusterResources, !Ref TargetGroup, "NA"]
           AWSREGION: !Ref AWS::Region
           NODE_SERVICE_START_COMMAND: !Ref NodeServiceStartCommand
+          CWT_EVENT_RULE_NAME: !Sub '${AWS::StackName}-CWTNodeTerminationEventRule'
       Code:
         S3Bucket: !Ref S3BucketName
         S3Key: !Ref S3Key

@@ -89,12 +89,12 @@ Parameters:
   ExistingVPCId:
     Description: "must specify VPC Id if UseExistingVPC is YES"
     Default: "NA"
-    Type: String
+    Type: AWS::EC2::VPC::Id
 
   ExistingSubnetIdsList:
     Description: "must select the list of subnets Ids if UseExistingVPC is YES"
     Default: "NA"
-    Type: String
+    Type: List<AWS::EC2::Subnet::Id>
 
   NumberOfEBSVolumes:
     Type: Number

@@ -755,7 +755,7 @@ def CleanupClusterResources():
     pprint("CleanupClusterResources completed successfully with state={} message={}".format(state, str(e)))
     return state, str(e)
 
-def returnFromLambda(event, message):
+def returnFromLambda(event, context, message):
   responseData = {}
   responseData['Data'] = '1'
   cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData,"CustomResourcePhysicalID")
@@ -796,7 +796,7 @@ def lambda_handler(event, context):
               launchTemplateVersion = '1'
             else:
               pprint("createLaunchTemplate failed for event={} with message={}".format(event, message))
-              returnFromLambda(event, message)
+              returnFromLambda(event, context, message)
 
 
           pprint("Adding launchTemplateId=%d launchTemplateName={} launchTemplateVersion={}".format(launchTemplateName, launchTemplateId, launchTemplateVersion))
@@ -815,7 +815,7 @@ def lambda_handler(event, context):
             pprint("updateExistingClusterinDynamoDB returned with state={} message={}".format(state, message))
           else:
             pprint("Error occured while processing the event={} with message={}".format(event, message))
-            returnFromLambda(event, message)
+            returnFromLambda(event, context, message)
         else:
 
           #pprint("NumberOfEBSVolumes={}".format(NumberOfEBSVolumes))
@@ -863,12 +863,12 @@ def lambda_handler(event, context):
           if "FAILURE" in state:
             pprint("createEC2Fleet failed with state={} message={} forevent={}".format(state, message, event))
             state, message = CleanupClusterResources()
-            returnFromLambda(event, message)
+            returnFromLambda(event, context, message)
 
       except Exception as e:
         pprint("Error occured while processing the event={} message={}.".format(event, str(e)))
         state, message = CleanupClusterResources()
-        returnFromLambda(event, str(e))
+        returnFromLambda(event, context, str(e))
 
     elif event['RequestType'] == "Delete":
       state, message = CleanupClusterResources()
@@ -881,7 +881,7 @@ def lambda_handler(event, context):
     else:
       print("CFN event RequestType={} is NOT handled currently".format(event['RequestType']))
 
-    returnFromLambda(event, "SUCCESS")
+    returnFromLambda(event, context, "SUCCESS")
     #responseData = {}
     #responseData['Data'] = '1'
     #cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData,"CustomResourcePhysicalID")
@@ -891,7 +891,7 @@ def lambda_handler(event, context):
     state, message = handleNodeTermination(InstanceId)
     if "SUCCESS" in state:
       pprint("handleNodeTermination failed for  event={} with state={} message={}".format(event, state, message))
-      returnFromLambda(event, message)
+      returnFromLambda(event, context, message)
 
 
-  returnFromLambda(event, message)
+  returnFromLambda(event, context, message)

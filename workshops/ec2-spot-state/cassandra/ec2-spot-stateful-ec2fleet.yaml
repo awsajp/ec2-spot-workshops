@@ -1,6 +1,6 @@
 ---
 AWSTemplateFormatVersion: 2010-09-09
-Description: EC2 Fleet Template
+Description: Stateful Workload on EC2 Spot Instances
 Metadata:
   Author:
     Description: Jayaprakash Alawala <jalawala@amazon.com>
@@ -26,34 +26,37 @@ Metadata:
           - S3Key
       -
         Label:
-          default: "Stateful Workload Configuration"
+          default: "Common Cluster Configuration"
         Parameters:
           - UseExistingCluster
+          - RetainPrivateIP
           - ClusterInstanceTag
+          - NumberOfEBSVolumes
+          - EBSVolumeDeviceNames
+          - EBSVolumeDeviceSizes
+          - EBSVolumeMountPaths
+          - KeyPairName
+          - InstanceTypes
+          - NodeServiceStartCommand
+      -
+        Label:
+          default: "Existing Cluster Configuration"
+        Parameters:
           - ExistingVPCId
           - ExistingSubnetIdsList
           - ExistingLaunchTemplateId
           - ExistingLaunchTemplateVersion
           - ExistingInstanceProfile
-          - NumberOfEBSVolumes
-          - EBSVolumeDeviceNames
-          - EBSVolumeDeviceSizes
-          - EBSVolumeMountPaths
+      -
+        Label:
+          default: "New Cluster Configuration"
+        Parameters:
           - RootEBSAMIId
           - BaseInstanceType
-          - KeyPairName
-          - RetainPrivateIP
           - sourceCidr
-          - InstanceTypes
           - TotalTargetCapacity
           - OnDemandTargetCapacity
           - SpotTargetCapacity
-      -
-        Label:
-          default: "S3 Bucket Configuration"
-        Parameters:
-          - S3BucketName
-          - S3Key
       -
         Label:
           default: "DynamoDB Configuration"
@@ -75,25 +78,25 @@ Parameters:
 
   UseExistingCluster:
     Description: "Select YES if you want to existing workload/cluster for this stateful solution"
-    Default: NO
+    Default: "NO"
     Type: String
     AllowedValues:
-      - YES
-      - NO
+      - "YES"
+      - "NO"
 
   ClusterInstanceTag:
     Description: "Specify the Tag <KEY>=<VALUE> to be used for th EC2 instances in the stateful solution"
-    Default: "ClusterName=CassandraCluster2"
+    Default: "ClusterName=CassandraClusterSetup2"
     Type: String
 
   ExistingVPCId:
     Description: "must specify VPC Id if UseExistingVPC is YES"
-    Default: "NA"
+    Default: "vpc-988441f0"
     Type: String
 
   ExistingSubnetIdsList:
     Description: "must select the list of subnets Ids if UseExistingVPC is YES"
-    Default: "NA"
+    Default: "subnet-0419da6c,subnet-06013d4b"
     Type: String
 
   NumberOfEBSVolumes:
@@ -124,10 +127,10 @@ Parameters:
   RetainPrivateIP:
     Type: String
     Description: "Enter YES if the private ip of the instances needs to be retained"
-    Default: YES
+    Default: "YES"
     AllowedValues:
-      - YES
-      - NO
+      - "YES"
+      - "NO"
 
   sourceCidr:
     Default: 0.0.0.0/0
@@ -181,7 +184,7 @@ Parameters:
 
   NodeServiceStartCommand:
     Description: "Specify the Node Service Start Command"
-    Default: "ls /home/ec2-user/"
+    Default: "su -c \"/home/ec2-user/apache-cassandra-3.11.6/bin/cassandra\" ec2-user"
     Type: String
 
   ReadCapacityUnits:
@@ -609,7 +612,7 @@ Resources:
           SUBNET_IDs_LIST: !If [CreateClusterResources, !Join [",", [!Ref publicSubnet1, !Ref publicSubnet2]], !Ref ExistingSubnetIdsList]
           EXISTING_LAUNCHTEMPLATE_ID: !Ref ExistingLaunchTemplateId
           EXISTING_LAUNCHTEMPLATE_VERSION: !Ref ExistingLaunchTemplateVersion
-          EXISTING_INSTANCE_PROFILE:  !If [CreateClusterResources, !Ref instanceProfile, !Ref ExistingInstanceProfile]
+          EXISTING_INSTANCE_PROFILE:  !If [CreateClusterResources, !GetAtt instanceProfile.Arn, !Ref ExistingInstanceProfile]
           NUMBER_OF_EBS_VOLUMES: !Ref NumberOfEBSVolumes
           EBS_VOLUME_DEVICE_NAMES: !Ref EBSVolumeDeviceNames
           EBS_VOLUME_DEVICE_SIZES: !Ref EBSVolumeDeviceSizes
@@ -621,7 +624,7 @@ Resources:
           RETAINPRIVATEIP: !Ref RetainPrivateIP
           DYNAMODB_INSTANCEID_TABLE_NAME: !Sub '${AWS::StackName}-InstanceStateTable'
           DYNAMODB_GSI_ST: 'ST-Global-Index'
-          CFN_STACK_NAME: ${AWS::StackName}
+          CFN_STACK_NAME: !Sub '${AWS::StackName}'
           PRIVATE_SUBNET_IDs_LIST: !If [CreateClusterResources, !Join [",", [!Ref privateSubnet1, !Ref privateSubnet2]], "NA"]
           ONDEMANDTARGETCAPACITY:  !Ref OnDemandTargetCapacity
           SPOTTARGETCAPACITY: !Ref SpotTargetCapacity
@@ -646,7 +649,6 @@ Resources:
     Properties:
       ServiceToken:
         Fn::GetAtt: [ InitFunction , "Arn" ]
-      DynamoTableName: !Ref InstanceStateTable
       Source: 'InitializeDynamoDB'
 
   CWTNodeTerminationEventRule:

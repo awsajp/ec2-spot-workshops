@@ -370,9 +370,9 @@ def createEC2Fleet(launchTemplateId, launchTemplateVersion,SubnetId,TotalTargetC
     return state, str(e)
 
 
-def updateInstanceDataInDynamoDB(Lifecycle, Name, InstancesDescription):
+def updateInstanceDataInDynamoDB(Lifecycle, InstanceName, InstancesDescription):
 
-  pprint("updateInstanceDataInDynamoDB starting with Lifecycle={}".format(Lifecycle))
+  pprint("updateInstanceDataInDynamoDB starting with Lifecycle={} InstanceName={}".format(Lifecycle, InstanceName))
 
   try:
 
@@ -393,6 +393,7 @@ def updateInstanceDataInDynamoDB(Lifecycle, Name, InstancesDescription):
 
       volumeIds=','.join(volumeIdList)
       #pprint("volumeIds={}".format(volumeIds))
+      Name = InstanceName
       if Name == "NA":
         Tags     = InstanceData['Tags']
         for tag in Tags:

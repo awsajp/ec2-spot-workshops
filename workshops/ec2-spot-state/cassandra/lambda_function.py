@@ -282,10 +282,10 @@ def createLaunchTemplateVersion(launchTemplateId, launchTemplateVersion, ImageId
 
 
 
-def createEC2Fleet(launchTemplateId, launchTemplateVersion,SubnetId,TotalTargetCapacity,OnDemandTargetCapacity,SpotTargetCapacity):
+def createEC2Fleet(launchTemplateId, launchTemplateVersion,SubnetId,TotalTargetCapacity,OnDemandTargetCapacity,SpotTargetCapacity, Name):
 
   try:
-    pprint("createEC2Fleet starting launchTemplateId={} launchTemplateVersion={} SubnetId={} TotalTargetCapacity={} OnDemandTargetCapacity={} SpotTargetCapacity={}".format(launchTemplateId, launchTemplateVersion, SubnetId, TotalTargetCapacity, OnDemandTargetCapacity, SpotTargetCapacity))
+    pprint("createEC2Fleet starting launchTemplateId={} launchTemplateVersion={} SubnetId={} TotalTargetCapacity={} OnDemandTargetCapacity={} SpotTargetCapacity={} Name={}".format(launchTemplateId, launchTemplateVersion, SubnetId, TotalTargetCapacity, OnDemandTargetCapacity, SpotTargetCapacity, Name))
     Overrides=[]
     InstanceTypesList= InstanceTypes.split(',')
     subnetIdsList = SubnetId.split(',')
@@ -353,7 +353,7 @@ def createEC2Fleet(launchTemplateId, launchTemplateVersion,SubnetId,TotalTargetC
       describeInstance = ec2client.describe_instances(InstanceIds=InstanceIds)
 
       InstancesDescription = describeInstance['Reservations'][0]['Instances']
-      state, message = updateInstanceDataInDynamoDB(Lifecycle, InstancesDescription)
+      state, message = updateInstanceDataInDynamoDB(Lifecycle, Name, InstancesDescription)
       if "FAILURE" in state:
         #state = "UPDATE_DB_FAILURE"
         #pprint("updateExistingClusterinDynamoDB failed with state={} message={} for Lifecycle={}".format(state, message, Lifecycle))
@@ -370,7 +370,7 @@ def createEC2Fleet(launchTemplateId, launchTemplateVersion,SubnetId,TotalTargetC
     return state, str(e)
 
 
-def updateInstanceDataInDynamoDB(Lifecycle, InstancesDescription):
+def updateInstanceDataInDynamoDB(Lifecycle, Name, InstancesDescription):
 
   pprint("updateInstanceDataInDynamoDB starting with Lifecycle={}".format(Lifecycle))
 
@@ -378,7 +378,9 @@ def updateInstanceDataInDynamoDB(Lifecycle, InstancesDescription):
 
     for InstanceData in InstancesDescription:
 
+      
       InstanceId = InstanceData['InstanceId']
+      pprint("updateInstanceDataInDynamoDB Getting details for the InstanceId={}".format(InstanceId))
       ImageId = InstanceData['ImageId']
       InstanceType = InstanceData['InstanceType']
       IP = InstanceData['PrivateIpAddress']
@@ -391,10 +393,18 @@ def updateInstanceDataInDynamoDB(Lifecycle, InstancesDescription):
 
       volumeIds=','.join(volumeIdList)
       #pprint("volumeIds={}".format(volumeIds))
+      if Name == "NA":
+        Tags     = InstanceData['Tags']
+        for tag in Tags:
+          if tag['Key'] == 'Name':
+            Name = tag['Value']
+            break
+
       pprint("updateInstanceDataInDynamoDB Adding InstanceId={} with ImageId={} volumeIds={} SubnetId={} IP={}to the dynamodb".format(InstanceId, ImageId, volumeIds, SubnetId, IP))
       response = InstanceTable.put_item(
         Item={
           'InstanceId': InstanceId,
+          'Name': Name,
           'ST': 'USED',
           'VolumeIds': volumeIds,
           'SnapshotIds': 'NA',
@@ -406,7 +416,9 @@ def updateInstanceDataInDynamoDB(Lifecycle, InstancesDescription):
           'InstanceType' : InstanceType
         }
       )
-
+      
+      pprint("updateInstanceDataInDynamoDB Updatubg the Instance Name Tag Value to={}".format(Name))
+      response = ec2client.create_tags( Resources=[InstanceId,  ], Tags=[  { 'Key': 'Name', 'Value': Name }, ])
       if UseExistingCluster == "NO" and TargetGroupArn is not None:
         pprint("updateInstanceDataInDynamoDB Registering the  InstanceId={}  to the TargetGroupArn={}".format(InstanceId, TargetGroupArn))
         registerTargets = elbv2client.register_targets(TargetGroupArn=TargetGroupArn,Targets=[{'Id':InstanceId}])
@@ -432,7 +444,8 @@ def handleNodeTermination(InstanceId):
       AZ = response['Item']['AZ']
       SubnetId = response['Item']['SubnetId']
       SnapshotIds = response['Item']['SnapshotIds']
-
+      Name = response['Item']['Name']
+      
 
       #print("volumeIds={} IP={} AZ={} SubnetId={}".format(volumeIds, IP, AZ, SubnetId))
       volumeIdList = volumeIds.split(',')
@@ -512,7 +525,7 @@ def handleNodeTermination(InstanceId):
 
 
       #pprint("createEC2Fleet with launchTemplateId={} launchTemplateVersion={} SubnetId={}".format(launchTemplateId, launchTemplateVersion, SubnetId))
-      state, FleetId = createEC2Fleet(launchTemplateId,launchTemplateVersion,SubnetId,TotalTargetCapacity,OnDemandTargetCapacity,SpotTargetCapacity)
+      state, FleetId = createEC2Fleet(launchTemplateId,launchTemplateVersion,SubnetId,TotalTargetCapacity,OnDemandTargetCapacity,SpotTargetCapacity, Name)
       if "SUCCESS" in state:
         for volumeId in volumeIdList:
           pprint("handleNodeTermination Deleting the volumeId={}".format(volumeId))
@@ -545,12 +558,13 @@ def handleNodeTermination(InstanceId):
 def updateExistingClusterinDynamoDB():
   try:
     pprint("updateExistingClusterinDynamoDB starting with TagKey={} TagValue={}".format(TagKey, TagValue))
-    response = ec2client.describe_instances(Filters=[{'Name': 'tag:'+TagKey,'Values':[TagValue]}])
+    response = ec2client.describe_instances(Filters=[{'Name': 'tag:'+TagKey,'Values':[TagValue]}, {'Name': 'instance-state-name', 'Values': ['running']} ])
     #pprint(response)
     InstancesDescription= response['Reservations'][0]['Instances']
     pprint("number of instances={}".format(len(InstancesDescription)))
     Lifecycle = 'on-demand'
-    state, message = updateInstanceDataInDynamoDB(Lifecycle, InstancesDescription)
+    Name = "NA"
+    state, message = updateInstanceDataInDynamoDB(Lifecycle, Name, InstancesDescription)
     if "SUCCESS" in state:
       pprint("updateInstanceDataInDynamoDB completed successfully with state={} message={}".format(state, message))
       state = "CLUSTER_HANLDER_SUCCESS"
@@ -684,7 +698,8 @@ def lambda_handler(event, context):
           data = ec2client.authorize_security_group_ingress(GroupId=securityGroupId,IpPermissions=[{'IpProtocol': 'tcp','FromPort': 80, 'ToPort': 80, 'IpRanges': [{'CidrIp': '0.0.0.0/0'}]},])
 
           SubnetId=subnetIdsString
-          state, message = createEC2Fleet(launchTemplateId, launchTemplateVersion,SubnetId,TotalTargetCapacity,OnDemandTargetCapacity,SpotTargetCapacity)
+          Name = "NA"
+          state, message = createEC2Fleet(launchTemplateId, launchTemplateVersion,SubnetId,TotalTargetCapacity,OnDemandTargetCapacity,SpotTargetCapacity, Name)
           if "FAILURE" in state:
             pprint("createEC2Fleet failed with state={} message={} forevent={}".format(state, message, event))
             state, message = CleanupClusterResources()

@@ -418,8 +418,10 @@ def updateInstanceDataInDynamoDB(Lifecycle, InstanceName, InstancesDescription):
         }
       )
       
-      pprint("updateInstanceDataInDynamoDB Updatubg the Instance Name Tag Value to={}".format(Name))
-      response = ec2client.create_tags( Resources=[InstanceId,  ], Tags=[  { 'Key': 'Name', 'Value': Name }, ])
+      if InstanceName != "NA":
+        pprint("updateInstanceDataInDynamoDB Updatubg the Instance Name Tag Value to={}".format(Name))
+        response = ec2client.create_tags( Resources=[InstanceId,  ], Tags=[  { 'Key': 'Name', 'Value': Name }, ])
+      
       if UseExistingCluster == "NO" and TargetGroupArn is not None:
         pprint("updateInstanceDataInDynamoDB Registering the  InstanceId={}  to the TargetGroupArn={}".format(InstanceId, TargetGroupArn))
         registerTargets = elbv2client.register_targets(TargetGroupArn=TargetGroupArn,Targets=[{'Id':InstanceId}])

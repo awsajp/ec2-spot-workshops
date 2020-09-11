@@ -122,7 +122,8 @@ def createAMIfromSnapshot(snapshotId):
       ],
       Description="RootVolume-"+snapshotId,
       RootDeviceName=EBSVolumeDeviceNamesList[0],
-      Name="RootVolume-"+snapshotId
+      Name="RootVolume-"+snapshotId,
+      VirtualizationType='hvm'
     )
     #print(json.dumps(response, indent=2, default=json_util.default))
     #print(json.dumps(response, indent=2))

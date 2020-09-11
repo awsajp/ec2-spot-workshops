@@ -12,6 +12,13 @@ import sys
 import datetime
 import base64
 import cfnresponse
+#from bson import json_util
+
+
+#InstancesTableName=os.getenv('DYNAMODB_INSTANCEID_TABLE_NAME')
+#StatusIndexName=os.getenv('DYNAMODB_GSI_ST')
+
+
 
 
 CWTEventRule=os.getenv('CWT_EVENT_RULE_NAME')
@@ -38,13 +45,19 @@ TotalTargetCapacity=int(os.getenv('TOTALTARGETCAPACITY'))
 TargetGroupArn = os.getenv('TARGET_GROUP_ARN')
 NodeServiceStartCommand = os.getenv('NODE_SERVICE_START_COMMAND')
 
+
+
+
 InstancesTableName=os.getenv('DYNAMODB_INSTANCEID_TABLE_NAME')
 StatusIndexName=os.getenv('DYNAMODB_GSI_ST')
 CFNStackName=os.getenv('CFN_STACK_NAME')
 awsRegion=os.getenv('AWSREGION')
 
+
 launchTemplateName=CFNStackName
 
+
+#NumberOfEBSVolumes=int(NumberOfEBSVolumes)
 EBSVolumeDeviceNamesList=EBSVolumeDeviceNames.split(',')
 EBSVolumeDeviceSizesList=EBSVolumeDeviceSizes.split(',')
 EBSVolumeMountPathsList=EBSVolumeMountPaths.split(',')
@@ -59,7 +72,10 @@ elbv2client = boto3.client('elbv2')
 dbclient = boto3.client('dynamodb')
 dynamodbresource = boto3.resource('dynamodb')
 cwtclient = boto3.client('events')
+
+pprint("InstancesTableName={}".format(InstancesTableName))
 InstanceTable = dynamodbresource.Table(InstancesTableName)
+
 lambdaclient = boto3.client('lambda')
 
 
@@ -109,6 +125,8 @@ def createAMIfromSnapshot(snapshotId):
       Name="RootVolume-"+snapshotId,
       VirtualizationType='hvm'
     )
+    #print(json.dumps(response, indent=2, default=json_util.default))
+    #print(json.dumps(response, indent=2))
     status_code = response['ResponseMetadata']['HTTPStatusCode']
     if status_code == 200:
       AMIId = response['ImageId']
@@ -129,6 +147,11 @@ def createAMIfromSnapshot(snapshotId):
 def createLaunchTemplate():
 
   try:
+    #response = ec2client.delete_launch_template(
+    #    LaunchTemplateName=launchTemplateName
+    #)
+
+    #pprint("type={}".format(type(NumberOfEBSVolumes)))
 
     pprint("createLaunchTemplate starting")
     InputFile = "user-data.txt"
@@ -208,7 +231,7 @@ def createLaunchTemplate():
       return state, launchTemplateId
     else:
       state = "LT_CREATE_FAILURE"
-      pprint("createLaunchTemplate failed with state={} message={}".format(state, str(response)))
+      pprint("createLaunchTemplate failed with state={} message={}".format(state, str(resource)))
       return state, str(response)
 
   except Exception as e:
@@ -270,7 +293,7 @@ def createLaunchTemplateVersion(launchTemplateId, launchTemplateVersion, ImageId
       return state, launchTemplateVersion
     else:
       state = "LT_CREATE_FAILURE"
-      pprint("createLaunchTemplate failed with state={} message={}".format(state, str(response)))
+      pprint("createLaunchTemplate failed with state={} message={}".format(state, str(resource)))
       return state, str(response)
 
   except Exception as e:
@@ -325,7 +348,17 @@ def createEC2Fleet(launchTemplateId, launchTemplateVersion,SubnetId,TotalTargetC
       Type='instant'
     )
 
+
+    #print(json.dumps(response, indent=2))
+    #print(json.dumps(response, indent=2, default=json_util.default))
+
     FleetId = response['FleetId']
+    #Errors = response['Errors']
+    #print("FleetId={} Errors={}".format(FleetId, Errors))
+    #InstanceType = response['Instances'][0]['LaunchTemplateAndOverrides']['Overrides']['InstanceType']
+    #InstanceId = response['Instances'][0]['InstanceIds'][0]
+    #subnetId = response['Instances'][0]['LaunchTemplateAndOverrides']['Overrides']['SubnetId']
+    #print("InstanceType={} subnetId={}".format(InstanceType,subnetId))
 
     response = ec2client.describe_fleets(FleetIds=[FleetId])
     #print("updateInstanceStatusInDynamoDB  response={}".format(str(response)))
@@ -351,7 +384,8 @@ def createEC2Fleet(launchTemplateId, launchTemplateVersion,SubnetId,TotalTargetC
       pprint("createEC2Fleet Waiting for the InstanceId={} state to become running".format(InstanceIds))
       waiter.wait(InstanceIds=InstanceIds)
       describeInstance = ec2client.describe_instances(InstanceIds=InstanceIds)
-
+      #pprint(describeInstance)
+      #print(json.dumps(describeInstance, indent=2, default=json_util.default))
       InstancesDescription = describeInstance['Reservations'][0]['Instances']
       state, message = updateInstanceDataInDynamoDB(Lifecycle, InstancesDescription)
       if "FAILURE" in state:
@@ -391,6 +425,7 @@ def updateInstanceDataInDynamoDB(Lifecycle, InstancesDescription):
 
       volumeIds=','.join(volumeIdList)
       #pprint("volumeIds={}".format(volumeIds))
+      #table = dynamodbresource.Table(InstanceTable)
       pprint("updateInstanceDataInDynamoDB Adding InstanceId={} with ImageId={} volumeIds={} SubnetId={} IP={}to the dynamodb".format(InstanceId, ImageId, volumeIds, SubnetId, IP))
       response = InstanceTable.put_item(
         Item={
@@ -418,6 +453,52 @@ def updateInstanceDataInDynamoDB(Lifecycle, InstancesDescription):
     state = "UPDATE_DB_FAILURE"
     pprint("updateInstanceDataInDynamoDB failed with state={} error={}".format(state, str(e)))
     return state, str(e)
+
+
+def updateInstanceIdInDynamoDB(InstanceId):
+  pprint("Running updateInstanceIdInDynamoDB for InstanceId={}".format(InstanceId))
+  InstanceIds = [InstanceId]
+  for InstanceId in InstanceIds:
+    pprint("Waiting for the InstanceId={} state to become running".format(InstanceId))
+    waiter = ec2client.get_waiter('system_status_ok')
+    waiter.wait(InstanceIds=[InstanceId])
+    describeInstance = ec2client.describe_instances(InstanceIds=[InstanceId])
+    #print(json.dumps(describeInstance, indent=2, default=json_util.default))
+    InstanceData = describeInstance['Reservations'][0]['Instances'][0]
+    ImageId = InstanceData['ImageId']
+    InstanceType = InstanceData['InstanceType']
+    IP = InstanceData['PrivateIpAddress']
+    SubnetId = InstanceData['SubnetId']
+    Lifecycle ='on-demand'
+    AZ = InstanceData['Placement']['AvailabilityZone']
+    volumeIds=""
+    for EBSVolume in InstanceData['BlockDeviceMappings']:
+      volumeIds=volumeIds+','+EBSVolume['Ebs']['VolumeId']
+
+
+    #rootvolume = InstanceData['BlockDeviceMappings'][0]['Ebs']['VolumeId']
+    #volume1    = InstanceData['BlockDeviceMappings'][1]['Ebs']['VolumeId']
+    #volume2    = InstanceData['BlockDeviceMappings'][2]['Ebs']['VolumeId']
+    #volumeIds = rootvolume +','+volume1+','+volume2
+    pprint("volumeIds={}".format(volumeIds))
+    #table = dynamodbresource.Table(InstanceTable)
+    pprint("Adding InstanceId={} details to the dynamodb".format(InstanceId))
+    response = InstanceTable.put_item(
+      Item={
+        'InstanceId': InstanceId,
+        'ST': 'USED',
+        'VolumeIds': volumeIds,
+        'SnapshotIds': 'NA',
+        'IP': IP,
+        'AZ': AZ,
+        'SubnetId': SubnetId,
+        'ImageId' : ImageId,
+        'Lifecycle' : Lifecycle,
+        'InstanceType' : InstanceType
+      }
+    )
+
+
 
 def handleNodeTermination(InstanceId):
 
@@ -449,7 +530,7 @@ def handleNodeTermination(InstanceId):
           else:
             state = "TERMINATION_HANLDER_FAILURE"
             pprint("handleNodeTermination failed due to createSnapshotFromVolumeId with state={} message={}".format(state, snapshotId))
-            return state, snapshotId
+            return state, message
 
         SnapshotIds = ','.join(snapshotIdList)
         pprint("handleNodeTermination updating the dynamodb with the SnapshotIds={} for InstanceId={}".format(SnapshotIds, InstanceId))
@@ -479,6 +560,8 @@ def handleNodeTermination(InstanceId):
         pprint("handleNodeTermination failed due to createAMIfromSnapshot with state={} message={}".format(state, AMIId))
         return state, AMIId
 
+        #launchTemplateId='lt-03ca5a44acf2af90a'
+
       if RetainPrivateIP == "NO":
         SubnetId=subnetIdsString
         IP =  None
@@ -506,6 +589,8 @@ def handleNodeTermination(InstanceId):
         pprint("handleNodeTermination failed due to createLaunchTemplateVersion with state={} message={}".format(state, message))
         return state, message
 
+        #EC2FleetId = createEC2Fleet(launchTemplateId, launchTemplateVersion, subnetId)
+
       OnDemandTargetCapacity=1
       SpotTargetCapacity=0
       TotalTargetCapacity=1
@@ -525,6 +610,20 @@ def handleNodeTermination(InstanceId):
         pprint("handleNodeTermination failed due to createEC2Fleet with state={} message={}".format(state, FleetId))
         return state, FleetId
 
+        #updateInstanceStatusInDynamoDB(EC2FleetId)
+
+      #print("Deregistering the AMI={} to be completed".format(AMIId))
+      #response = ec2client.deregister_image(
+      #  ImageId=AMIId
+      #)
+
+      #for snapshotId in snapshotIdList:
+      #  print("Deleting the snapshotId={} to be completed".format(snapshotId))
+      #  response = ec2client.delete_snapshot(
+      #    SnapshotId=snapshotId
+      #  )
+
+
       state = "TERMINATION_HANLDER_SUCCESS"
       message = "SUCCESS"
       pprint("handleNodeTermination completed successfully with state={} for InstanceId={}".format(state, InstanceId))
@@ -541,10 +640,43 @@ def handleNodeTermination(InstanceId):
     pprint("handleNodeTermination  failed with state={} message={} for InstanceId={}".format(state, str(e), InstanceId))
     return state, str(e)
 
+def createSnapshots(InstanceId):
+
+  print("createSnapshots for InstanceId={}".format(InstanceId))
+
+  try:
+    response = InstanceTable.get_item(Key={'InstanceId': InstanceId})
+  except ClientError as e:
+    print(e.response['Error']['Message'])
+
+  if 'Item' in response.keys():
+
+    volumeIds = response['Item']['VolumeIds']
+    IP = response['Item']['IP']
+    AZ = response['Item']['AZ']
+    SubnetId = response['Item']['SubnetId']
+
+    print("volumeIds={} IP={} AZ={} SubnetId={}".format(volumeIds, IP, AZ, SubnetId))
+    volumeIdList = volumeIds.split(',')
+    print("volumeIdList={}".format(volumeIdList))
+    snapshotIdList = []
+    #snapshotIdList = ['snap-0fc6d23769bedf5ff', 'snap-0987320f1d5c08daa', 'snap-02d91eb0f597dc8bc']
+    #time.sleep(45)
+
+    for index, volumeId in enumerate(volumeIdList):
+      print("volumeId={}".format(volumeId))
+      snapshotId=createSnapshotFromVolumeId("volume"+str(index), volumeId)
+      snapshotIdList.append(snapshotId)
+
+    print("snapshotIdList={}".format(snapshotIdList))
 
 def updateExistingClusterinDynamoDB():
   try:
     pprint("updateExistingClusterinDynamoDB starting with TagKey={} TagValue={}".format(TagKey, TagValue))
+    #TagKeyValues = ExistingClusterInstanceTag.split('=')
+    #key = TagKeyValues[0]
+    #value = TagKeyValues[1]
+    #pprint("TagKey={} TagValue={}".format(TagKey, TagValue))
     response = ec2client.describe_instances(Filters=[{'Name': 'tag:'+TagKey,'Values':[TagValue]}])
     #pprint(response)
     InstancesDescription= response['Reservations'][0]['Instances']
@@ -566,9 +698,20 @@ def updateExistingClusterinDynamoDB():
     return state, str(e)
 
 def CleanupClusterResources():
+
+
   try:
 
-    pprint("CleanupClusterResources starting finding all the Instances with TagKey={} TagValue={}".format(TagKey, TagValue))
+
+
+    #response = cwtclient.enable_rule(
+    #    Name=CWTEventRule
+    #)
+    #pprint("response={}".format(response))
+    pprint("CleanupClusterResources starting")
+    #key   = "ClusterName"
+    #value = CFNStackName
+    pprint("CleanupClusterResources finding all the Instances with TagKey={} TagValue={}".format(TagKey, TagValue))
     response = ec2client.describe_instances(Filters=[{'Name': 'tag:'+TagKey,'Values':[TagValue]}, {'Name': 'instance-state-name', 'Values': ['running']} ])
     #pprint(response)
     InstancesDescription=[]
@@ -659,7 +802,7 @@ def lambda_handler(event, context):
               returnFromLambda(event, context, message)
 
 
-          pprint("Adding launchTemplateId={} launchTemplateName={} launchTemplateVersion={}".format(launchTemplateName, launchTemplateId, launchTemplateVersion))
+          pprint("Adding launchTemplateId=%d launchTemplateName={} launchTemplateVersion={}".format(launchTemplateName, launchTemplateId, launchTemplateVersion))
           response = InstanceTable.put_item(
             Item={
               'InstanceId': 'launchTemplateData',
@@ -677,12 +820,47 @@ def lambda_handler(event, context):
             pprint("Error occured while processing the event={} with message={}".format(event, message))
             returnFromLambda(event, context, message)
         else:
+
+          #pprint("NumberOfEBSVolumes={}".format(NumberOfEBSVolumes))
+          #response = lambdaclient.update_function_configuration(
+          #  FunctionName='arn:aws:lambda:ap-south-1:140518057739:function:Ec2SpotState-InitFunction',
+          #  Environment={
+          #      'Variables': {
+          #          'LAUNCH_TEMPLATE_ID': 'testValue'
+          #      }
+          #    }
+          #)
+          #pprint(response)
+          #launchTemplateId=os.getenv('LAUNCH_TEMPLATE_ID')
+          #pprint("launchTemplateId={}".format(launchTemplateId))
+
+          #try:
+          #  response = InstanceTable.get_item(Key={'InstanceId': 'launchTemplateData'})
+          #except ClientError as e:
+          #  print(e.response['Error']['Message'])
+
+          #if 'Item' in response.keys():
+
+          #  launchTemplateId = response['Item']['LaunchTemplateId']
+          #else:
+          #  launchTemplateId = createLaunchTemplate()
+          #return {
+          #  'statusCode': 200,
+          #  'body': json.dumps("Completed processing of the event={}".format(event))
+          #}
+
+
+          #pprint("vpcId={}".format(vpcId))
           response = ec2client.describe_security_groups(    Filters=[ { 'Name': 'vpc-id',  'Values': [ vpcId, ] }, { 'Name': 'group-name',  'Values': [ 'default', ] }  ],)
           #pprint("vpcId={} response={}".format(vpcId, response))
           securityGroupId= response['SecurityGroups'][0]['GroupId']
-          pprint("Adding ingress rule for prort 80 for securityGroupId={} vpcId={}".format(securityGroupId, vpcId))
+          #pprint("Adding ingress rule for prort 80 for securityGroupId={} vpcId={}".format(securityGroupId, vpcId))
           data = ec2client.authorize_security_group_ingress(GroupId=securityGroupId,IpPermissions=[{'IpProtocol': 'tcp','FromPort': 80, 'ToPort': 80, 'IpRanges': [{'CidrIp': '0.0.0.0/0'}]},])
 
+
+
+          #launchTemplateVersion = '14'
+          #launchTemplateVersion = '1'
           SubnetId=subnetIdsString
           state, message = createEC2Fleet(launchTemplateId, launchTemplateVersion,SubnetId,TotalTargetCapacity,OnDemandTargetCapacity,SpotTargetCapacity)
           if "FAILURE" in state:
@@ -699,14 +877,17 @@ def lambda_handler(event, context):
       state, message = CleanupClusterResources()
     elif event['RequestType'] == "Snapshot":
       InstanceId = event['InstanceId']
-      #createSnapshots(InstanceId) # for testing purpose
+      createSnapshots(InstanceId)
     elif event['RequestType'] == "Update":
       InstanceId = event['InstanceId']
-      #updateInstanceIdInDynamoDB(InstanceId) # for testing purpose
+      updateInstanceIdInDynamoDB(InstanceId)
     else:
       print("CFN event RequestType={} is NOT handled currently".format(event['RequestType']))
 
     returnFromLambda(event, context, "SUCCESS")
+    #responseData = {}
+    #responseData['Data'] = '1'
+    #cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData,"CustomResourcePhysicalID")
   else:
     InstanceId = event['detail']['instance-id']
     print("Received EC2 Instance State-change Notification InstanceId={}...".format(InstanceId))
@@ -715,5 +896,5 @@ def lambda_handler(event, context):
       pprint("handleNodeTermination failed for  event={} with state={} message={}".format(event, state, message))
       returnFromLambda(event, context, message)
 
+
   returnFromLambda(event, context, message)
-sage)

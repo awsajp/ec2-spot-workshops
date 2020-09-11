@@ -716,4 +716,3 @@ def lambda_handler(event, context):
       returnFromLambda(event, context, message)
 
   returnFromLambda(event, context, message)
-sage)

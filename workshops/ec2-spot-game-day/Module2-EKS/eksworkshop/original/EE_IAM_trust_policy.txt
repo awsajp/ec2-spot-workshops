@@ -1,0 +1,2 @@
+codebuild.amazonaws.com
+ec2.amazonaws.com

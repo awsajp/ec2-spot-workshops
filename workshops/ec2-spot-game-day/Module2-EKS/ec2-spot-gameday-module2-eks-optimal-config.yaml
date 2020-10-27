@@ -1517,17 +1517,10 @@ Resources:
 
 Outputs:
 
-
   EKSClusterARN:
     Export:
       Name: !Sub '${EKSClusterName}-ARN'
     Value: !GetAtt ControlPlane.Arn
-
-  CertificateAuthorityData:
-    Value: !GetAtt ControlPlane.CertificateAuthorityData
-    Export:
-      Name: !Sub "${AWS::StackName}-CertificateAuthorityData"
-
 
   ClusterSecurityGroupId:
     Value: !GetAtt ControlPlane.ClusterSecurityGroupId

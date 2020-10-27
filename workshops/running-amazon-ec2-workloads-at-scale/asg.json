@@ -1,6 +1,7 @@
 {
   "AutoScalingGroupName": "runningAmazonEC2WorkloadsAtScale",
-  "MixedInstancesPolicy": {
+  "eneccccbvglbnlhctecgubiuibrubutevijnuiidcnlu
+  ": {
     "LaunchTemplate": {
       "LaunchTemplateSpecification": {
         "LaunchTemplateName": "runningAmazonEC2WorkloadsAtScale",

@@ -1,0 +1,41 @@
+[
+    {
+      "Sid": "Allow",
+      "Effect": "Allow",
+      "Action": [
+        "cloud9:*",
+        "lambda:*",
+        "ecr:*",
+        "codebuild:*",
+        "cloudformation:*",
+        "cloudwatch:*",
+        "ec2:*",
+        "elasticloadbalancing:*",
+        "eks:*",
+        "ecs:*",
+        "logs:*",
+        "s3:*",
+        "ssm:*",
+        "dynamodb:*",
+        "iam:*",
+        "autoscaling:*",
+        "appmesh:*",
+        "xray:*",
+        "sns:*",
+        "codepipeline:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "Deny",
+      "Effect": "Deny",
+      "Action": [
+        "iam:*AccessKey",
+        "iam:*User*",
+        "iam:*User",
+        "ec2:Purchase*",
+        "ec2:*CapacityReservation"
+      ],
+      "Resource": "*"
+    }
+  ]

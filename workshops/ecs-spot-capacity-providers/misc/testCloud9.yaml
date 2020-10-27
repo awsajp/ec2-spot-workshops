@@ -1,0 +1,34 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+Description: ECS Spot Workshop CFN Template
+
+
+Parameters:
+  EETeamRoleArn:
+    Type: String
+    Default: ''
+
+Conditions:
+  EventEngine:
+    !Not [!Equals [!Ref EETeamRoleArn, '']]
+
+
+Resources:
+  Cloud9:
+    Type: AWS::Cloud9::EnvironmentEC2
+    Properties:
+      AutomaticStopTimeMinutes: 120
+      InstanceType: t3.medium
+      Name: ECS Spot Workshop
+      OwnerArn:
+        !If [EventEngine, !Sub "arn:aws:sts::${AWS::AccountId}:assumed-role/${EETeamRoleArn}/MasterKey", !Ref "AWS::NoValue"]
+
+Outputs:
+  Cloud9:
+    Description: Cloud9
+    Value: !Ref Cloud9
+
+  EETeamRoleArn:
+    Description: EETeamRoleArn
+    Value: !Ref EETeamRoleArn
+...

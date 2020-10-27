@@ -22,6 +22,7 @@ spec:
           effect: "PreferNoSchedule"
       nodeSelector:
         spotsa: jp
+      schedulerName: Ec2SpotK8sScheduler  
       containers:
         - name: nginx-no-split
           image: nginx:1.14.2

@@ -1,0 +1,778 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+Description: EC2 Fleet Template
+Metadata:
+  Author:
+    Description: Jayaprakash Alawala <jalawala@amazon.com>
+  License:
+    Description: 'Copyright 2020 Amazon.com, Inc. and its affiliates. All Rights Reserved.
+
+      Licensed under the Amazon Software License (the "License"). You may not use this file
+      except in compliance with the License. A copy of the License is located at
+
+      http://aws.amazon.com/asl/
+
+      or in the "license" file accompanying this file. This file is distributed on an "AS IS"
+      BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+      License for the specific language governing permissions and limitations under the License.'
+
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      -
+        Label:
+          default: "S3 Bucket Configuration for the Lambda Code"
+        Parameters:
+          - S3BucketName
+          - S3Key
+      -
+        Label:
+          default: "Stateful Workload Configuration"
+        Parameters:
+          - UseExistingCluster
+          - ClusterInstanceTag
+          - ExistingVPCId
+          - ExistingSubnetIdsList
+          - ExistingLaunchTemplateId
+          - ExistingLaunchTemplateVersion
+          - ExistingInstanceProfile
+          - NumberOfEBSVolumes
+          - EBSVolumeDeviceNames
+          - EBSVolumeDeviceSizes
+          - EBSVolumeMountPaths
+          - RootEBSAMIId
+          - BaseInstanceType
+          - KeyPairName
+          - RetainPrivateIP
+          - sourceCidr
+          - InstanceTypes
+          - TotalTargetCapacity
+          - OnDemandTargetCapacity
+          - SpotTargetCapacity
+      -
+        Label:
+          default: "S3 Bucket Configuration"
+        Parameters:
+          - S3BucketName
+          - S3Key
+      -
+        Label:
+          default: "DynamoDB Configuration"
+        Parameters:
+          - ReadCapacityUnits
+          - WriteCapacityUnits
+
+Parameters:
+
+  S3BucketName:
+    Type: String
+    Description: "Name of the S3 Bucket Where the lambda function zip file exists"
+    Default: "ec2spotstatefulworkload2"
+
+  S3Key:
+    Type: String
+    Description: "The Object Name in the S3 Bucket Where the lambda function xip file exists"
+    Default: "lambda_function.zip"
+
+  UseExistingCluster:
+    Description: "Select YES if you want to existing workload/cluster for this stateful solution"
+    Default: NO
+    Type: String
+    AllowedValues:
+      - YES
+      - NO
+
+  ClusterInstanceTag:
+    Description: "Specify the Tag <KEY>=<VALUE> to be used for th EC2 instances in the stateful solution"
+    Default: "ClusterName=CassandraCluster2"
+    Type: String
+
+  ExistingVPCId:
+    Description: "must specify VPC Id if UseExistingVPC is YES"
+    Default: "NA"
+    Type: AWS::EC2::VPC::Id
+
+  ExistingSubnetIdsList:
+    Description: "must select the list of subnets Ids if UseExistingVPC is YES"
+    Default: "NA"
+    Type: List<AWS::EC2::Subnet::Id>
+
+  NumberOfEBSVolumes:
+    Type: Number
+    Description: "Specify number of EBS volumes attached to the instance including the Root EBS Volume"
+    Default: 3
+
+  EBSVolumeDeviceNames:
+    Description: "Specify the device names for all the EBS volumes"
+    Default: "/dev/xvda,/dev/xvdb,/dev/xvdc"
+    Type: String
+
+  EBSVolumeDeviceSizes:
+    Description: "Specify the sizes (in GB) for all the EBS volumes"
+    Default: "30,50,200"
+    Type: String
+
+  EBSVolumeMountPaths:
+    Description: "Specify the mount points for all the EBS volumes"
+    Default: "/,/cassandra,/var/lib/cassandra"
+    Type: String
+
+  RootEBSAMIId:
+    Description: "Specify AMI for the Root EBS volume if UseExistingCluster is NO"
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
+
+  RetainPrivateIP:
+    Type: String
+    Description: "Enter YES if the private ip of the instances needs to be retained"
+    Default: YES
+    AllowedValues:
+      - YES
+      - NO
+
+  sourceCidr:
+    Default: 0.0.0.0/0
+    Description: "Optional - CIDR/IP range for instance ssh/http access and load balancer http access"
+    Type: String
+
+  BaseInstanceType:
+    Type: String
+    Description: "multiple spot instances to override(seperated by comma)"
+    Default: "m4.large"
+
+  ExistingLaunchTemplateId:
+    Type: String
+    Description: "multiple spot instances to override(seperated by comma)"
+    Default: "NA"
+
+  ExistingLaunchTemplateVersion:
+    Type: String
+    Description: "multiple spot instances to override(seperated by comma)"
+    Default: "NA"
+
+  ExistingInstanceProfile:
+    Type: String
+    Description: "multiple spot instances to override(seperated by comma)"
+    Default: "NA"
+
+  InstanceTypes:
+    Type: String
+    Description: "multiple spot instances to override(seperated by comma)"
+    Default: "m4.large,m5.large,c4.large,c5.large,r4.large,r5.large,t3.large,t3a.large"
+
+  KeyPairName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: "awsajp_keypair"
+    Default: "awsajp_keypair"
+
+  TotalTargetCapacity:
+    Type: Number
+    Description: "Total Capacity"
+    Default: 2
+
+  OnDemandTargetCapacity:
+    Type: Number
+    Description: "on-demand  capacity"
+    Default: 1
+
+  SpotTargetCapacity:
+    Type: Number
+    Description: "Spot Capacity"
+    Default: 1
+
+  NodeServiceStartCommand:
+    Description: "Specify the Node Service Start Command"
+    Default: "ls /home/ec2-user/"
+    Type: String
+
+  ReadCapacityUnits:
+    Description: Provisioned read throughput
+    Type: Number
+    Default: '10'
+    MinValue: '10'
+    MaxValue: '10000'
+    ConstraintDescription: must be between 5 and 10000
+
+  WriteCapacityUnits:
+    Description: Provisioned write throughput
+    Type: Number
+    Default: '10'
+    MinValue: '10'
+    MaxValue: '10000'
+    ConstraintDescription: must be between 5 and 10000
+
+Conditions:
+  CreateClusterResources: !Equals [!Ref UseExistingCluster, "NO"]
+
+Resources:
+
+  vpc:
+    Type: AWS::EC2::VPC
+    Condition: CreateClusterResources
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-vpc'
+
+  internetGateway:
+    Type: AWS::EC2::InternetGateway
+    Condition: CreateClusterResources
+    DependsOn:
+      - vpc
+
+  attachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Condition: CreateClusterResources
+    DependsOn:
+      - vpc
+      - internetGateway
+    Properties:
+      InternetGatewayId: !Ref internetGateway
+      VpcId: !Ref vpc
+
+
+  publicSubnet1:
+    Type: AWS::EC2::Subnet
+    Condition: CreateClusterResources
+    DependsOn: attachGateway
+    Properties:
+      AvailabilityZone:
+        Fn::Select:
+          - 0
+          - Fn::GetAZs:
+              Ref: AWS::Region
+      CidrBlock: 10.0.0.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-publicSubnet1'
+      VpcId: !Ref vpc
+
+  publicSubnet2:
+    Type: AWS::EC2::Subnet
+    Condition: CreateClusterResources
+    DependsOn: attachGateway
+    Properties:
+      AvailabilityZone:
+        Fn::Select:
+          - 1
+          - Fn::GetAZs:
+              Ref: AWS::Region
+      CidrBlock: 10.0.1.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-publicSubnet2'
+      VpcId: !Ref vpc
+
+  privateSubnet1:
+    Type: AWS::EC2::Subnet
+    Condition: CreateClusterResources
+    Properties:
+      AvailabilityZone:
+        Fn::Select:
+          - 0
+          - Fn::GetAZs:
+              Ref: AWS::Region
+      CidrBlock: 10.0.3.0/24
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-privateSubnet1'
+      VpcId: !Ref vpc
+
+
+  privateSubnet2:
+    Type: AWS::EC2::Subnet
+    Condition: CreateClusterResources
+    Properties:
+      AvailabilityZone:
+        Fn::Select:
+          - 1
+          - Fn::GetAZs:
+              Ref: AWS::Region
+      CidrBlock: 10.0.4.0/24
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-privateSubnet2'
+      VpcId: !Ref vpc
+
+  publicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Condition: CreateClusterResources
+    DependsOn:
+      - vpc
+      - attachGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-publicRouteTable'
+      VpcId: !Ref vpc
+
+  RouteTablePrivate:
+    Type: AWS::EC2::RouteTable
+    Condition: CreateClusterResources
+    DependsOn: vpc
+    Properties:
+      VpcId: !Ref vpc
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-RouteTablePrivate'
+
+  publicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Condition: CreateClusterResources
+    DependsOn:
+      - publicRouteTable
+      - publicSubnet1
+      - attachGateway
+    Properties:
+      RouteTableId: !Ref publicRouteTable
+      SubnetId: !Ref publicSubnet1
+
+  publicSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Condition: CreateClusterResources
+    DependsOn:
+      - publicRouteTable
+      - publicSubnet2
+      - attachGateway
+    Properties:
+      RouteTableId: !Ref publicRouteTable
+      SubnetId: !Ref publicSubnet2
+
+
+  privateSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Condition: CreateClusterResources
+    DependsOn:
+      - RouteTablePrivate
+      - privateSubnet1
+    Properties:
+      RouteTableId: !Ref RouteTablePrivate
+      SubnetId: !Ref privateSubnet1
+
+  privateSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Condition: CreateClusterResources
+    DependsOn:
+      - RouteTablePrivate
+      - privateSubnet2
+    Properties:
+      RouteTableId: !Ref RouteTablePrivate
+      SubnetId: !Ref privateSubnet2
+
+  EIPNATGateway:
+    Type: AWS::EC2::EIP
+    Condition: CreateClusterResources
+    DependsOn:
+      - attachGateway
+      - vpc
+    Properties:
+      Domain: vpc
+
+  NATGateway:
+    Type: AWS::EC2::NatGateway
+    Condition: CreateClusterResources
+    DependsOn:
+      - publicSubnet1
+    Properties:
+      AllocationId: !GetAtt EIPNATGateway.AllocationId
+      SubnetId: !Ref publicSubnet1
+
+  publicRoute:
+    Type: AWS::EC2::Route
+    Condition: CreateClusterResources
+    DependsOn:
+      - publicRouteTable
+      - internetGateway
+      - attachGateway
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref internetGateway
+      RouteTableId: !Ref publicRouteTable
+
+  privateRoute:
+    Type: AWS::EC2::Route
+    Condition: CreateClusterResources
+    DependsOn:
+      - RouteTablePrivate
+      - NATGateway
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NATGateway
+      RouteTableId: !Ref RouteTablePrivate
+
+  loadBalancerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Condition: CreateClusterResources
+    DependsOn:
+      - vpc
+    Properties:
+      GroupDescription: Allow http (80)
+      GroupName: !Sub '${AWS::StackName}-loadBalancerSecurityGroup'
+      SecurityGroupIngress:
+        - CidrIp: !Ref sourceCidr
+          FromPort: 80
+          IpProtocol: tcp
+          ToPort: 80
+      VpcId: !Ref vpc
+
+  ALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Condition: CreateClusterResources
+    DependsOn:
+      - loadBalancerSecurityGroup
+      - publicSubnet1
+      - publicSubnet2
+    Properties:
+      Name: !Sub '${AWS::StackName}-ALB'
+      Scheme: internet-facing
+      SecurityGroups:
+        - !Ref loadBalancerSecurityGroup
+      Subnets:
+        - !Ref publicSubnet1
+        - !Ref publicSubnet2
+
+  TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Condition: CreateClusterResources
+    DependsOn:
+      - vpc
+    Properties:
+      HealthCheckIntervalSeconds: 50
+      HealthCheckPath: /
+      HealthCheckPort: 80
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 45
+      HealthyThresholdCount: 2
+      Matcher:
+        HttpCode: 200
+      Name: !Sub '${AWS::StackName}-TargetGroup'
+      Port: 80
+      Protocol: HTTP
+      UnhealthyThresholdCount: 4
+      VpcId: !Ref vpc
+
+  ALBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Condition: CreateClusterResources
+    DependsOn:
+      - ALB
+      - TargetGroup
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroup
+      LoadBalancerArn: !Ref ALB
+      Port: 80
+      Protocol: HTTP
+
+  instanceRole:
+    Type: AWS::IAM::Role
+    Condition: CreateClusterResources
+    Properties:
+      RoleName: !Sub '${AWS::StackName}-InstanceRole'
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+        Version: 2012-10-17
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM
+      Path: /
+      Policies:
+        - PolicyName: !Sub '${AWS::StackName}-EC2DescribeInstances'
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: ec2:DescribeInstances
+                Resource: "*"
+
+  instanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Condition: CreateClusterResources
+    DependsOn:
+    - instanceRole
+    Properties:
+      InstanceProfileName:  !Sub '${AWS::StackName}-InstanceProfile'
+      Path: /
+      Roles:
+        - Ref: instanceRole
+
+  instanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Condition: CreateClusterResources
+    Properties:
+      SecurityGroupIngress:
+        - CidrIp:
+            Ref: sourceCidr
+          FromPort: 22
+          IpProtocol: tcp
+          ToPort: 22
+        - CidrIp:
+            Ref: sourceCidr
+          FromPort: 80
+          IpProtocol: tcp
+          ToPort: 80
+      GroupDescription: Allow traffic from Internet
+      GroupName:  !Sub '${AWS::StackName}-InstanceSG'
+      VpcId: !Ref vpc
+
+  InstanceStateTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: InstanceId
+          AttributeType: S
+        - AttributeName: ST
+          AttributeType: S
+      BillingMode: PROVISIONED
+      KeySchema:
+        - AttributeName: InstanceId
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: !Ref 'ReadCapacityUnits'
+        WriteCapacityUnits: !Ref 'WriteCapacityUnits'
+      TableName:  !Sub '${AWS::StackName}-InstanceStateTable'
+      Tags:
+        - Key: Name
+          Value: 'InstanceStateTable'
+      GlobalSecondaryIndexes:
+        - IndexName: 'ST-Global-Index'
+          KeySchema:
+            - AttributeName: ST
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: !Ref 'ReadCapacityUnits'
+            WriteCapacityUnits: !Ref 'WriteCapacityUnits'
+
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: !Sub '${AWS::StackName}-dynamodbAccessRole'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:*
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - logs:*
+                Resource: "*"
+        - PolicyName: !Sub '${AWS::StackName}-ec2fleetAccessRole'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ec2:*
+                Resource: "*"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEC2FullAccess
+        - arn:aws:iam::aws:policy/AWSLambdaExecute
+        - arn:aws:iam::aws:policy/AdministratorAccess
+
+  InitFunction:
+    Type: AWS::Lambda::Function
+    DependsOn:
+      - LambdaRole
+    Properties:
+      Description: 'This function initializes the DynamoDB table with Instance ID status'
+      FunctionName: !Sub '${AWS::StackName}-InitFunction'
+      Environment:
+        Variables:
+          USE_EXISTING_CLUSTER: !Ref UseExistingCluster
+          EXISTING_CLUSTER_INSTANCE_TAG: !Ref ClusterInstanceTag
+          VPC_ID: !If [CreateClusterResources, !Ref vpc, !Ref ExistingVPCId]
+          SUBNET_IDs_LIST: !If [CreateClusterResources, !Join [",", [!Ref publicSubnet1, !Ref publicSubnet2]], !Ref ExistingSubnetIdsList]
+          EXISTING_LAUNCHTEMPLATE_ID: !Ref ExistingLaunchTemplateId
+          EXISTING_LAUNCHTEMPLATE_VERSION: !Ref ExistingLaunchTemplateVersion
+          EXISTING_INSTANCE_PROFILE:  !If [CreateClusterResources, !Ref instanceProfile, !Ref ExistingInstanceProfile]
+          NUMBER_OF_EBS_VOLUMES: !Ref NumberOfEBSVolumes
+          EBS_VOLUME_DEVICE_NAMES: !Ref EBSVolumeDeviceNames
+          EBS_VOLUME_DEVICE_SIZES: !Ref EBSVolumeDeviceSizes
+          EBS_VOLUME_MOUNT_PATHS: !Ref EBSVolumeMountPaths
+          ROOT_EBS_AMI_ID: !Ref RootEBSAMIId
+          INSTANCE_TYPES_LIST: !Ref InstanceTypes
+          BASE_INSTANCE_TYPE: !Ref BaseInstanceType
+          KEY_PAIR_NAME: !Ref KeyPairName
+          RETAINPRIVATEIP: !Ref RetainPrivateIP
+          DYNAMODB_INSTANCEID_TABLE_NAME: !Sub '${AWS::StackName}-InstanceStateTable'
+          DYNAMODB_GSI_ST: 'ST-Global-Index'
+          CFN_STACK_NAME: ${AWS::StackName}
+          PRIVATE_SUBNET_IDs_LIST: !If [CreateClusterResources, !Join [",", [!Ref privateSubnet1, !Ref privateSubnet2]], "NA"]
+          ONDEMANDTARGETCAPACITY:  !Ref OnDemandTargetCapacity
+          SPOTTARGETCAPACITY: !Ref SpotTargetCapacity
+          TOTALTARGETCAPACITY: !Ref TotalTargetCapacity
+          TARGET_GROUP_ARN:  !If [CreateClusterResources, !Ref TargetGroup, "NA"]
+          AWSREGION: !Ref AWS::Region
+          NODE_SERVICE_START_COMMAND: !Ref NodeServiceStartCommand
+      Code:
+        S3Bucket: !Ref S3BucketName
+        S3Key: !Ref S3Key
+      Handler: lambda_function.lambda_handler
+      Role:
+        Fn::GetAtt: [ LambdaRole , "Arn" ]
+      Runtime: python3.7
+      Timeout: 900
+
+  InitializeDynamoDB:
+    Type: Custom::InitFunction
+    DependsOn:
+      - InstanceStateTable
+    Properties:
+      ServiceToken:
+        Fn::GetAtt: [ InitFunction , "Arn" ]
+      DynamoTableName: !Ref InstanceStateTable
+      Source: 'InitializeDynamoDB'
+
+  CWTNodeTerminationEventRule:
+    DependsOn:
+      - InitFunction
+    Properties:
+      Description: Events rule for EC2 Instance State-change Notification Notices
+      Name: !Sub '${AWS::StackName}-CWTNodeTerminationEventRule'
+      EventPattern:
+        detail:
+          state:
+            - shutting-down
+        detail-type:
+          - EC2 Instance State-change Notification
+        source:
+          - aws.ec2
+      State: ENABLED
+      Targets:
+        - Arn:
+            Fn::GetAtt:
+              - InitFunction
+              - Arn
+          Id:
+            Ref: InitFunction
+    Type: AWS::Events::Rule
+
+  lambdaFunctionPermission:
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+          - InitFunction
+          - Arn
+      Principal: events.amazonaws.com
+      SourceArn:
+        Fn::GetAtt:
+          - CWTNodeTerminationEventRule
+          - Arn
+    Type: AWS::Lambda::Permission
+
+Outputs:
+  awsRegionId:
+    Description: The AWS Region ID your template was launched in
+    Value: !Ref AWS::Region
+
+  instanceProfile:
+    Description: Instance profile ARN
+    Condition: CreateClusterResources
+    Value:
+      Fn::GetAtt:
+        - instanceProfile
+        - Arn
+
+  instanceSecurityGroup:
+    Description: Instance security group
+    Value: !Ref instanceSecurityGroup
+    Condition: CreateClusterResources
+
+  loadBalancerSecurityGroup:
+    Description: Load Balancer security group
+    Value: !Ref loadBalancerSecurityGroup
+    Condition: CreateClusterResources
+
+  vpc:
+    Description: The VPC
+    Condition: CreateClusterResources
+    Value: !Ref vpc
+
+  publicSubnet1:
+    Description: Public subnet 1
+    Value: !Ref publicSubnet1
+    Condition: CreateClusterResources
+
+  publicSubnet2:
+    Description: Public subnet 2
+    Value: !Ref publicSubnet2
+    Condition: CreateClusterResources
+
+
+  privateSubnet1:
+    Description: Private subnet 1
+    Value: !Ref privateSubnet1
+    Condition: CreateClusterResources
+
+  privateSubnet2:
+    Description: Private subnet 2
+    Value: !Ref privateSubnet2
+    Condition: CreateClusterResources
+
+  VPCPublicSubnets:
+    Description:  The list of public subnets in the VPC
+    Condition: CreateClusterResources
+    Value: !Join [",", [!Ref publicSubnet1, !Ref publicSubnet2]]
+
+  VPCPrivateSubnets:
+    Description:  The list of private subnets in the VPC
+    Condition: CreateClusterResources
+    Value: !Join [",", [!Ref privateSubnet1, !Ref privateSubnet2]]
+
+
+  ALBDNSName:
+    Description: The Application Load Balancer
+    Value: !GetAtt ALB.DNSName
+    Condition: CreateClusterResources
+
+  TargetGroup:
+    Description: The Target Group
+    Value: !Ref TargetGroup
+    Condition: CreateClusterResources
+
+  LaunchTemplateId:
+    Description: The Launch Template Id
+    Value: !Ref ExistingLaunchTemplateId
+    Condition: CreateClusterResources
+
+  LaunchTemplateVersion:
+    Description: The Launch Template Version
+    Value: !Ref ExistingLaunchTemplateVersion
+    Condition: CreateClusterResources
+
+  InitFunction:
+    Description: InitFunction
+    Value: !Ref InitFunction
+
+  InstanceStateTable:
+    Description: InstanceStateTable
+    Value: !Ref InstanceStateTable
+
+
+...

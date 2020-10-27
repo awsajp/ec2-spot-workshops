@@ -500,7 +500,6 @@ Resources:
             requests
             boto3
             EOF
-
             sudo pip3 install -r requirements.txt
 
 
@@ -619,6 +618,11 @@ Resources:
               print("Starting A Simple Web Service ...")
               mountVolumes()
               app.run(port=80,host='0.0.0.0')
+
+              state=processdone
+              terminate()
+
+
             EOF
 
             sudo python3 app.py

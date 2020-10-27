@@ -14,6 +14,7 @@ ec2resource = boto3.resource('ec2')
 dbclient = boto3.client('dynamodb')
 dynamodbresource = boto3.resource('dynamodb')
 transcribe = boto3.client('transcribe')
+s3client = boto3.client('s3')
 
 def checkTranscribeJobs(job_name):
   while True:

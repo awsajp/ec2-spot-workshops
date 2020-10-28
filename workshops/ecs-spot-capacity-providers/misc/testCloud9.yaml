@@ -21,7 +21,7 @@ Resources:
       InstanceType: t3.medium
       Name: ECS Spot Workshop
       OwnerArn:
-        !If [EventEngine, !Sub "arn:aws:sts::${AWS::AccountId}:assumed-role/${EETeamRoleArn}/MasterKey", !Ref "AWS::NoValue"]
+        !If [EventEngine, !Sub "arn:aws:sts::${AWS::AccountId}:assumed-role/TeamRole/MasterKey", !Ref "AWS::NoValue"]
 
 Outputs:
   Cloud9:

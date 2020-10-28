@@ -6,6 +6,8 @@ metadata:
 data:
   priorities: |-
     10: 
-      - .*Big*
-    20: 
+      - .*Large*
+    20:
+      - .*Medium*
+    30:
       - .*Small*

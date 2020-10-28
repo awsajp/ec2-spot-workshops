@@ -453,9 +453,6 @@ Outputs:
     Export:
       Name: !Sub "${AWS::StackName}-awsRegionId"
 
-
-
-
   instanceRole:
     Description: Instance Role
     Value:

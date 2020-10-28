@@ -163,6 +163,7 @@ spec:
             - --max-total-unready-percentage=75
             - --ok-total-unready-count=20
             - --max-empty-bulk-delete=30
+            - --max-node-provision-time=5m0s
           volumeMounts:
             - name: ssl-certs
               mountPath: /etc/ssl/certs/ca-certificates.crt

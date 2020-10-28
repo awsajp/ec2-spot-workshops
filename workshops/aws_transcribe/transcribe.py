@@ -20,11 +20,14 @@ dbclient = boto3.client('dynamodb')
 dynamodbresource = boto3.resource('dynamodb')
 transcribe = boto3.client('transcribe')
 s3client = boto3.client('s3')
+<<<<<<< HEAD
+=======
 dynamodbtablename='TranscribeJobs'
 table = dynamodbresource.Table(dynamodbtablename)
 AWSREGION = "us-east-1"
 sesClient = boto3.client('ses',region_name=AWSREGION)
 
+>>>>>>> df697205d6633c658d0f2e9722976b71ab2837de
 
 def checkTranscribeJobs(job_name):
   while True:

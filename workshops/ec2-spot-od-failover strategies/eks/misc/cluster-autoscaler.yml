@@ -154,8 +154,7 @@ spec:
             - --cloud-provider=aws
             - --skip-nodes-with-local-storage=false
             - --expander=priority
-            - --nodes=0:5:eksctl-eks-spot-demo-nodegroup-SPOT-NodeGroup-CTS7Q22CLVPT
-            - --nodes=0:5:eksctl-eks-spot-demo-nodegroup-OnDemand-NodeGroup-1WBT5PP03OQ4J
+            - --node-group-auto-discovery=asg:tag=k8s.io/cluster-autoscaler/enabled,k8s.io/cluster-autoscaler/eksworkshop-eksctl
             - --scale-down-unneeded-time=1m0s
             - --scale-down-unready-time=2m0s
             - --scale-down-delay-after-add=2m0s

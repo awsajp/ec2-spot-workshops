@@ -5,7 +5,9 @@ metadata:
   namespace: kube-system
 data:
   priorities: |-
+    10: 
+      - .*Large*
     20:
-      - .*OnDemand*
+      - .*Medium*
     30:
-      - .*SPOT*
+      - .*Small*

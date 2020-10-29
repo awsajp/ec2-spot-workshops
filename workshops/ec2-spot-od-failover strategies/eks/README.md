@@ -26,6 +26,11 @@ There are two ways to do this
 1. configure lowest price
 2. select some rare / high demand instances which may not be available for spot
 
+The second method is used in this PoC
+
+![Alt text](docs/spot_not_available_2.png?raw=true "Diagram")
+
+
 ### Step4: Deploy Cluster Autoscaler 
  
 ```bash
@@ -64,7 +69,7 @@ CA checks SPOT ASG fo every 1 min to check node is provisioned
 ```bash
 Line 16816: I1028 16:02:51.138867       1 auto_scaling_groups.go:407] Instance group eksctl-eks-spot-demo-nodegroup-SPOT-NodeGroup-CTS7Q22CLVPT has only 0 instances created while requested count is 1. Creating placeholder instance with ID i-placeholder-eksctl-eks-spot-demo-nodegroup-SPOT-NodeGroup-CTS7Q22CLVPT-0.
 ```
-
+![Alt text](docs/spot_not_available.png?raw=true "Diagram")
 
 CA decides that SPOT ASG cannot provision nodes at T2=**16:06:41.903608**
 So T2-T1 = 5min which is same as --max-node-provision-time=5m0s

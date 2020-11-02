@@ -4,6 +4,8 @@
 
 In this workshop, you will deploy the following:
 
+
+
 TBD
 ### Step3 : Create a Capacity Provider using this ASG i.e. od-capacity_provider_3  with Managed Scaling Enabled with target capacity of 100
 TBD

@@ -4,9 +4,6 @@
 
 In this workshop, you will deploy the following:
 
-### Step1 :  Create a Launch Template with ECS optimized AMI and with user data configuring ECS Cluster  
-TBD
-### Step2 : Create a ASG for only OD instances i.e. ecs-fargate-cluster-autoscale-asg-od with MIN 0 and MAX 10
 TBD
 ### Step3 : Create a Capacity Provider using this ASG i.e. od-capacity_provider_3  with Managed Scaling Enabled with target capacity of 100
 TBD

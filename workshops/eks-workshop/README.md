@@ -1,5 +1,7 @@
 ## EC2 Spot Workshop : ECS_Cluster_Auto_Scaling
 
+
+
 In this workshop, you will deploy the following:
 
 ### Step1 :  Create a Launch Template with ECS optimized AMI and with user data configuring ECS Cluster  

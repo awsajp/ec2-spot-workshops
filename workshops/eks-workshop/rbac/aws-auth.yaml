@@ -1,0 +1,15 @@
+apiVersion: v1
+data:
+  mapRoles: |
+    - groups:
+      - system:bootstrappers
+      - system:nodes
+      rolearn: arn:aws:iam::000474600478:role/eksctl-eksworkshop-nodegroup-node-NodeInstanceRole-8YUS61VM06SQ
+      username: system:node:{{EC2PrivateDNSName}}
+  mapUsers: |
+    - userarn: arn:aws:iam::000474600478:user/rbac-user
+      username: rbac-user
+kind: ConfigMap
+metadata:
+  name: aws-auth
+  namespace: kube-system

@@ -86,7 +86,7 @@ Parameters:
 
   Ec2SpotNodeLabels:
     Type: String
-    Default: ' --node-labels="lifecycle=Ec2Spot,intent=apps" '
+      Default: ' --node-labels="lifecycle=Ec2Spot,intent=apps" '
     Description: "List of Taints for Ec2 Spot nodes"
 
   Ec2SpotNodeTaints:

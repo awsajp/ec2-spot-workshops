@@ -1,0 +1,106 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+Description: Stateful Workload on EC2 Spot Instances
+Metadata:
+  Author:
+    Description: Jayaprakash Alawala <jalawala@amazon.com>
+  License:
+    Description: 'Copyright 2020 Amazon.com, Inc. and its affiliates. All Rights Reserved.
+
+      Licensed under the Amazon Software License (the "License"). You may not use this file
+      except in compliance with the License. A copy of the License is located at
+
+      http://aws.amazon.com/asl/
+
+      or in the "license" file accompanying this file. This file is distributed on an "AS IS"
+      BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+      License for the specific language governing permissions and limitations under the License.'
+
+
+Parameters:
+
+  KeyPairName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: "awsajp_keypair"
+    Default: "awsajp_keypair"
+
+  TotalTargetCapacity:
+    Type: Number
+    Description: "Total Capacity"
+    Default: 2
+
+  OnDemandTargetCapacity:
+    Type: Number
+    Description: "on-demand  capacity"
+    Default: 1
+
+  SpotTargetCapacity:
+    Type: Number
+    Description: "Spot Capacity"
+    Default: 1
+
+  NodeServiceStartCommand:
+    Description: "Specify the Node Service Start Command"
+    Default: "su -c \"/home/ec2-user/apache-cassandra-3.11.6/bin/cassandra\" ec2-user"
+    Type: String
+
+  ReadCapacityUnits:
+    Description: Provisioned read throughput
+    Type: Number
+    Default: '10'
+    MinValue: '10'
+    MaxValue: '10000'
+    ConstraintDescription: must be between 5 and 10000
+
+  WriteCapacityUnits:
+    Description: Provisioned write throughput
+    Type: Number
+    Default: '10'
+    MinValue: '10'
+    MaxValue: '10000'
+    ConstraintDescription: must be between 5 and 10000
+
+Resources:
+
+  InstanceStateTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: instanceId
+          AttributeType: S
+        - AttributeName: ST
+          AttributeType: S
+      BillingMode: PROVISIONED
+      KeySchema:
+        - AttributeName: instanceId
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: !Ref 'ReadCapacityUnits'
+        WriteCapacityUnits: !Ref 'WriteCapacityUnits'
+      TableName:  !Sub '${AWS::StackName}'
+      Tags:
+        - Key: Name
+          Value: 'tallycustomertable'
+      GlobalSecondaryIndexes:
+        - IndexName: 'ST-index'
+          KeySchema:
+            - AttributeName: ST
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: !Ref 'ReadCapacityUnits'
+            WriteCapacityUnits: !Ref 'WriteCapacityUnits'
+
+
+Outputs:
+  awsRegionId:
+    Description: The AWS Region ID your template was launched in
+    Value: !Ref AWS::Region
+
+  InstanceStateTable:
+    Description: InstanceStateTable
+    Value: !Ref InstanceStateTable
+
+
+...

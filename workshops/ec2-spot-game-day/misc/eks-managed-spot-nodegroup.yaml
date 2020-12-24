@@ -1,0 +1,118 @@
+
+AWSTemplateFormatVersion: 2010-09-09
+Description: 'EKS Managed Nodes (SSH access: false) [created by eksctl]'
+Mappings:
+  ServicePrincipalPartitionMap:
+    aws:
+      EC2: ec2.amazonaws.com
+      EKS: eks.amazonaws.com
+      EKSFargatePods: eks-fargate-pods.amazonaws.com
+    aws-cn:
+      EC2: ec2.amazonaws.com.cn
+      EKS: eks.amazonaws.com
+      EKSFargatePods: eks-fargate-pods.amazonaws.com
+    aws-us-gov:
+      EC2: ec2.amazonaws.com
+      EKS: eks.amazonaws.com
+      EKSFargatePods: eks-fargate-pods.amazonaws.com
+Resources:
+  LaunchTemplate:
+    Type: 'AWS::EC2::LaunchTemplate'
+    Properties:
+      LaunchTemplateData:
+        BlockDeviceMappings:
+          - DeviceName: /dev/xvda
+            Ebs:
+              VolumeSize: 80
+              VolumeType: gp2
+        MetadataOptions:
+          HttpPutResponseHopLimit: 2
+          HttpTokens: optional
+        SecurityGroupIds:
+          - !ImportValue 'eksctl-eks-spot-managed-node-groups-cluster::ClusterSecurityGroupId'
+        TagSpecifications:
+          - ResourceType: instance
+            Tags:
+              - Key: Name
+                Value: eks-spot-managed-node-groups-spot-4vcpu-16gb-Node
+              - Key: alpha.eksctl.io/nodegroup-name
+                Value: spot-4vcpu-16gb
+              - Key: alpha.eksctl.io/nodegroup-type
+                Value: managed
+      LaunchTemplateName: !Sub '${AWS::StackName}'
+  ManagedNodeGroup:
+    Type: 'AWS::EKS::Nodegroup'
+    Properties:
+      AmiType: AL2_x86_64
+      ClusterName: eks-spot-managed-node-groups
+      InstanceTypes:
+        - m5.xlarge
+        - m4.xlarge
+        - m5a.xlarge
+        - m5d.xlarge
+        - m5n.xlarge
+        - m5ad.xlarge
+        - m5dn.xlarge
+      CapacityType: SPOT
+      Labels:
+        alpha.eksctl.io/cluster-name: eks-spot-managed-node-groups
+        alpha.eksctl.io/nodegroup-name: spot-4vcpu-16gb
+      LaunchTemplate:
+        Id: !Ref LaunchTemplate
+      NodeRole: !GetAtt
+        - NodeInstanceRole
+        - Arn
+      NodegroupName: spot-4vcpu-16gb
+      ScalingConfig:
+        DesiredSize: 2
+        MaxSize: 20
+        MinSize: 2
+      Subnets: !Split
+        - ','
+        - !ImportValue 'eksctl-eks-spot-managed-node-groups-cluster::SubnetsPublic'
+      Tags:
+        alpha.eksctl.io/nodegroup-name: spot-4vcpu-16gb
+        alpha.eksctl.io/nodegroup-type: managed
+  NodeInstanceRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action:
+              - 'sts:AssumeRole'
+            Effect: Allow
+            Principal:
+              Service:
+                - !FindInMap
+                  - ServicePrincipalPartitionMap
+                  - !Ref 'AWS::Partition'
+                  - EC2
+        Version: 2012-10-17
+      ManagedPolicyArns:
+        - !Sub >-
+          arn:${AWS::Partition}:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/AmazonEKSWorkerNodePolicy'
+        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/AmazonEKS_CNI_Policy'
+      Path: /
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}/NodeInstanceRole'
+  PolicyAutoScaling:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - 'autoscaling:DescribeAutoScalingGroups'
+              - 'autoscaling:DescribeAutoScalingInstances'
+              - 'autoscaling:DescribeLaunchConfigurations'
+              - 'autoscaling:DescribeTags'
+              - 'autoscaling:SetDesiredCapacity'
+              - 'autoscaling:TerminateInstanceInAutoScalingGroup'
+              - 'ec2:DescribeLaunchTemplateVersions'
+            Effect: Allow
+            Resource: '*'
+        Version: 2012-10-17
+      PolicyName: !Sub '${AWS::StackName}-PolicyAutoScaling'
+      Roles:
+        - !Ref NodeInstanceRole

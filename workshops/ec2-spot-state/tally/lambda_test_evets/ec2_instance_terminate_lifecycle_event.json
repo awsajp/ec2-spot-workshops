@@ -1,0 +1,20 @@
+{
+  "version": "0",
+  "id": "12345678-1234-1234-1234-123456789012",
+  "detail-type": "EC2 Instance-terminate Lifecycle Action",
+  "source": "aws.autoscaling",
+  "account": "123456789012",
+  "time": "yyyy-mm-ddThh:mm:ssZ",
+  "region": "ap-south-1",
+  "resources": [
+    "auto-scaling-group-arn"
+  ],
+  "detail": {
+    "LifecycleActionToken": "36f3c11b-40ee-4565-8f4b-402fe5807f1c",
+    "AutoScalingGroupName": "CP4-5",
+    "LifecycleHookName": "terminate-hook",
+    "EC2InstanceId": "i-0f7fb75f0d652d18f",
+    "LifecycleTransition": "autoscaling:EC2_INSTANCE_TERMINATING",
+    "NotificationMetadata": "additional-info"
+  }
+}
